@@ -27,6 +27,7 @@
 package org.sireum.parser
 
 import org.sireum._
+import org.sireum.U32._
 import org.sireum.U64._
 import org.sireum.message.{PosInfo, Position, Reporter}
 import org.sireum.parser.{ParseTree => Tree}
@@ -189,7 +190,7 @@ import org.sireum.parser.{GrammarAst => AST}
     leaf.ruleName match {
       case string"LID" => return AST.Element.Ref(T, leaf.text, leafPosOpt(leaf))
       case string"CHAR" => return buildCHAR(leaf)
-      case string"STRING" => return buildSTRING(leaf)
+      case string"STRING" => return buildSTRING(leaf, reporter)
       case string"'.'" =>
         val pOpt = leafPosOpt(leaf)
         if (!isLexer) {
@@ -208,7 +209,7 @@ import org.sireum.parser.{GrammarAst => AST}
     }
     e.ruleName match {
       case string"CHAR" => return AST.Element.Neg(buildCHAR(e), pOpt)
-      case string"STRING" => return AST.Element.Neg(buildSTRING(e), pOpt)
+      case string"STRING" => return AST.Element.Neg(buildSTRING(e, reporter), pOpt)
       case string"block" => return AST.Element.Neg(buildBlock(isLexer, e, reporter), pOpt)
       case _ => halt(s"Infeasible: $tree")
     }
@@ -239,9 +240,26 @@ import org.sireum.parser.{GrammarAst => AST}
     return AST.Element.Char(cis2C(cis, 1)._1, leafPosOpt(leaf))
   }
 
-  def buildSTRING(tree: ParseTree): AST.Element.Str = {
+  def buildSTRING(tree: ParseTree, reporter: Reporter): AST.Element = {
     val leaf@Tree.Leaf(_) = tree
     val cis = conversions.String.toCis(leaf.text)
+    val pOpt = leafPosOpt(leaf)
+    def error(): Unit = {
+      reporter.error(pOpt, kind, s"Could not recognize full unicode escape '${leaf.text}'")
+    }
+    cis match {
+      case ISZ('\\', '\\', 'u', '{', '0', 'x', _*) if cis(cis.size - 1) == '}' =>
+        U32(ops.StringOps.substring(cis, 6, cis.size - 1)) match {
+          case Some(n) if n <= u32"0x10FFFF" => return AST.Element.Char(conversions.U32.toC(n), pOpt)
+          case _ => error()
+        }
+      case ISZ('\\', '\\', 'u', '{', _*) if cis(cis.size - 1) == '}' =>
+        U32(s"0x${ops.StringOps.substring(cis, 4, cis.size - 1)}") match {
+          case Some(n) if n <= u32"0x10FFFF" => return AST.Element.Char(conversions.U32.toC(n), pOpt)
+          case _ => error()
+        }
+      case _ =>
+    }
     var cs = ISZ[C]()
     val last = cis.size - 1
     var i: Z = 1
@@ -250,7 +268,7 @@ import org.sireum.parser.{GrammarAst => AST}
       cs = cs :+ p._1
       i = i + p._2
     }
-    return AST.Element.Str(conversions.String.fromCis(cs), leafPosOpt(leaf))
+    return AST.Element.Str(conversions.String.fromCis(cs), pOpt)
   }
 
   def buildBlock(isLexer: B, tree: ParseTree, reporter: Reporter): AST.Element.Block = {
