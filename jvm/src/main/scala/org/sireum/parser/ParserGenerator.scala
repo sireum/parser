@@ -29,15 +29,29 @@ package org.sireum.parser
 import org.sireum._
 import org.sireum.message.Reporter
 import org.sireum.parser.{GrammarAst => AST}
-import org.sireum.U32._
 
 @datatype class ParserGenerator {
 
   val tqs: String = "\"\"\""
-  val maxChar: C = conversions.U32.toC(u32"0x0010FFFF")
 
   def gen(licenseOpt: Option[ST], fileInfo: ST, packageOpt: Option[ST], name: String, ast: AST.Grammar,
           memoize: B, reporter: Reporter): Option[ST] = {
+
+    val options = HashMap.empty[String, String] ++ ast.options
+    var kOpt: Option[Z] = None()
+    options.get("k") match {
+      case Some(v) => Z(v) match {
+        case Some(n) => kOpt = Some(n)
+        case _ =>
+          reporter.error(None(), "ParserGenerator", s"Expecting an integer for k, but found: $v")
+          return None()
+      }
+      case _ =>
+    }
+    if (kOpt.isEmpty) {
+      reporter.error(None(), "ParserGenerator", s"Please specify the k lookahead option")
+      return None()
+    }
 
     val lexerDfaMap = ParserGenerator.Ext.computeLexerDfas(ast, reporter)
 
@@ -153,12 +167,32 @@ import org.sireum.U32._
 
     var parserDefs = ISZ[ST]()
 
+    val nameRuleMap = HashMap.empty[String, AST.Rule] ++ (for (rule <- ast.rules if !rule.isFragment && !rule.isHidden) yield (rule.name, rule))
+
+    val k = kOpt.get
+
+    val laMap = LookAhead.compute(k, nameRuleMap, parserDfaMap, reporter)
+
+    if (reporter.hasError) {
+      return None()
+    }
+
     def genParser(): Unit = {
 
       for (p <- parserDfaMap.entries) {
-        parserDefs = parserDefs :+ genParserDfa(memoize, parseName(p._1), p._1, p._2._1, p._2._2)
+        parserDefs = parserDefs :+ genParserDfa(k, memoize, parseName(p._1), p._1, p._2._1, p._2._2, laMap)
       }
 
+      for (p <- laMap.entries) {
+        val trie = p._2
+        val sts = genTries(k, trie)
+        parserDefs = parserDefs :+
+          st"""${if (memoize) "@memoize" else "@pure"} def ${predictName(p._1)}(j: Z): B = {
+              |  var shouldTry = F
+              |  ${(sts, "\n")}
+              |  return shouldTry
+              |}"""
+      }
     }
 
     genLexer()
@@ -235,6 +269,13 @@ import org.sireum.U32._
           |
           |  ${(parserDefs, "\n\n")}
           |
+          |  def retVal(n: Z, resOpt: Option[Result], initial: B, noBacktrack: B): Either[Result, Z] = {
+          |    resOpt match {
+          |      case Some(res) => return Either.Left(res)
+          |      case _ =>
+          |        return if (noBacktrack) Either.Right(if (!initial) -n else n) else Either.Right(n)
+          |    }
+          |  }
           |}
           |
           |@datatype class ${name}Lexer(input: String, docInfo: message.DocInfo) {
@@ -247,19 +288,22 @@ import org.sireum.U32._
     )
   }
 
+  @strictpure def predictName(name: String): ST = st"predict${ops.StringOps(name).firstToUpper}"
+
   @strictpure def parseName(name: String): ST = st"parse${ops.StringOps(name).firstToUpper}"
 
   @strictpure def lexName(name: String): ST = st"lex_$name"
 
   @strictpure def dfaName(name: String): ST = st"dfa_$name"
 
-  def genParserDfa(memoize: B, name: ST, ruleName: String, dfa: Dfa, atoms: ISZ[AST.Element]): ST = {
+  def genParserDfa(k: Z, memoize: B, name: ST, ruleName: String, dfa: Dfa, atoms: ISZ[AST.Element],
+                   laMap: HashMap[String, LookAhead.Trie]): ST = {
     val noBacktrack: B = ops.StringOps(ruleName).endsWith("_cut")
     var transitions = ISZ[ST]()
     for (node <- dfa.g.nodesInverse) {
       var conds = ISZ[ST]()
       val outgoing = dfa.g.outgoing(node)
-      if (!(outgoing.size === 1 && isReject(outgoing(0).asInstanceOf[Graph.Edge.Data[Z, (C, C)]]))) {
+      if (!(outgoing.size === 1 && Dfa.isReject(outgoing(0)))) {
         for (e <- outgoing) {
           val edge = e.asInstanceOf[Graph.Edge.Data[Z, (C, C)]]
           val lo = conversions.U32.toZ(conversions.C.toU32(edge.data._1))
@@ -294,7 +338,7 @@ import org.sireum.U32._
                         |}"""
                 } else {
                   conds = conds :+
-                    st"""if (!found) {
+                    st"""if (!found && ${predictName(e.name)}(j)) {
                         |  ${parseName(e.name)}(j) match {
                         |    case Either.Left(r) =>
                         |      trees = trees :+ r.tree
@@ -317,14 +361,14 @@ import org.sireum.U32._
       }
       if (conds.isEmpty) {
         transitions = transitions :+
-          st"""case u32"$node" => return retVal(max)"""
+          st"""case u32"$node" => return retVal(max, resOpt, initial, ${if (noBacktrack) "T" else "F"})"""
       } else {
         transitions = transitions :+
           st"""case u32"$node" =>
               |  var found = F
               |  ${(conds, "\n")}
               |  if (!found) {
-              |    return retVal(max)
+              |    return retVal(max, resOpt, initial, ${if (noBacktrack) "T" else "F"})
               |  }"""
       }
     }
@@ -347,14 +391,6 @@ import org.sireum.U32._
           |    resOpt = Some(Result(ParseTree.Node(trees, $tqs$ruleName$tqs,  None()), j))
           |  }
           |
-          |  def retVal(n: Z): Either[Result, Z] = {
-          |    resOpt match {
-          |      case Some(res) => return Either.Left(res)
-          |      case _ =>
-          |        ${if (noBacktrack) "return Either.Right(if (!initial) -n else n)" else "return Either.Right(n)"}
-          |    }
-          |  }
-          |
           |  while (j < tokens.size) {
           |    state match {
           |      ${(transitions, "\n")}
@@ -365,20 +401,92 @@ import org.sireum.U32._
           |    }
           |  }
           |
-          |  return retVal(j)
+          |  return retVal(j, resOpt, initial, ${if (noBacktrack) "T" else "F"})
           |}"""
     return r
   }
 
-  @strictpure def isReject(e: Graph.Edge.Data[Z, (C, C)]): B =
-    e.source == e.dest && e.data._1 === '\u0000' && e.data._2 == maxChar
+  def genTries(k: Z, ruleTrie: LookAhead.Trie): ISZ[ST] = {
+    var r = ISZ[ST]()
+
+    def rec(depth: Z, trie: LookAhead.Trie): ST = {
+      val idx: ST = if (depth == 0) st"j" else st"j + $depth"
+      val subs: ISZ[ST] =
+        if (trie.accept || depth >= k) ISZ()
+        else for (sub <- trie.subs.values) yield rec(depth + 1, sub)
+      val subsOpt: Option[ST] = if (subs.isEmpty) None() else Some(st" && (${(subs, " || ")})")
+      val cond: ST = trie.value match {
+        case v: LookAhead.Case.Value.Str => st"""tokens($idx).text === "${ops.StringOps(v.value).escapeST}""""
+        case v: LookAhead.Case.Value.Terminal => st"""tokens($idx).ruleName === "${v.name}""""
+      }
+      return st"$idx < tokens.size && $cond$subsOpt"
+    }
+    if (ruleTrie.accept || ruleTrie.subs.isEmpty) {
+      r = r :+ st"shouldTry = T"
+    } else {
+      for (trie <- ruleTrie.subs.values) {
+        val cond = rec(0, trie)
+        r = r :+
+          st"""if (!shouldTry && $cond) {
+              |  shouldTry = T
+              |}"""
+      }
+    }
+
+    return r
+    /*
+    var kMap = HashMap.empty[Z, ISZ[LookAhead.Case]]
+    for (cas <- cases) {
+      val key = cas.value.size
+      val vs: ISZ[LookAhead.Case] = kMap.get(key) match {
+        case Some(v) => v
+        case _ => ISZ()
+      }
+      kMap = kMap + key ~> (vs :+ cas)
+    }
+    var r = ISZ[ST]()
+    for (i <- 1 to k) {
+      var conds = ISZ[ST]()
+      kMap.get(i) match {
+        case Some(cases) =>
+          for (cas <- cases) {
+            var valueConds = ISZ[ST]()
+            for (k <- 0 until cas.value.size) {
+              val idx: ST = if (k == 0) st"j" else st"j + $k"
+              cas.value(k) match {
+                case v: LookAhead.Case.Value.Str => valueConds = valueConds :+ st"""tokens($idx).text === "${ops.StringOps(v.value).escapeST}""""
+                case v: LookAhead.Case.Value.Terminal => valueConds = valueConds :+ st"""tokens($idx).ruleName === "${v.name}""""
+              }
+            }
+            conds = conds :+ st"${(valueConds, " && ")}"
+          }
+        case _ =>
+      }
+      if (conds.nonEmpty) {
+        if (i == 1) {
+          r = r :+
+            st"""if (!shouldTry && (${(conds, " || ")})) {
+                |  shouldTry = T
+                |}"""
+        } else {
+          r = r :+
+            st"""if (!shouldTry && j + ${i - 1} < tokens.size && (${(conds, " || ")})) {
+                |  shouldTry = T
+                |}"""
+        }
+      }
+    }
+
+    return r
+     */
+  }
 
   def genLexerDfa(name: ST, dfa: Dfa): ST = {
     var transitions = ISZ[ST]()
     for (node <- dfa.g.nodesInverse) {
       var conds = ISZ[ST]()
       val outgoing = dfa.g.outgoing(node)
-      if (!(outgoing.size === 1 && isReject(outgoing(0).asInstanceOf[Graph.Edge.Data[Z, (C, C)]]))) {
+      if (!(outgoing.size === 1 && Dfa.isReject(outgoing(0)))) {
         for (e <- outgoing) {
           val edge = e.asInstanceOf[Graph.Edge.Data[Z, (C, C)]]
           val (lo, hi) = edge.data
@@ -434,7 +542,7 @@ import org.sireum.U32._
   def c2ST(c: C): ST = {
     if (c == '\u0000') {
       return st"minChar"
-    } else if (c == maxChar) {
+    } else if (c == Dfa.maxChar) {
       return st"maxChar"
     } else if (c > '\uFFFF') {
       return st"""toC(u32"0x${conversions.C.toU32(c)}")"""

@@ -27,5 +27,16 @@
 package org.sireum.parser
 
 import org.sireum._
+import org.sireum.U32._
 
-@datatype class Dfa(initial: Z, accepting: HashSSet[Z], g: Graph[Z, (C, C)])
+@datatype class Dfa(val initial: Z, val accepting: HashSSet[Z], val g: Graph[Z, (C, C)])
+
+object Dfa {
+  val maxChar: C = conversions.U32.toC(u32"0x0010FFFF")
+
+  @pure def isReject(edge: Graph.Edge[Z, (C, C)]): B = {
+    val e = edge.asInstanceOf[Graph.Edge.Data[Z, (C, C)]]
+    return e.source == e.dest && e.data._1 === '\u0000' && e.data._2 == maxChar
+  }
+
+}
