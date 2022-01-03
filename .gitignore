@@ -1,0 +1,4 @@
+*.cmd.jar
+*.cmd.com
+/out
+project.json
