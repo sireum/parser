@@ -66,10 +66,7 @@ trait Module extends CrossJvmJsJitPack {
     if (isSourceDep) Agg.empty
     else Agg(jpLatest(isCross = true, "sireum", "parser"))
 
-  final override def jvmIvyDeps = Agg(
-    ivy"org.antlr:antlr-runtime:$antlr3Version",
-    ivy"org.sireum:automaton:$automatonVersion",
-  )
+  final override def jvmIvyDeps = Agg.empty
 
   final override def deps =
     if (isSourceDep) Seq(libraryObject) else Seq()
