@@ -1658,7 +1658,9 @@ import SireumGrammarParser._
 
   @pure def predictParserRule(j: Z): B = {
     var shouldTry = F
-    if (!shouldTry && j < tokens.size && tokens(j).ruleName === "PID" && (j + 1 < tokens.size && tokens(j + 1).text === ":")) {
+    val j1 = j + 1
+    val off1 = j1 < tokens.size
+    if (!shouldTry && tokens(j).ruleName === "PID" && (off1 && tokens(j1).text === ":")) {
       shouldTry = T
     }
     return shouldTry
@@ -1666,22 +1668,24 @@ import SireumGrammarParser._
 
   @pure def predictAtom(j: Z): B = {
     var shouldTry = F
-    if (!shouldTry && j < tokens.size && tokens(j).ruleName === "CHAR") {
+    val j1 = j + 1
+    val off1 = j1 < tokens.size
+    if (!shouldTry && tokens(j).ruleName === "CHAR") {
       shouldTry = T
     }
-    if (!shouldTry && j < tokens.size && tokens(j).ruleName === "LID") {
+    if (!shouldTry && tokens(j).ruleName === "LID") {
       shouldTry = T
     }
-    if (!shouldTry && j < tokens.size && tokens(j).ruleName === "STRING") {
+    if (!shouldTry && tokens(j).ruleName === "STRING") {
       shouldTry = T
     }
-    if (!shouldTry && j < tokens.size && tokens(j).text === ".") {
+    if (!shouldTry && tokens(j).text === ".") {
       shouldTry = T
     }
-    if (!shouldTry && j < tokens.size && tokens(j).text === "~" && (j + 1 < tokens.size && tokens(j + 1).ruleName === "CHAR" || j + 1 < tokens.size && tokens(j + 1).ruleName === "STRING" || j + 1 < tokens.size && tokens(j + 1).text === "(")) {
+    if (!shouldTry && tokens(j).text === "~" && (off1 && tokens(j1).ruleName === "CHAR" || off1 && tokens(j1).ruleName === "STRING" || off1 && tokens(j1).text === "(")) {
       shouldTry = T
     }
-    if (!shouldTry && j < tokens.size && tokens(j).ruleName === "PID") {
+    if (!shouldTry && tokens(j).ruleName === "PID") {
       shouldTry = T
     }
     return shouldTry
@@ -1689,7 +1693,9 @@ import SireumGrammarParser._
 
   @pure def predictOptionsSpec(j: Z): B = {
     var shouldTry = F
-    if (!shouldTry && j < tokens.size && tokens(j).text === "options" && (j + 1 < tokens.size && tokens(j + 1).text === "{")) {
+    val j1 = j + 1
+    val off1 = j1 < tokens.size
+    if (!shouldTry && tokens(j).text === "options" && (off1 && tokens(j1).text === "{")) {
       shouldTry = T
     }
     return shouldTry
@@ -1697,25 +1703,27 @@ import SireumGrammarParser._
 
   @pure def predictAlt(j: Z): B = {
     var shouldTry = F
-    if (!shouldTry && j < tokens.size && tokens(j).ruleName === "CHAR") {
+    val j1 = j + 1
+    val off1 = j1 < tokens.size
+    if (!shouldTry && tokens(j).ruleName === "CHAR") {
       shouldTry = T
     }
-    if (!shouldTry && j < tokens.size && tokens(j).ruleName === "LID") {
+    if (!shouldTry && tokens(j).ruleName === "LID") {
       shouldTry = T
     }
-    if (!shouldTry && j < tokens.size && tokens(j).ruleName === "STRING") {
+    if (!shouldTry && tokens(j).ruleName === "STRING") {
       shouldTry = T
     }
-    if (!shouldTry && j < tokens.size && tokens(j).text === ".") {
+    if (!shouldTry && tokens(j).text === ".") {
       shouldTry = T
     }
-    if (!shouldTry && j < tokens.size && tokens(j).text === "~" && (j + 1 < tokens.size && tokens(j + 1).ruleName === "CHAR" || j + 1 < tokens.size && tokens(j + 1).ruleName === "STRING" || j + 1 < tokens.size && tokens(j + 1).text === "(")) {
+    if (!shouldTry && tokens(j).text === "~" && (off1 && tokens(j1).ruleName === "CHAR" || off1 && tokens(j1).ruleName === "STRING" || off1 && tokens(j1).text === "(")) {
       shouldTry = T
     }
-    if (!shouldTry && j < tokens.size && tokens(j).ruleName === "PID") {
+    if (!shouldTry && tokens(j).ruleName === "PID") {
       shouldTry = T
     }
-    if (!shouldTry && j < tokens.size && tokens(j).text === "(" && (j + 1 < tokens.size && tokens(j + 1).ruleName === "CHAR" || j + 1 < tokens.size && tokens(j + 1).ruleName === "LID" || j + 1 < tokens.size && tokens(j + 1).ruleName === "STRING" || j + 1 < tokens.size && tokens(j + 1).text === "." || j + 1 < tokens.size && tokens(j + 1).text === "~" || j + 1 < tokens.size && tokens(j + 1).ruleName === "PID" || j + 1 < tokens.size && tokens(j + 1).text === "(")) {
+    if (!shouldTry && tokens(j).text === "(" && (off1 && tokens(j1).ruleName === "CHAR" || off1 && tokens(j1).ruleName === "LID" || off1 && tokens(j1).ruleName === "STRING" || off1 && tokens(j1).text === "." || off1 && tokens(j1).text === "~" || off1 && tokens(j1).ruleName === "PID" || off1 && tokens(j1).text === "(")) {
       shouldTry = T
     }
     return shouldTry
@@ -1723,16 +1731,16 @@ import SireumGrammarParser._
 
   @pure def predictTerminal(j: Z): B = {
     var shouldTry = F
-    if (!shouldTry && j < tokens.size && tokens(j).ruleName === "LID") {
+    if (!shouldTry && tokens(j).ruleName === "LID") {
       shouldTry = T
     }
-    if (!shouldTry && j < tokens.size && tokens(j).ruleName === "CHAR") {
+    if (!shouldTry && tokens(j).ruleName === "CHAR") {
       shouldTry = T
     }
-    if (!shouldTry && j < tokens.size && tokens(j).ruleName === "STRING") {
+    if (!shouldTry && tokens(j).ruleName === "STRING") {
       shouldTry = T
     }
-    if (!shouldTry && j < tokens.size && tokens(j).text === ".") {
+    if (!shouldTry && tokens(j).text === ".") {
       shouldTry = T
     }
     return shouldTry
@@ -1740,10 +1748,12 @@ import SireumGrammarParser._
 
   @pure def predictLexerRule(j: Z): B = {
     var shouldTry = F
-    if (!shouldTry && j < tokens.size && tokens(j).text === "fragment" && (j + 1 < tokens.size && tokens(j + 1).ruleName === "LID")) {
+    val j1 = j + 1
+    val off1 = j1 < tokens.size
+    if (!shouldTry && tokens(j).text === "fragment" && (off1 && tokens(j1).ruleName === "LID")) {
       shouldTry = T
     }
-    if (!shouldTry && j < tokens.size && tokens(j).ruleName === "LID" && (j + 1 < tokens.size && tokens(j + 1).text === ":")) {
+    if (!shouldTry && tokens(j).ruleName === "LID" && (off1 && tokens(j1).text === ":")) {
       shouldTry = T
     }
     return shouldTry
@@ -1751,25 +1761,27 @@ import SireumGrammarParser._
 
   @pure def predictElement(j: Z): B = {
     var shouldTry = F
-    if (!shouldTry && j < tokens.size && tokens(j).ruleName === "CHAR") {
+    val j1 = j + 1
+    val off1 = j1 < tokens.size
+    if (!shouldTry && tokens(j).ruleName === "CHAR") {
       shouldTry = T
     }
-    if (!shouldTry && j < tokens.size && tokens(j).ruleName === "LID") {
+    if (!shouldTry && tokens(j).ruleName === "LID") {
       shouldTry = T
     }
-    if (!shouldTry && j < tokens.size && tokens(j).ruleName === "STRING") {
+    if (!shouldTry && tokens(j).ruleName === "STRING") {
       shouldTry = T
     }
-    if (!shouldTry && j < tokens.size && tokens(j).text === ".") {
+    if (!shouldTry && tokens(j).text === ".") {
       shouldTry = T
     }
-    if (!shouldTry && j < tokens.size && tokens(j).text === "~" && (j + 1 < tokens.size && tokens(j + 1).ruleName === "CHAR" || j + 1 < tokens.size && tokens(j + 1).ruleName === "STRING" || j + 1 < tokens.size && tokens(j + 1).text === "(")) {
+    if (!shouldTry && tokens(j).text === "~" && (off1 && tokens(j1).ruleName === "CHAR" || off1 && tokens(j1).ruleName === "STRING" || off1 && tokens(j1).text === "(")) {
       shouldTry = T
     }
-    if (!shouldTry && j < tokens.size && tokens(j).ruleName === "PID") {
+    if (!shouldTry && tokens(j).ruleName === "PID") {
       shouldTry = T
     }
-    if (!shouldTry && j < tokens.size && tokens(j).text === "(" && (j + 1 < tokens.size && tokens(j + 1).ruleName === "CHAR" || j + 1 < tokens.size && tokens(j + 1).ruleName === "LID" || j + 1 < tokens.size && tokens(j + 1).ruleName === "STRING" || j + 1 < tokens.size && tokens(j + 1).text === "." || j + 1 < tokens.size && tokens(j + 1).text === "~" || j + 1 < tokens.size && tokens(j + 1).ruleName === "PID" || j + 1 < tokens.size && tokens(j + 1).text === "(")) {
+    if (!shouldTry && tokens(j).text === "(" && (off1 && tokens(j1).ruleName === "CHAR" || off1 && tokens(j1).ruleName === "LID" || off1 && tokens(j1).ruleName === "STRING" || off1 && tokens(j1).text === "." || off1 && tokens(j1).text === "~" || off1 && tokens(j1).ruleName === "PID" || off1 && tokens(j1).text === "(")) {
       shouldTry = T
     }
     return shouldTry
@@ -1777,7 +1789,9 @@ import SireumGrammarParser._
 
   @pure def predictChannel(j: Z): B = {
     var shouldTry = F
-    if (!shouldTry && j < tokens.size && tokens(j).text === "{" && (j + 1 < tokens.size && tokens(j + 1).text === "$channel")) {
+    val j1 = j + 1
+    val off1 = j1 < tokens.size
+    if (!shouldTry && tokens(j).text === "{" && (off1 && tokens(j1).text === "$channel")) {
       shouldTry = T
     }
     return shouldTry
@@ -1785,10 +1799,12 @@ import SireumGrammarParser._
 
   @pure def predictOption(j: Z): B = {
     var shouldTry = F
-    if (!shouldTry && j < tokens.size && tokens(j).ruleName === "LID" && (j + 1 < tokens.size && tokens(j + 1).text === "=")) {
+    val j1 = j + 1
+    val off1 = j1 < tokens.size
+    if (!shouldTry && tokens(j).ruleName === "LID" && (off1 && tokens(j1).text === "=")) {
       shouldTry = T
     }
-    if (!shouldTry && j < tokens.size && tokens(j).ruleName === "PID" && (j + 1 < tokens.size && tokens(j + 1).text === "=")) {
+    if (!shouldTry && tokens(j).ruleName === "PID" && (off1 && tokens(j1).text === "=")) {
       shouldTry = T
     }
     return shouldTry
@@ -1796,13 +1812,13 @@ import SireumGrammarParser._
 
   @pure def predictOptionValue(j: Z): B = {
     var shouldTry = F
-    if (!shouldTry && j < tokens.size && tokens(j).ruleName === "LID") {
+    if (!shouldTry && tokens(j).ruleName === "LID") {
       shouldTry = T
     }
-    if (!shouldTry && j < tokens.size && tokens(j).ruleName === "PID") {
+    if (!shouldTry && tokens(j).ruleName === "PID") {
       shouldTry = T
     }
-    if (!shouldTry && j < tokens.size && tokens(j).ruleName === "INT") {
+    if (!shouldTry && tokens(j).ruleName === "INT") {
       shouldTry = T
     }
     return shouldTry
@@ -1810,7 +1826,9 @@ import SireumGrammarParser._
 
   @pure def predictBlock(j: Z): B = {
     var shouldTry = F
-    if (!shouldTry && j < tokens.size && tokens(j).text === "(" && (j + 1 < tokens.size && tokens(j + 1).ruleName === "CHAR" || j + 1 < tokens.size && tokens(j + 1).ruleName === "LID" || j + 1 < tokens.size && tokens(j + 1).ruleName === "STRING" || j + 1 < tokens.size && tokens(j + 1).text === "." || j + 1 < tokens.size && tokens(j + 1).text === "~" || j + 1 < tokens.size && tokens(j + 1).ruleName === "PID" || j + 1 < tokens.size && tokens(j + 1).text === "(")) {
+    val j1 = j + 1
+    val off1 = j1 < tokens.size
+    if (!shouldTry && tokens(j).text === "(" && (off1 && tokens(j1).ruleName === "CHAR" || off1 && tokens(j1).ruleName === "LID" || off1 && tokens(j1).ruleName === "STRING" || off1 && tokens(j1).text === "." || off1 && tokens(j1).text === "~" || off1 && tokens(j1).ruleName === "PID" || off1 && tokens(j1).text === "(")) {
       shouldTry = T
     }
     return shouldTry
@@ -1818,7 +1836,9 @@ import SireumGrammarParser._
 
   @pure def predictGrammarDef(j: Z): B = {
     var shouldTry = F
-    if (!shouldTry && j < tokens.size && tokens(j).text === "grammar" && (j + 1 < tokens.size && tokens(j + 1).ruleName === "LID" || j + 1 < tokens.size && tokens(j + 1).ruleName === "PID")) {
+    val j1 = j + 1
+    val off1 = j1 < tokens.size
+    if (!shouldTry && tokens(j).text === "grammar" && (off1 && tokens(j1).ruleName === "LID" || off1 && tokens(j1).ruleName === "PID")) {
       shouldTry = T
     }
     return shouldTry
@@ -1826,7 +1846,9 @@ import SireumGrammarParser._
 
   @pure def predictRange(j: Z): B = {
     var shouldTry = F
-    if (!shouldTry && j < tokens.size && tokens(j).ruleName === "CHAR" && (j + 1 < tokens.size && tokens(j + 1).text === "..")) {
+    val j1 = j + 1
+    val off1 = j1 < tokens.size
+    if (!shouldTry && tokens(j).ruleName === "CHAR" && (off1 && tokens(j1).text === "..")) {
       shouldTry = T
     }
     return shouldTry
@@ -1834,10 +1856,10 @@ import SireumGrammarParser._
 
   @pure def predictId(j: Z): B = {
     var shouldTry = F
-    if (!shouldTry && j < tokens.size && tokens(j).ruleName === "LID") {
+    if (!shouldTry && tokens(j).ruleName === "LID") {
       shouldTry = T
     }
-    if (!shouldTry && j < tokens.size && tokens(j).ruleName === "PID") {
+    if (!shouldTry && tokens(j).ruleName === "PID") {
       shouldTry = T
     }
     return shouldTry
@@ -1845,7 +1867,9 @@ import SireumGrammarParser._
 
   @pure def predictNot(j: Z): B = {
     var shouldTry = F
-    if (!shouldTry && j < tokens.size && tokens(j).text === "~" && (j + 1 < tokens.size && tokens(j + 1).ruleName === "CHAR" || j + 1 < tokens.size && tokens(j + 1).ruleName === "STRING" || j + 1 < tokens.size && tokens(j + 1).text === "(")) {
+    val j1 = j + 1
+    val off1 = j1 < tokens.size
+    if (!shouldTry && tokens(j).text === "~" && (off1 && tokens(j1).ruleName === "CHAR" || off1 && tokens(j1).ruleName === "STRING" || off1 && tokens(j1).text === "(")) {
       shouldTry = T
     }
     return shouldTry

@@ -409,8 +409,15 @@ import org.sireum.parser.{GrammarAst => AST}
   def genTries(k: Z, ruleTrie: LookAhead.Trie): ISZ[ST] = {
     var r = ISZ[ST]()
 
+    var offs = HashSSet.empty[Z]
+
     def rec(depth: Z, trie: LookAhead.Trie): ST = {
-      val idx: ST = if (depth == 0) st"j" else st"j + $depth"
+      val (idx, size): (ST, ST) = if (depth == 0) {
+        (st"j", st"?")
+      } else {
+        offs = offs + depth
+        (st"j$depth", st"off$depth")
+      }
       val subs: ISZ[ST] =
         if (trie.accept || depth >= k) ISZ()
         else for (sub <- trie.subs.values) yield rec(depth + 1, sub)
@@ -419,7 +426,7 @@ import org.sireum.parser.{GrammarAst => AST}
         case v: LookAhead.Case.Value.Str => st"""tokens($idx).text === "${ops.StringOps(v.value).escapeST}""""
         case v: LookAhead.Case.Value.Terminal => st"""tokens($idx).ruleName === "${v.name}""""
       }
-      return st"$idx < tokens.size && $cond$subsOpt"
+      return if (depth == 0) st"$cond$subsOpt" else st"$size && $cond$subsOpt"
     }
     if (ruleTrie.accept || ruleTrie.subs.isEmpty) {
       r = r :+ st"shouldTry = T"
@@ -433,52 +440,12 @@ import org.sireum.parser.{GrammarAst => AST}
       }
     }
 
-    return r
-    /*
-    var kMap = HashMap.empty[Z, ISZ[LookAhead.Case]]
-    for (cas <- cases) {
-      val key = cas.value.size
-      val vs: ISZ[LookAhead.Case] = kMap.get(key) match {
-        case Some(v) => v
-        case _ => ISZ()
-      }
-      kMap = kMap + key ~> (vs :+ cas)
+    var vars = ISZ[ST]()
+    for (i <- offs.elements) {
+      vars = vars :+ st"val j$i = j + $i"
+      vars = vars :+ st"val off$i = j$i < tokens.size"
     }
-    var r = ISZ[ST]()
-    for (i <- 1 to k) {
-      var conds = ISZ[ST]()
-      kMap.get(i) match {
-        case Some(cases) =>
-          for (cas <- cases) {
-            var valueConds = ISZ[ST]()
-            for (k <- 0 until cas.value.size) {
-              val idx: ST = if (k == 0) st"j" else st"j + $k"
-              cas.value(k) match {
-                case v: LookAhead.Case.Value.Str => valueConds = valueConds :+ st"""tokens($idx).text === "${ops.StringOps(v.value).escapeST}""""
-                case v: LookAhead.Case.Value.Terminal => valueConds = valueConds :+ st"""tokens($idx).ruleName === "${v.name}""""
-              }
-            }
-            conds = conds :+ st"${(valueConds, " && ")}"
-          }
-        case _ =>
-      }
-      if (conds.nonEmpty) {
-        if (i == 1) {
-          r = r :+
-            st"""if (!shouldTry && (${(conds, " || ")})) {
-                |  shouldTry = T
-                |}"""
-        } else {
-          r = r :+
-            st"""if (!shouldTry && j + ${i - 1} < tokens.size && (${(conds, " || ")})) {
-                |  shouldTry = T
-                |}"""
-        }
-      }
-    }
-
-    return r
-     */
+    return vars ++ r
   }
 
   def genLexerDfa(name: ST, dfa: Dfa): ST = {
