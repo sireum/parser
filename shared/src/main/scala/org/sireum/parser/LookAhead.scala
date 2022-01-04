@@ -74,18 +74,25 @@ object LookAhead {
                         val nameRuleMap: HashMap[String, AST.Rule],
                         val parserDfaMap: HashSMap[String, (Dfa, ISZ[AST.Element])]) {
 
+  var cache: HashMap[(String, Z), ISZ[LookAhead.Case]] = HashMap.empty
+
   def computeRule(seen: HashSet[(String, Z)], size: Z, name: String, dfa: Dfa, atoms: ISZ[AST.Element], reporter: message.Reporter): ISZ[LookAhead.Case] = {
+
+    val key = (name, size)
+    cache.get(key) match {
+      case Some(r) => return r
+      case _ =>
+    }
+
     var r = HashSSet.empty[LookAhead.Case]
 
     def rec(state: Z, acc: ISZ[LookAhead.Case.Value]): Unit = {
-      if (dfa.accepting.contains(state)) {
-        r = r + LookAhead.Case(acc)
-      }
-      if (size + acc.size == k) {
+      if (dfa.accepting.contains(state) || size + acc.size == k) {
         r = r + LookAhead.Case(acc)
         return
-      } else if (size + acc.size > k) {
-        r = r + LookAhead.Case(for (i <- 0 until k) yield acc(i))
+      }
+      if (size + acc.size > k) {
+        r = r + LookAhead.Case(for (i <- 0 until k - size) yield acc(i))
         return
       }
       val edges = dfa.g.outgoing(state)
@@ -123,7 +130,9 @@ object LookAhead {
 
     rec(dfa.initial, ISZ())
 
-    return r.elements
+    val res = r.elements
+    cache = cache + key ~> res
+    return res
   }
 
   def compute(reporter: message.Reporter): HashMap[String, LookAhead.Trie] = {

@@ -59,6 +59,7 @@ import org.sireum.parser.{GrammarAst => AST}
       return None()
     }
 
+    var objectVals = ISZ[ST]()
     var lexerDefs = ISZ[ST]()
 
     def genLexer(): Unit = {
@@ -66,10 +67,10 @@ import org.sireum.parser.{GrammarAst => AST}
       val literalNameMap = literalCharStrNames(ast)
       var typ = 0
 
-      def lexST(lexname: ST, recognizerName: ST, tokenString: ST, isHidden: B): ST = {
+      def lexST(lexname: ST, recognizerName: ST, tokenString: ST, tokenTipe: ST, isHidden: B): ST = {
         val r =
           st"""@strictpure def $lexname(index: Z): Option[Result] =
-              |   lexH(index, $recognizerName(index), $tokenString, ${if (isHidden) "T" else "F"})"""
+              |   lexH(index, $recognizerName(index), $tokenString, $tokenTipe, ${if (isHidden) "T" else "F"})"""
         typ = typ + 1
         return r
       }
@@ -78,12 +79,20 @@ import org.sireum.parser.{GrammarAst => AST}
 
       for (p <- literalNameMap.entries) {
         val s: String = p._1 match {
-          case Either.Left(c) => lexerDefs = lexerDefs :+ genLiteralC(c, p._2); c.string
-          case Either.Right(s) => lexerDefs = lexerDefs :+ genLiteralString(s, p._2); s
+          case Either.Left(c) =>
+            lexerDefs = lexerDefs :+ genLiteralC(c, p._2)
+            c.string
+          case Either.Right(s) =>
+            lexerDefs = lexerDefs :+ genLiteralString(s, p._2)
+            s
         }
         val lexname = lexName(ops.StringOps(p._2).substring(4, p._2.size))
         lexNames = lexNames :+ lexname
-        lexerDefs = lexerDefs :+ lexST(lexname, st"${p._2}", st"$tqs'$s'$tqs", F)
+        val valcode = valCode(s)
+        val sEscape = escape(s)
+        val valueST = st"""u32"0x${(valcode, "")}" /* "$sEscape" */"""
+        objectVals = objectVals :+ st"""val T_$valcode: U32 = $valueST"""
+        lexerDefs = lexerDefs :+ lexST(lexname, st"${p._2}", st"$tqs'$s'$tqs", valueST, F)
       }
 
       var hiddens = ISZ[ST]()
@@ -98,12 +107,16 @@ import org.sireum.parser.{GrammarAst => AST}
       }
 
       for (p <- lexerDfaMap.entries) {
-        val dfaname = dfaName(p._1)
+        val tname = p._1
+        val dfaname = dfaName(tname)
         lexerDefs = lexerDefs :+ genLexerDfa(dfaname, p._2)
 
-        val lexname = lexName(p._1)
+        val lexname = lexName(tname)
         lexNames = lexNames :+ lexname
-        lexerDefs = lexerDefs :+ lexST(lexname, dfaname, st"$tqs${p._1}$tqs", hiddenNames.contains(p._1))
+        val valcode = valCode(tname)
+        val valueST = st"""u32"0x${(valcode, "")}""""
+        objectVals = objectVals :+ st"""val T_$tname: U32 = $valueST"""
+        lexerDefs = lexerDefs :+ lexST(lexname, dfaname, st"$tqs${p._1}$tqs", valueST, hiddenNames.contains(p._1))
       }
 
       lexerDefs = lexerDefs :+
@@ -114,10 +127,10 @@ import org.sireum.parser.{GrammarAst => AST}
             |}"""
 
       lexerDefs = lexerDefs :+
-        st"""@pure def lexH(index: Z, newIndex: Z, name: String, isHidden: B): Option[Result] = {
+        st"""@pure def lexH(index: Z, newIndex: Z, name: String, tipe: U32, isHidden: B): Option[Result] = {
             |  if (newIndex > 0) {
             |    return Some(Result(ParseTree.Leaf(ops.StringOps.substring(cis, index, newIndex),
-            |      name, isHidden, Some(message.PosInfo(docInfo, offsetLength(index, newIndex - index)))),
+            |      name, tipe, isHidden, Some(message.PosInfo(docInfo, offsetLength(index, newIndex - index)))),
             |      newIndex))
             |  } else {
             |    return None()
@@ -142,16 +155,16 @@ import org.sireum.parser.{GrammarAst => AST}
             |        if (stopAtError) {
             |          return r
             |        }
-            |        r = r :+ ParseTree.Leaf(conversions.String.fromCis(ISZ(cis(i))), "<ERROR>", F, posOpt)
+            |        r = r :+ ParseTree.Leaf(conversions.String.fromCis(ISZ(cis(i))), "<ERROR>",u32"0x${(valCode("<ERROR>"), "")}", F, posOpt)
             |        i = i + 1
             |    }
             |  }
-            |  r = r :+ ParseTree.Leaf("", "EOF", F, None())
+            |  r = r :+ ParseTree.Leaf("", "EOF", u32"0x${(valCode("EOF"), "")}", F, None())
             |  return r
             |}
             |
             |@pure def tokenize(i: Z): Option[Result] = {
-            |  var r = Result(ParseTree.Leaf("", "", T, None()), -1)
+            |  var r = Result(ParseTree.Leaf("", "", u32"-2", T, None()), -1)
             |  def update(rOpt: Option[Result]): Unit = {
             |    rOpt match {
             |      case Some(newR) if newR.newIndex > r.newIndex => r = newR
@@ -180,7 +193,10 @@ import org.sireum.parser.{GrammarAst => AST}
     def genParser(): Unit = {
 
       for (p <- parserDfaMap.entries) {
-        parserDefs = parserDefs :+ genParserDfa(k, memoize, parseName(p._1), p._1, p._2._1, p._2._2, laMap)
+        val valueST = st"""u32"0x${valCode(p._1)}""""
+        objectVals = objectVals :+ st"""val T_${p._1}: U32 = $valueST"""
+        parserDefs = parserDefs :+ genParserDfa(memoize, parseName(p._1), p._1, st"$valueST /* ${p._1} */",
+          p._2._1, p._2._2)
       }
 
       for (p <- laMap.entries) {
@@ -243,6 +259,8 @@ import org.sireum.parser.{GrammarAst => AST}
           |  val minChar: C = '\u0000'
           |  val maxChar: C = toC(u32"0x0010FFFF")
           |
+          |  ${(objectVals, "\n")}
+          |
           |  $parserOpt
           |
           |  def lex(input: String, docInfo: message.DocInfo, skipHidden: B, stopAtError: B,
@@ -288,6 +306,12 @@ import org.sireum.parser.{GrammarAst => AST}
     )
   }
 
+  @memoize def valCode(name: String): ISZ[U8] = {
+    val sha3 = crypto.SHA3.init256
+    sha3.update(conversions.String.toU8is(name))
+    return ops.ISZOps(sha3.finalise()).take(4)
+  }
+
   @strictpure def predictName(name: String): ST = st"predict${ops.StringOps(name).firstToUpper}"
 
   @strictpure def parseName(name: String): ST = st"parse${ops.StringOps(name).firstToUpper}"
@@ -296,8 +320,7 @@ import org.sireum.parser.{GrammarAst => AST}
 
   @strictpure def dfaName(name: String): ST = st"dfa_$name"
 
-  def genParserDfa(k: Z, memoize: B, name: ST, ruleName: String, dfa: Dfa, atoms: ISZ[AST.Element],
-                   laMap: HashMap[String, LookAhead.Trie]): ST = {
+  def genParserDfa(memoize: B, name: ST, ruleName: String, valueST: ST, dfa: Dfa, atoms: ISZ[AST.Element]): ST = {
     val noBacktrack: B = ops.StringOps(ruleName).endsWith("_cut")
     var transitions = ISZ[ST]()
     for (node <- dfa.g.nodesInverse) {
@@ -313,7 +336,7 @@ import org.sireum.parser.{GrammarAst => AST}
               case e: AST.Element.Char =>
                 val s = conversions.String.fromCis(ISZ(e.value))
                 conds = conds :+
-                  st"""if (!found && tokens(j).text === "${ops.StringOps(s).escapeST}") {
+                  st"""if (!found && tokens(j).tipe == u32"0x${(valCode(s), "")}" /* "${escape(s)}" */) {
                       |  trees = trees :+ tokens(j)
                       |  j = j + 1
                       |  update(u32"${edge.dest}")
@@ -321,7 +344,7 @@ import org.sireum.parser.{GrammarAst => AST}
                       |}"""
               case e: AST.Element.Str =>
                 conds = conds :+
-                  st"""if (!found && tokens(j).text === "${ops.StringOps(e.value).escapeST}") {
+                  st"""if (!found && tokens(j).tipe == u32"0x${(valCode(e.value), "")}" /* "${escape(e.value)}" */) {
                       |  trees = trees :+ tokens(j)
                       |  j = j + 1
                       |  update(u32"${edge.dest}")
@@ -330,7 +353,7 @@ import org.sireum.parser.{GrammarAst => AST}
               case e: AST.Element.Ref =>
                 if (e.isTerminal) {
                   conds = conds :+
-                    st"""if (!found && tokens(j).ruleName === "${ops.StringOps(e.name).escapeST}") {
+                    st"""if (!found && tokens(j).tipe == u32"0x${(valCode(e.name), "")}" /* ${e.name} */) {
                         |  trees = trees :+ tokens(j)
                         |  j = j + 1
                         |  update(u32"${edge.dest}")
@@ -388,7 +411,7 @@ import org.sireum.parser.{GrammarAst => AST}
           |      ${(for (s <- dfa.accepting.elements) yield st"""case u32"$s" => """, "\n")}
           |      case _ => return
           |    }
-          |    resOpt = Some(Result(ParseTree.Node(trees, $tqs$ruleName$tqs,  None()), j))
+          |    resOpt = Some(Result(ParseTree.Node(trees, $tqs$ruleName$tqs, $valueST, None()), j))
           |  }
           |
           |  while (j < tokens.size) {
@@ -423,8 +446,8 @@ import org.sireum.parser.{GrammarAst => AST}
         else for (sub <- trie.subs.values) yield rec(depth + 1, sub)
       val subsOpt: Option[ST] = if (subs.isEmpty) None() else Some(st" && (${(subs, " || ")})")
       val cond: ST = trie.value match {
-        case v: LookAhead.Case.Value.Str => st"""tokens($idx).text === "${ops.StringOps(v.value).escapeST}""""
-        case v: LookAhead.Case.Value.Terminal => st"""tokens($idx).ruleName === "${v.name}""""
+        case v: LookAhead.Case.Value.Str => st"""tokens($idx).tipe == u32"0x${valCode(v.value)}" /* "${escape(v.value)}" */ """
+        case v: LookAhead.Case.Value.Terminal => st"""tokens($idx).tipe == u32"0x${(valCode(v.name), "")}" /* ${v.name} */ """
       }
       return if (depth == 0) st"$cond$subsOpt" else st"$size && $cond$subsOpt"
     }
@@ -565,6 +588,10 @@ import org.sireum.parser.{GrammarAst => AST}
     }
     val hex = ops.COps(c).toUnicodeHex
     return st"u${hex._1}${hex._2}${hex._3}${hex._4}"
+  }
+
+  @memoize def escape(s: String): ST = {
+    return ops.StringOps(s).escapeST
   }
 
   @memoize def genNameC(c: C): ST = {
