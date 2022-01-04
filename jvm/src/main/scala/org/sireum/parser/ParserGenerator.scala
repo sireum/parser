@@ -35,7 +35,7 @@ import org.sireum.parser.{GrammarAst => AST}
   val tqs: String = "\"\"\""
 
   def gen(licenseOpt: Option[ST], fileInfo: ST, packageOpt: Option[ST], name: String, ast: AST.Grammar,
-          memoize: B, predictive: B, reporter: Reporter): Option[ST] = {
+          memoize: B, predictive: B, backtracking: B, reporter: Reporter): Option[ST] = {
 
     val options = HashMap.empty[String, String] ++ ast.options
     var kOpt: Option[Z] = None()
@@ -192,8 +192,8 @@ import org.sireum.parser.{GrammarAst => AST}
       for (p <- parserDfaMap.entries) {
         val valueST = st"""u32"0x${valCode(p._1)}""""
         objectVals = objectVals :+ st"""val T_${p._1}: U32 = $valueST"""
-        parserDefs = parserDefs :+ genParserDfa(memoize, predict, parseName(p._1), p._1, st"$valueST /* ${p._1} */",
-          p._2._1, p._2._2)
+        parserDefs = parserDefs :+ genParserDfa(memoize, predict, backtracking, parseName(p._1), p._1,
+          st"$valueST /* ${p._1} */", p._2._1, p._2._2)
       }
 
       if (predict) {
@@ -319,14 +319,17 @@ import org.sireum.parser.{GrammarAst => AST}
 
   @strictpure def dfaName(name: String): ST = st"dfa_$name"
 
-  def genParserDfa(memoize: B, predict: B, name: ST, ruleName: String, valueST: ST, dfa: Dfa, atoms: ISZ[AST.Element]): ST = {
-    val noBacktrack: B = ops.StringOps(ruleName).endsWith("_cut")
+  def genParserDfa(memoize: B, predict: B, backtracking: B, name: ST, ruleName: String, valueST: ST, dfa: Dfa,
+                   atoms: ISZ[AST.Element]): ST = {
+    val noBacktrack: B = !backtracking || ops.StringOps(ruleName).endsWith("_cut")
     var transitions = ISZ[ST]()
+    var condDefs = HashSMap.empty[String, ST]
     for (node <- dfa.g.nodesInverse) {
-      var conds = ISZ[ST]()
       var cases = ISZ[ST]()
       val outgoing = dfa.g.outgoing(node)
       if (!(outgoing.size === 1 && Dfa.isReject(outgoing(0)))) {
+        var notFoundOpt: Option[ST] = None()
+        var notFoundRefOpt: Option[ST] = None()
         for (e <- outgoing) {
           val edge = e.asInstanceOf[Graph.Edge.Data[Z, (C, C)]]
           val lo = conversions.U32.toZ(conversions.C.toU32(edge.data._1))
@@ -336,14 +339,14 @@ import org.sireum.parser.{GrammarAst => AST}
               case e: AST.Element.Char =>
                 val s = conversions.String.fromCis(ISZ(e.value))
                 cases = cases :+
-                  st"""case u32"0x${(valCode(s), "")}" /* "${escape(s)}" */ =>
+                  st"""case u32"0x${(valCode(s), "")}" /* "${escape(s)}" */$notFoundOpt =>
                       |  trees = trees :+ tokens(j)
                       |  j = j + 1
                       |  update(u32"${edge.dest}")
                       |  found = T"""
               case e: AST.Element.Str =>
                 cases = cases :+
-                  st"""case u32"0x${(valCode(e.value), "")}" /* "${escape(e.value)}" */ =>
+                  st"""case u32"0x${(valCode(e.value), "")}" /* "${escape(e.value)}" */$notFoundOpt =>
                       |  trees = trees :+ tokens(j)
                       |  j = j + 1
                       |  update(u32"${edge.dest}")
@@ -351,36 +354,50 @@ import org.sireum.parser.{GrammarAst => AST}
               case e: AST.Element.Ref =>
                 if (e.isTerminal) {
                   cases = cases :+
-                    st"""case u32"0x${(valCode(e.name), "")}" /* ${e.name} */ =>
+                    st"""case u32"0x${(valCode(e.name), "")}" /* ${e.name} */$notFoundOpt =>
                         |  trees = trees :+ tokens(j)
                         |  j = j + 1
                         |  update(u32"${edge.dest}")
                         |  found = T"""
                 } else {
-                  val predictOpt: Option[ST] = if (predict) Some(st" && ${predictName(e.name)}(j)") else None()
-                  conds = conds :+
-                    st"""if (!found$predictOpt) {
-                        |  ${parseName(e.name)}(j) match {
-                        |    case Either.Left(r) =>
-                        |      trees = trees :+ r.tree
-                        |      j = r.newIndex
-                        |      update(u32"${edge.dest}")
-                        |      found = T
-                        |    case res@Either.Right(r) =>
-                        |      if (r < 0) {
-                        |        return res
-                        |      } else if (max < r) {
-                        |        max = r
-                        |      }
-                        |  }
-                        |}"""
+                  if (notFoundOpt.isEmpty) {
+                    notFoundOpt = Some(st" if !found")
+                  }
+                  val predictOpt: Option[ST] = if (predict) Some(st"${predictName(e.name)}(j) && ") else None()
+                  val parsename = parseName(e.name)
+                  if (!condDefs.contains(e.name)) {
+                    condDefs = condDefs + e.name ~>
+                      st"""def ${parsename}H(nextState: U32): B = {
+                          |  ${parseName(e.name)}(j) match {
+                          |    case Either.Left(r) =>
+                          |      trees = trees :+ r.tree
+                          |      j = r.newIndex
+                          |      update(nextState)
+                          |      found = T
+                          |      return F
+                          |    case Either.Right(r) =>
+                          |      if (r < 0) {
+                          |        failIndex = r
+                          |        return T
+                          |      } else if (max < r) {
+                          |        max = r
+                          |      }
+                          |      return F
+                          |  }
+                          |}"""
+                  }
+                  cases = cases :+
+                    st"""case _ if $notFoundRefOpt$predictOpt${parsename}H(u32"${edge.dest}") => return Either.Right(failIndex)"""
                 }
               case e => halt(s"Infeasible: $e")
+            }
+            if (notFoundRefOpt.isEmpty) {
+              notFoundRefOpt = Some(st"!found && ")
             }
           }
         }
       }
-      if (conds.isEmpty && cases.isEmpty) {
+      if (cases.isEmpty) {
         transitions = transitions :+
           st"""case u32"$node" => return retVal(max, resOpt, initial, ${if (noBacktrack) "T" else "F"})"""
       } else {
@@ -392,9 +409,8 @@ import org.sireum.parser.{GrammarAst => AST}
         )
         transitions = transitions :+
           st"""case u32"$node" =>
-              |  var found = F
+              |  found = F
               |  $matchOpt
-              |  ${(conds, "\n")}
               |  if (!found) {
               |    return retVal(max, resOpt, initial, ${if (noBacktrack) "T" else "F"})
               |  }"""
@@ -408,6 +424,8 @@ import org.sireum.parser.{GrammarAst => AST}
           |  var j = i
           |  var max = i
           |  var initial = T
+          |  var found = F
+          |  var failIndex: Z = 0
           |
           |  def update(newState: U32): Unit = {
           |    initial = F
@@ -418,6 +436,8 @@ import org.sireum.parser.{GrammarAst => AST}
           |    }
           |    resOpt = Some(Result(ParseTree.Node(trees, $tqs$ruleName$tqs, $valueST, None()), j))
           |  }
+          |
+          |  ${(condDefs.values, "\n\n")}
           |
           |  while (j < tokens.size) {
           |    state match {
@@ -488,15 +508,40 @@ import org.sireum.parser.{GrammarAst => AST}
       var conds = ISZ[ST]()
       val outgoing = dfa.g.outgoing(node)
       if (!(outgoing.size === 1 && Dfa.isReject(outgoing(0)))) {
+        var notFoundOpt: Option[ST] = None()
+        var destMap = HashSMap.empty[Z, ISZ[(C, C)]]
         for (e <- outgoing) {
           val edge = e.asInstanceOf[Graph.Edge.Data[Z, (C, C)]]
-          val (lo, hi) = edge.data
-          val cond: ST = if (lo == hi) st"c === ${c2ST(lo)}" else st"${c2ST(lo)} <= c && c <= ${c2ST(hi)}"
-          conds = conds :+
-            st"""if (!found && $cond) {
-                |  update(u32"${edge.dest}")
-                |  found = T
-                |}"""
+          val ds: ISZ[(C, C)] = destMap.get(e.dest) match {
+            case Some(l) => l
+            case _ => ISZ()
+          }
+          destMap = destMap + edge.dest ~> (ds :+ edge.data)
+        }
+        for (p <- destMap.entries) {
+          val dest = p._1
+          var cs = ISZ[ST]()
+          for (data <- p._2) {
+            val (lo, hi) = data
+            cs = cs :+ (if (lo == hi) st"c === ${c2ST(lo)}" else st"${c2ST(lo)} <= c && c <= ${c2ST(hi)}")
+          }
+          if (notFoundOpt.isEmpty) {
+            notFoundOpt = Some(st"!found && ")
+          }
+          notFoundOpt match {
+            case Some(nf) =>
+              conds = conds :+
+                st"""if ($nf(${(cs, " || ")})) {
+                    |  update(u32"$dest")
+                    |  found = T
+                    |}"""
+            case _ =>
+              conds = conds :+
+                st"""if ${(cs, " || ")}) {
+                    |  update(u32"$dest")
+                    |  found = T
+                    |}"""
+          }
         }
       }
       if (conds.isEmpty) {

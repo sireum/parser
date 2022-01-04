@@ -134,6 +134,8 @@ import SireumGrammarParser._
     var j = i
     var max = i
     var initial = T
+    var found = F
+    var failIndex: Z = 0
 
     def update(newState: U32): Unit = {
       initial = F
@@ -145,10 +147,86 @@ import SireumGrammarParser._
       resOpt = Some(Result(ParseTree.Node(trees, """grammarDef""", u32"0x49D573EC" /* grammarDef */, None()), j))
     }
 
+    def parseIdH(nextState: U32): B = {
+      parseId(j) match {
+        case Either.Left(r) =>
+          trees = trees :+ r.tree
+          j = r.newIndex
+          update(nextState)
+          found = T
+          return F
+        case Either.Right(r) =>
+          if (r < 0) {
+            failIndex = r
+            return T
+          } else if (max < r) {
+            max = r
+          }
+          return F
+      }
+    }
+
+    def parseOptionsSpecH(nextState: U32): B = {
+      parseOptionsSpec(j) match {
+        case Either.Left(r) =>
+          trees = trees :+ r.tree
+          j = r.newIndex
+          update(nextState)
+          found = T
+          return F
+        case Either.Right(r) =>
+          if (r < 0) {
+            failIndex = r
+            return T
+          } else if (max < r) {
+            max = r
+          }
+          return F
+      }
+    }
+
+    def parseParserRuleH(nextState: U32): B = {
+      parseParserRule(j) match {
+        case Either.Left(r) =>
+          trees = trees :+ r.tree
+          j = r.newIndex
+          update(nextState)
+          found = T
+          return F
+        case Either.Right(r) =>
+          if (r < 0) {
+            failIndex = r
+            return T
+          } else if (max < r) {
+            max = r
+          }
+          return F
+      }
+    }
+
+    def parseLexerRuleH(nextState: U32): B = {
+      parseLexerRule(j) match {
+        case Either.Left(r) =>
+          trees = trees :+ r.tree
+          j = r.newIndex
+          update(nextState)
+          found = T
+          return F
+        case Either.Right(r) =>
+          if (r < 0) {
+            failIndex = r
+            return T
+          } else if (max < r) {
+            max = r
+          }
+          return F
+      }
+    }
+
     while (j < tokens.size) {
       state match {
         case u32"0" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0xAEB64436" /* "grammar" */ =>
               trees = trees :+ tokens(j)
@@ -158,30 +236,19 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"1" =>
-          var found = F
-          if (!found && predictId(j)) {
-            parseId(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"2")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
+          found = F
+          tokens(j).tipe match {
+            case _ if predictId(j) && parseIdH(u32"2") => return Either.Right(failIndex)
+            case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"2" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0x36F2899D" /* ";" */ =>
               trees = trees :+ tokens(j)
@@ -191,78 +258,36 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"3" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
-            case u32"0xEDD2348C" /* PHEADER */ =>
+            case _ if predictOptionsSpec(j) && parseOptionsSpecH(u32"4") => return Either.Right(failIndex)
+            case u32"0xEDD2348C" /* PHEADER */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"5")
               found = T
-            case u32"0x2322FC01" /* LHEADER */ =>
+            case u32"0x2322FC01" /* LHEADER */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"6")
               found = T
-            case u32"0xFC5CB374" /* EOF */ =>
+            case _ if !found && predictParserRule(j) && parseParserRuleH(u32"6") => return Either.Right(failIndex)
+            case _ if !found && predictLexerRule(j) && parseLexerRuleH(u32"7") => return Either.Right(failIndex)
+            case u32"0xFC5CB374" /* EOF */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"8")
               found = T
             case _ =>
           }
-          if (!found && predictOptionsSpec(j)) {
-            parseOptionsSpec(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"4")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
-          }
-          if (!found && predictParserRule(j)) {
-            parseParserRule(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"6")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
-          }
-          if (!found && predictLexerRule(j)) {
-            parseLexerRule(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"7")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
-          }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"4" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0xEDD2348C" /* PHEADER */ =>
               trees = trees :+ tokens(j)
@@ -274,166 +299,68 @@ import SireumGrammarParser._
               j = j + 1
               update(u32"6")
               found = T
-            case u32"0xFC5CB374" /* EOF */ =>
+            case _ if !found && predictParserRule(j) && parseParserRuleH(u32"6") => return Either.Right(failIndex)
+            case _ if !found && predictLexerRule(j) && parseLexerRuleH(u32"7") => return Either.Right(failIndex)
+            case u32"0xFC5CB374" /* EOF */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"8")
               found = T
             case _ =>
           }
-          if (!found && predictParserRule(j)) {
-            parseParserRule(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"6")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
-          }
-          if (!found && predictLexerRule(j)) {
-            parseLexerRule(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"7")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
-          }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"5" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0x2322FC01" /* LHEADER */ =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"6")
               found = T
-            case u32"0xFC5CB374" /* EOF */ =>
+            case _ if !found && predictParserRule(j) && parseParserRuleH(u32"6") => return Either.Right(failIndex)
+            case _ if !found && predictLexerRule(j) && parseLexerRuleH(u32"7") => return Either.Right(failIndex)
+            case u32"0xFC5CB374" /* EOF */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"8")
               found = T
             case _ =>
           }
-          if (!found && predictParserRule(j)) {
-            parseParserRule(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"6")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
-          }
-          if (!found && predictLexerRule(j)) {
-            parseLexerRule(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"7")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
-          }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"6" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
-            case u32"0xFC5CB374" /* EOF */ =>
+            case _ if predictParserRule(j) && parseParserRuleH(u32"6") => return Either.Right(failIndex)
+            case _ if !found && predictLexerRule(j) && parseLexerRuleH(u32"7") => return Either.Right(failIndex)
+            case u32"0xFC5CB374" /* EOF */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"8")
               found = T
             case _ =>
           }
-          if (!found && predictParserRule(j)) {
-            parseParserRule(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"6")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
-          }
-          if (!found && predictLexerRule(j)) {
-            parseLexerRule(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"7")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
-          }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"7" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
-            case u32"0xFC5CB374" /* EOF */ =>
+            case _ if predictLexerRule(j) && parseLexerRuleH(u32"7") => return Either.Right(failIndex)
+            case u32"0xFC5CB374" /* EOF */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"8")
               found = T
             case _ =>
           }
-          if (!found && predictLexerRule(j)) {
-            parseLexerRule(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"7")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
-          }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
-        case u32"8" => return retVal(max, resOpt, initial, F)
+        case u32"8" => return retVal(max, resOpt, initial, T)
         case _ => halt("Infeasible")
       }
       if (max < j) {
@@ -441,7 +368,7 @@ import SireumGrammarParser._
       }
     }
 
-    return retVal(j, resOpt, initial, F)
+    return retVal(j, resOpt, initial, T)
   }
 
   @pure def parseOptionsSpec(i: Z): Either[Result, Z] = {
@@ -451,6 +378,8 @@ import SireumGrammarParser._
     var j = i
     var max = i
     var initial = T
+    var found = F
+    var failIndex: Z = 0
 
     def update(newState: U32): Unit = {
       initial = F
@@ -462,10 +391,29 @@ import SireumGrammarParser._
       resOpt = Some(Result(ParseTree.Node(trees, """optionsSpec""", u32"0x5A3A1CB5" /* optionsSpec */, None()), j))
     }
 
+    def parseOptionH(nextState: U32): B = {
+      parseOption(j) match {
+        case Either.Left(r) =>
+          trees = trees :+ r.tree
+          j = r.newIndex
+          update(nextState)
+          found = T
+          return F
+        case Either.Right(r) =>
+          if (r < 0) {
+            failIndex = r
+            return T
+          } else if (max < r) {
+            max = r
+          }
+          return F
+      }
+    }
+
     while (j < tokens.size) {
       state match {
         case u32"0" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0xED16D169" /* "options" */ =>
               trees = trees :+ tokens(j)
@@ -475,10 +423,10 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"1" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0xFDCE65E5" /* "{" */ =>
               trees = trees :+ tokens(j)
@@ -488,57 +436,32 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"2" =>
-          var found = F
-          if (!found && predictOption(j)) {
-            parseOption(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"3")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
+          found = F
+          tokens(j).tipe match {
+            case _ if predictOption(j) && parseOptionH(u32"3") => return Either.Right(failIndex)
+            case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"3" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
-            case u32"0x5BF60471" /* "}" */ =>
+            case _ if predictOption(j) && parseOptionH(u32"3") => return Either.Right(failIndex)
+            case u32"0x5BF60471" /* "}" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"4")
               found = T
             case _ =>
           }
-          if (!found && predictOption(j)) {
-            parseOption(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"3")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
-          }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
-        case u32"4" => return retVal(max, resOpt, initial, F)
+        case u32"4" => return retVal(max, resOpt, initial, T)
         case _ => halt("Infeasible")
       }
       if (max < j) {
@@ -546,7 +469,7 @@ import SireumGrammarParser._
       }
     }
 
-    return retVal(j, resOpt, initial, F)
+    return retVal(j, resOpt, initial, T)
   }
 
   @pure def parseOption(i: Z): Either[Result, Z] = {
@@ -556,6 +479,8 @@ import SireumGrammarParser._
     var j = i
     var max = i
     var initial = T
+    var found = F
+    var failIndex: Z = 0
 
     def update(newState: U32): Unit = {
       initial = F
@@ -567,30 +492,57 @@ import SireumGrammarParser._
       resOpt = Some(Result(ParseTree.Node(trees, """option""", u32"0x47F1F331" /* option */, None()), j))
     }
 
+    def parseIdH(nextState: U32): B = {
+      parseId(j) match {
+        case Either.Left(r) =>
+          trees = trees :+ r.tree
+          j = r.newIndex
+          update(nextState)
+          found = T
+          return F
+        case Either.Right(r) =>
+          if (r < 0) {
+            failIndex = r
+            return T
+          } else if (max < r) {
+            max = r
+          }
+          return F
+      }
+    }
+
+    def parseOptionValueH(nextState: U32): B = {
+      parseOptionValue(j) match {
+        case Either.Left(r) =>
+          trees = trees :+ r.tree
+          j = r.newIndex
+          update(nextState)
+          found = T
+          return F
+        case Either.Right(r) =>
+          if (r < 0) {
+            failIndex = r
+            return T
+          } else if (max < r) {
+            max = r
+          }
+          return F
+      }
+    }
+
     while (j < tokens.size) {
       state match {
         case u32"0" =>
-          var found = F
-          if (!found && predictId(j)) {
-            parseId(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"1")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
+          found = F
+          tokens(j).tipe match {
+            case _ if predictId(j) && parseIdH(u32"1") => return Either.Right(failIndex)
+            case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"1" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0xEF954474" /* "=" */ =>
               trees = trees :+ tokens(j)
@@ -600,30 +552,19 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"2" =>
-          var found = F
-          if (!found && predictOptionValue(j)) {
-            parseOptionValue(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"3")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
+          found = F
+          tokens(j).tipe match {
+            case _ if predictOptionValue(j) && parseOptionValueH(u32"3") => return Either.Right(failIndex)
+            case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"3" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0x36F2899D" /* ";" */ =>
               trees = trees :+ tokens(j)
@@ -633,9 +574,9 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
-        case u32"4" => return retVal(max, resOpt, initial, F)
+        case u32"4" => return retVal(max, resOpt, initial, T)
         case _ => halt("Infeasible")
       }
       if (max < j) {
@@ -643,7 +584,7 @@ import SireumGrammarParser._
       }
     }
 
-    return retVal(j, resOpt, initial, F)
+    return retVal(j, resOpt, initial, T)
   }
 
   @pure def parseOptionValue(i: Z): Either[Result, Z] = {
@@ -653,6 +594,8 @@ import SireumGrammarParser._
     var j = i
     var max = i
     var initial = T
+    var found = F
+    var failIndex: Z = 0
 
     def update(newState: U32): Unit = {
       initial = F
@@ -664,37 +607,42 @@ import SireumGrammarParser._
       resOpt = Some(Result(ParseTree.Node(trees, """optionValue""", u32"0xED8E0DA8" /* optionValue */, None()), j))
     }
 
+    def parseIdH(nextState: U32): B = {
+      parseId(j) match {
+        case Either.Left(r) =>
+          trees = trees :+ r.tree
+          j = r.newIndex
+          update(nextState)
+          found = T
+          return F
+        case Either.Right(r) =>
+          if (r < 0) {
+            failIndex = r
+            return T
+          } else if (max < r) {
+            max = r
+          }
+          return F
+      }
+    }
+
     while (j < tokens.size) {
       state match {
         case u32"0" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
-            case u32"0x589C233C" /* INT */ =>
+            case _ if predictId(j) && parseIdH(u32"1") => return Either.Right(failIndex)
+            case u32"0x589C233C" /* INT */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"1")
               found = T
             case _ =>
           }
-          if (!found && predictId(j)) {
-            parseId(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"1")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
-          }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
-        case u32"1" => return retVal(max, resOpt, initial, F)
+        case u32"1" => return retVal(max, resOpt, initial, T)
         case _ => halt("Infeasible")
       }
       if (max < j) {
@@ -702,7 +650,7 @@ import SireumGrammarParser._
       }
     }
 
-    return retVal(j, resOpt, initial, F)
+    return retVal(j, resOpt, initial, T)
   }
 
   @pure def parseParserRule(i: Z): Either[Result, Z] = {
@@ -712,6 +660,8 @@ import SireumGrammarParser._
     var j = i
     var max = i
     var initial = T
+    var found = F
+    var failIndex: Z = 0
 
     def update(newState: U32): Unit = {
       initial = F
@@ -723,10 +673,29 @@ import SireumGrammarParser._
       resOpt = Some(Result(ParseTree.Node(trees, """parserRule""", u32"0x4AF0B412" /* parserRule */, None()), j))
     }
 
+    def parseAltH(nextState: U32): B = {
+      parseAlt(j) match {
+        case Either.Left(r) =>
+          trees = trees :+ r.tree
+          j = r.newIndex
+          update(nextState)
+          found = T
+          return F
+        case Either.Right(r) =>
+          if (r < 0) {
+            failIndex = r
+            return T
+          } else if (max < r) {
+            max = r
+          }
+          return F
+      }
+    }
+
     while (j < tokens.size) {
       state match {
         case u32"0" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0xD2EDBEA1" /* PID */ =>
               trees = trees :+ tokens(j)
@@ -736,10 +705,10 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"1" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0x763C38BE" /* ":" */ =>
               trees = trees :+ tokens(j)
@@ -749,30 +718,19 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"2" =>
-          var found = F
-          if (!found && predictAlt(j)) {
-            parseAlt(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"3")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
+          found = F
+          tokens(j).tipe match {
+            case _ if predictAlt(j) && parseAltH(u32"3") => return Either.Right(failIndex)
+            case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"3" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0x687111E8" /* "|" */ =>
               trees = trees :+ tokens(j)
@@ -787,29 +745,18 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"4" =>
-          var found = F
-          if (!found && predictAlt(j)) {
-            parseAlt(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"3")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
+          found = F
+          tokens(j).tipe match {
+            case _ if predictAlt(j) && parseAltH(u32"3") => return Either.Right(failIndex)
+            case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
-        case u32"5" => return retVal(max, resOpt, initial, F)
+        case u32"5" => return retVal(max, resOpt, initial, T)
         case _ => halt("Infeasible")
       }
       if (max < j) {
@@ -817,7 +764,7 @@ import SireumGrammarParser._
       }
     }
 
-    return retVal(j, resOpt, initial, F)
+    return retVal(j, resOpt, initial, T)
   }
 
   @pure def parseLexerRule(i: Z): Either[Result, Z] = {
@@ -827,6 +774,8 @@ import SireumGrammarParser._
     var j = i
     var max = i
     var initial = T
+    var found = F
+    var failIndex: Z = 0
 
     def update(newState: U32): Unit = {
       initial = F
@@ -838,10 +787,48 @@ import SireumGrammarParser._
       resOpt = Some(Result(ParseTree.Node(trees, """lexerRule""", u32"0x9E30C465" /* lexerRule */, None()), j))
     }
 
+    def parseAltH(nextState: U32): B = {
+      parseAlt(j) match {
+        case Either.Left(r) =>
+          trees = trees :+ r.tree
+          j = r.newIndex
+          update(nextState)
+          found = T
+          return F
+        case Either.Right(r) =>
+          if (r < 0) {
+            failIndex = r
+            return T
+          } else if (max < r) {
+            max = r
+          }
+          return F
+      }
+    }
+
+    def parseChannelH(nextState: U32): B = {
+      parseChannel(j) match {
+        case Either.Left(r) =>
+          trees = trees :+ r.tree
+          j = r.newIndex
+          update(nextState)
+          found = T
+          return F
+        case Either.Right(r) =>
+          if (r < 0) {
+            failIndex = r
+            return T
+          } else if (max < r) {
+            max = r
+          }
+          return F
+      }
+    }
+
     while (j < tokens.size) {
       state match {
         case u32"0" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0x072BDD2B" /* "fragment" */ =>
               trees = trees :+ tokens(j)
@@ -856,10 +843,10 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"1" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0x8E18F45B" /* LID */ =>
               trees = trees :+ tokens(j)
@@ -869,10 +856,10 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"2" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0x763C38BE" /* ":" */ =>
               trees = trees :+ tokens(j)
@@ -882,83 +869,47 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"3" =>
-          var found = F
-          if (!found && predictAlt(j)) {
-            parseAlt(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"4")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
+          found = F
+          tokens(j).tipe match {
+            case _ if predictAlt(j) && parseAltH(u32"4") => return Either.Right(failIndex)
+            case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"4" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0x687111E8" /* "|" */ =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"5")
               found = T
-            case u32"0x36F2899D" /* ";" */ =>
+            case _ if !found && predictChannel(j) && parseChannelH(u32"8") => return Either.Right(failIndex)
+            case u32"0x36F2899D" /* ";" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"7")
               found = T
             case _ =>
           }
-          if (!found && predictChannel(j)) {
-            parseChannel(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"8")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
-          }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"5" =>
-          var found = F
-          if (!found && predictAlt(j)) {
-            parseAlt(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"6")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
+          found = F
+          tokens(j).tipe match {
+            case _ if predictAlt(j) && parseAltH(u32"6") => return Either.Right(failIndex)
+            case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"6" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0x687111E8" /* "|" */ =>
               trees = trees :+ tokens(j)
@@ -973,11 +924,11 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
-        case u32"7" => return retVal(max, resOpt, initial, F)
+        case u32"7" => return retVal(max, resOpt, initial, T)
         case u32"8" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0x687111E8" /* "|" */ =>
               trees = trees :+ tokens(j)
@@ -992,47 +943,25 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"9" =>
-          var found = F
-          if (!found && predictAlt(j)) {
-            parseAlt(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"10")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
+          found = F
+          tokens(j).tipe match {
+            case _ if predictAlt(j) && parseAltH(u32"10") => return Either.Right(failIndex)
+            case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"10" =>
-          var found = F
-          if (!found && predictChannel(j)) {
-            parseChannel(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"8")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
+          found = F
+          tokens(j).tipe match {
+            case _ if predictChannel(j) && parseChannelH(u32"8") => return Either.Right(failIndex)
+            case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case _ => halt("Infeasible")
       }
@@ -1041,7 +970,7 @@ import SireumGrammarParser._
       }
     }
 
-    return retVal(j, resOpt, initial, F)
+    return retVal(j, resOpt, initial, T)
   }
 
   @pure def parseBlock(i: Z): Either[Result, Z] = {
@@ -1051,6 +980,8 @@ import SireumGrammarParser._
     var j = i
     var max = i
     var initial = T
+    var found = F
+    var failIndex: Z = 0
 
     def update(newState: U32): Unit = {
       initial = F
@@ -1062,10 +993,29 @@ import SireumGrammarParser._
       resOpt = Some(Result(ParseTree.Node(trees, """block""", u32"0xAA25218B" /* block */, None()), j))
     }
 
+    def parseAltH(nextState: U32): B = {
+      parseAlt(j) match {
+        case Either.Left(r) =>
+          trees = trees :+ r.tree
+          j = r.newIndex
+          update(nextState)
+          found = T
+          return F
+        case Either.Right(r) =>
+          if (r < 0) {
+            failIndex = r
+            return T
+          } else if (max < r) {
+            max = r
+          }
+          return F
+      }
+    }
+
     while (j < tokens.size) {
       state match {
         case u32"0" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0x71F6371D" /* "(" */ =>
               trees = trees :+ tokens(j)
@@ -1075,30 +1025,19 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"1" =>
-          var found = F
-          if (!found && predictAlt(j)) {
-            parseAlt(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"2")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
+          found = F
+          tokens(j).tipe match {
+            case _ if predictAlt(j) && parseAltH(u32"2") => return Either.Right(failIndex)
+            case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"2" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0x687111E8" /* "|" */ =>
               trees = trees :+ tokens(j)
@@ -1113,29 +1052,18 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"3" =>
-          var found = F
-          if (!found && predictAlt(j)) {
-            parseAlt(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"2")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
+          found = F
+          tokens(j).tipe match {
+            case _ if predictAlt(j) && parseAltH(u32"2") => return Either.Right(failIndex)
+            case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
-        case u32"4" => return retVal(max, resOpt, initial, F)
+        case u32"4" => return retVal(max, resOpt, initial, T)
         case _ => halt("Infeasible")
       }
       if (max < j) {
@@ -1143,7 +1071,7 @@ import SireumGrammarParser._
       }
     }
 
-    return retVal(j, resOpt, initial, F)
+    return retVal(j, resOpt, initial, T)
   }
 
   @pure def parseAlt(i: Z): Either[Result, Z] = {
@@ -1153,6 +1081,8 @@ import SireumGrammarParser._
     var j = i
     var max = i
     var initial = T
+    var found = F
+    var failIndex: Z = 0
 
     def update(newState: U32): Unit = {
       initial = F
@@ -1164,47 +1094,44 @@ import SireumGrammarParser._
       resOpt = Some(Result(ParseTree.Node(trees, """alt""", u32"0xB817E927" /* alt */, None()), j))
     }
 
+    def parseElementH(nextState: U32): B = {
+      parseElement(j) match {
+        case Either.Left(r) =>
+          trees = trees :+ r.tree
+          j = r.newIndex
+          update(nextState)
+          found = T
+          return F
+        case Either.Right(r) =>
+          if (r < 0) {
+            failIndex = r
+            return T
+          } else if (max < r) {
+            max = r
+          }
+          return F
+      }
+    }
+
     while (j < tokens.size) {
       state match {
         case u32"0" =>
-          var found = F
-          if (!found && predictElement(j)) {
-            parseElement(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"1")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
+          found = F
+          tokens(j).tipe match {
+            case _ if predictElement(j) && parseElementH(u32"1") => return Either.Right(failIndex)
+            case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"1" =>
-          var found = F
-          if (!found && predictElement(j)) {
-            parseElement(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"1")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
+          found = F
+          tokens(j).tipe match {
+            case _ if predictElement(j) && parseElementH(u32"1") => return Either.Right(failIndex)
+            case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case _ => halt("Infeasible")
       }
@@ -1213,7 +1140,7 @@ import SireumGrammarParser._
       }
     }
 
-    return retVal(j, resOpt, initial, F)
+    return retVal(j, resOpt, initial, T)
   }
 
   @pure def parseElement(i: Z): Either[Result, Z] = {
@@ -1223,6 +1150,8 @@ import SireumGrammarParser._
     var j = i
     var max = i
     var initial = T
+    var found = F
+    var failIndex: Z = 0
 
     def update(newState: U32): Unit = {
       initial = F
@@ -1235,45 +1164,58 @@ import SireumGrammarParser._
       resOpt = Some(Result(ParseTree.Node(trees, """element""", u32"0x022B2C72" /* element */, None()), j))
     }
 
+    def parseAtomH(nextState: U32): B = {
+      parseAtom(j) match {
+        case Either.Left(r) =>
+          trees = trees :+ r.tree
+          j = r.newIndex
+          update(nextState)
+          found = T
+          return F
+        case Either.Right(r) =>
+          if (r < 0) {
+            failIndex = r
+            return T
+          } else if (max < r) {
+            max = r
+          }
+          return F
+      }
+    }
+
+    def parseBlockH(nextState: U32): B = {
+      parseBlock(j) match {
+        case Either.Left(r) =>
+          trees = trees :+ r.tree
+          j = r.newIndex
+          update(nextState)
+          found = T
+          return F
+        case Either.Right(r) =>
+          if (r < 0) {
+            failIndex = r
+            return T
+          } else if (max < r) {
+            max = r
+          }
+          return F
+      }
+    }
+
     while (j < tokens.size) {
       state match {
         case u32"0" =>
-          var found = F
-          if (!found && predictAtom(j)) {
-            parseAtom(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"1")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
-          }
-          if (!found && predictBlock(j)) {
-            parseBlock(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"1")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
+          found = F
+          tokens(j).tipe match {
+            case _ if predictAtom(j) && parseAtomH(u32"1") => return Either.Right(failIndex)
+            case _ if !found && predictBlock(j) && parseBlockH(u32"1") => return Either.Right(failIndex)
+            case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"1" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0xD827FEB7" /* "?" */ =>
               trees = trees :+ tokens(j)
@@ -1293,9 +1235,9 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
-        case u32"2" => return retVal(max, resOpt, initial, F)
+        case u32"2" => return retVal(max, resOpt, initial, T)
         case _ => halt("Infeasible")
       }
       if (max < j) {
@@ -1303,7 +1245,7 @@ import SireumGrammarParser._
       }
     }
 
-    return retVal(j, resOpt, initial, F)
+    return retVal(j, resOpt, initial, T)
   }
 
   @pure def parseAtom(i: Z): Either[Result, Z] = {
@@ -1313,6 +1255,8 @@ import SireumGrammarParser._
     var j = i
     var max = i
     var initial = T
+    var found = F
+    var failIndex: Z = 0
 
     def update(newState: U32): Unit = {
       initial = F
@@ -1324,67 +1268,82 @@ import SireumGrammarParser._
       resOpt = Some(Result(ParseTree.Node(trees, """atom""", u32"0xBF749739" /* atom */, None()), j))
     }
 
+    def parseRangeH(nextState: U32): B = {
+      parseRange(j) match {
+        case Either.Left(r) =>
+          trees = trees :+ r.tree
+          j = r.newIndex
+          update(nextState)
+          found = T
+          return F
+        case Either.Right(r) =>
+          if (r < 0) {
+            failIndex = r
+            return T
+          } else if (max < r) {
+            max = r
+          }
+          return F
+      }
+    }
+
+    def parseTerminalH(nextState: U32): B = {
+      parseTerminal(j) match {
+        case Either.Left(r) =>
+          trees = trees :+ r.tree
+          j = r.newIndex
+          update(nextState)
+          found = T
+          return F
+        case Either.Right(r) =>
+          if (r < 0) {
+            failIndex = r
+            return T
+          } else if (max < r) {
+            max = r
+          }
+          return F
+      }
+    }
+
+    def parseNotH(nextState: U32): B = {
+      parseNot(j) match {
+        case Either.Left(r) =>
+          trees = trees :+ r.tree
+          j = r.newIndex
+          update(nextState)
+          found = T
+          return F
+        case Either.Right(r) =>
+          if (r < 0) {
+            failIndex = r
+            return T
+          } else if (max < r) {
+            max = r
+          }
+          return F
+      }
+    }
+
     while (j < tokens.size) {
       state match {
         case u32"0" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
-            case u32"0xD2EDBEA1" /* PID */ =>
+            case _ if predictRange(j) && parseRangeH(u32"1") => return Either.Right(failIndex)
+            case _ if !found && predictTerminal(j) && parseTerminalH(u32"1") => return Either.Right(failIndex)
+            case _ if !found && predictNot(j) && parseNotH(u32"1") => return Either.Right(failIndex)
+            case u32"0xD2EDBEA1" /* PID */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"1")
               found = T
             case _ =>
           }
-          if (!found && predictRange(j)) {
-            parseRange(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"1")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
-          }
-          if (!found && predictTerminal(j)) {
-            parseTerminal(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"1")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
-          }
-          if (!found && predictNot(j)) {
-            parseNot(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"1")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
-          }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
-        case u32"1" => return retVal(max, resOpt, initial, F)
+        case u32"1" => return retVal(max, resOpt, initial, T)
         case _ => halt("Infeasible")
       }
       if (max < j) {
@@ -1392,7 +1351,7 @@ import SireumGrammarParser._
       }
     }
 
-    return retVal(j, resOpt, initial, F)
+    return retVal(j, resOpt, initial, T)
   }
 
   @pure def parseNot(i: Z): Either[Result, Z] = {
@@ -1402,6 +1361,8 @@ import SireumGrammarParser._
     var j = i
     var max = i
     var initial = T
+    var found = F
+    var failIndex: Z = 0
 
     def update(newState: U32): Unit = {
       initial = F
@@ -1413,10 +1374,29 @@ import SireumGrammarParser._
       resOpt = Some(Result(ParseTree.Node(trees, """not""", u32"0x94BF4010" /* not */, None()), j))
     }
 
+    def parseBlockH(nextState: U32): B = {
+      parseBlock(j) match {
+        case Either.Left(r) =>
+          trees = trees :+ r.tree
+          j = r.newIndex
+          update(nextState)
+          found = T
+          return F
+        case Either.Right(r) =>
+          if (r < 0) {
+            failIndex = r
+            return T
+          } else if (max < r) {
+            max = r
+          }
+          return F
+      }
+    }
+
     while (j < tokens.size) {
       state match {
         case u32"0" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0xAAB7E55C" /* "~" */ =>
               trees = trees :+ tokens(j)
@@ -1426,10 +1406,10 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"1" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0xE95F063A" /* CHAR */ =>
               trees = trees :+ tokens(j)
@@ -1441,27 +1421,13 @@ import SireumGrammarParser._
               j = j + 1
               update(u32"2")
               found = T
+            case _ if !found && predictBlock(j) && parseBlockH(u32"2") => return Either.Right(failIndex)
             case _ =>
           }
-          if (!found && predictBlock(j)) {
-            parseBlock(j) match {
-              case Either.Left(r) =>
-                trees = trees :+ r.tree
-                j = r.newIndex
-                update(u32"2")
-                found = T
-              case res@Either.Right(r) =>
-                if (r < 0) {
-                  return res
-                } else if (max < r) {
-                  max = r
-                }
-            }
-          }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
-        case u32"2" => return retVal(max, resOpt, initial, F)
+        case u32"2" => return retVal(max, resOpt, initial, T)
         case _ => halt("Infeasible")
       }
       if (max < j) {
@@ -1469,7 +1435,7 @@ import SireumGrammarParser._
       }
     }
 
-    return retVal(j, resOpt, initial, F)
+    return retVal(j, resOpt, initial, T)
   }
 
   @pure def parseRange(i: Z): Either[Result, Z] = {
@@ -1479,6 +1445,8 @@ import SireumGrammarParser._
     var j = i
     var max = i
     var initial = T
+    var found = F
+    var failIndex: Z = 0
 
     def update(newState: U32): Unit = {
       initial = F
@@ -1490,10 +1458,11 @@ import SireumGrammarParser._
       resOpt = Some(Result(ParseTree.Node(trees, """range""", u32"0x821FF55C" /* range */, None()), j))
     }
 
+
     while (j < tokens.size) {
       state match {
         case u32"0" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0xE95F063A" /* CHAR */ =>
               trees = trees :+ tokens(j)
@@ -1503,10 +1472,10 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"1" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0x3A15194D" /* ".." */ =>
               trees = trees :+ tokens(j)
@@ -1516,10 +1485,10 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"2" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0xE95F063A" /* CHAR */ =>
               trees = trees :+ tokens(j)
@@ -1529,9 +1498,9 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
-        case u32"3" => return retVal(max, resOpt, initial, F)
+        case u32"3" => return retVal(max, resOpt, initial, T)
         case _ => halt("Infeasible")
       }
       if (max < j) {
@@ -1539,7 +1508,7 @@ import SireumGrammarParser._
       }
     }
 
-    return retVal(j, resOpt, initial, F)
+    return retVal(j, resOpt, initial, T)
   }
 
   @pure def parseTerminal(i: Z): Either[Result, Z] = {
@@ -1549,6 +1518,8 @@ import SireumGrammarParser._
     var j = i
     var max = i
     var initial = T
+    var found = F
+    var failIndex: Z = 0
 
     def update(newState: U32): Unit = {
       initial = F
@@ -1560,10 +1531,11 @@ import SireumGrammarParser._
       resOpt = Some(Result(ParseTree.Node(trees, """terminal""", u32"0xC926557D" /* terminal */, None()), j))
     }
 
+
     while (j < tokens.size) {
       state match {
         case u32"0" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0x8E18F45B" /* LID */ =>
               trees = trees :+ tokens(j)
@@ -1588,9 +1560,9 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
-        case u32"1" => return retVal(max, resOpt, initial, F)
+        case u32"1" => return retVal(max, resOpt, initial, T)
         case _ => halt("Infeasible")
       }
       if (max < j) {
@@ -1598,7 +1570,7 @@ import SireumGrammarParser._
       }
     }
 
-    return retVal(j, resOpt, initial, F)
+    return retVal(j, resOpt, initial, T)
   }
 
   @pure def parseId(i: Z): Either[Result, Z] = {
@@ -1608,6 +1580,8 @@ import SireumGrammarParser._
     var j = i
     var max = i
     var initial = T
+    var found = F
+    var failIndex: Z = 0
 
     def update(newState: U32): Unit = {
       initial = F
@@ -1619,10 +1593,11 @@ import SireumGrammarParser._
       resOpt = Some(Result(ParseTree.Node(trees, """id""", u32"0x92391AB1" /* id */, None()), j))
     }
 
+
     while (j < tokens.size) {
       state match {
         case u32"0" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0x8E18F45B" /* LID */ =>
               trees = trees :+ tokens(j)
@@ -1637,9 +1612,9 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
-        case u32"1" => return retVal(max, resOpt, initial, F)
+        case u32"1" => return retVal(max, resOpt, initial, T)
         case _ => halt("Infeasible")
       }
       if (max < j) {
@@ -1647,7 +1622,7 @@ import SireumGrammarParser._
       }
     }
 
-    return retVal(j, resOpt, initial, F)
+    return retVal(j, resOpt, initial, T)
   }
 
   @pure def parseChannel(i: Z): Either[Result, Z] = {
@@ -1657,6 +1632,8 @@ import SireumGrammarParser._
     var j = i
     var max = i
     var initial = T
+    var found = F
+    var failIndex: Z = 0
 
     def update(newState: U32): Unit = {
       initial = F
@@ -1668,10 +1645,11 @@ import SireumGrammarParser._
       resOpt = Some(Result(ParseTree.Node(trees, """channel""", u32"0x239B7220" /* channel */, None()), j))
     }
 
+
     while (j < tokens.size) {
       state match {
         case u32"0" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0xFDCE65E5" /* "{" */ =>
               trees = trees :+ tokens(j)
@@ -1681,10 +1659,10 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"1" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0x46562B21" /* "$channel" */ =>
               trees = trees :+ tokens(j)
@@ -1694,10 +1672,10 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"2" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0xEF954474" /* "=" */ =>
               trees = trees :+ tokens(j)
@@ -1707,10 +1685,10 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"3" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0x8E18F45B" /* LID */ =>
               trees = trees :+ tokens(j)
@@ -1720,10 +1698,10 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"4" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0x36F2899D" /* ";" */ =>
               trees = trees :+ tokens(j)
@@ -1733,10 +1711,10 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
         case u32"5" =>
-          var found = F
+          found = F
           tokens(j).tipe match {
             case u32"0x5BF60471" /* "}" */ =>
               trees = trees :+ tokens(j)
@@ -1746,9 +1724,9 @@ import SireumGrammarParser._
             case _ =>
           }
           if (!found) {
-            return retVal(max, resOpt, initial, F)
+            return retVal(max, resOpt, initial, T)
           }
-        case u32"6" => return retVal(max, resOpt, initial, F)
+        case u32"6" => return retVal(max, resOpt, initial, T)
         case _ => halt("Infeasible")
       }
       if (max < j) {
@@ -1756,7 +1734,7 @@ import SireumGrammarParser._
       }
     }
 
-    return retVal(j, resOpt, initial, F)
+    return retVal(j, resOpt, initial, T)
   }
 
   @pure def predictParserRule(j: Z): B = {
@@ -2308,7 +2286,7 @@ import SireumGrammarParser._
         case u32"0" =>
           val c = cis(j)
           var found = F
-          if (!found && c === '\'') {
+          if (!found && (c === '\'')) {
             update(u32"1")
             found = T
           }
@@ -2318,20 +2296,12 @@ import SireumGrammarParser._
         case u32"1" =>
           val c = cis(j)
           var found = F
-          if (!found && minChar <= c && c <= '&') {
+          if (!found && (minChar <= c && c <= '&' || '(' <= c && c <= '[' || ']' <= c && c <= maxChar)) {
             update(u32"2")
             found = T
           }
-          if (!found && '(' <= c && c <= '[') {
-            update(u32"2")
-            found = T
-          }
-          if (!found && c === '\\') {
+          if (!found && (c === '\\')) {
             update(u32"4")
-            found = T
-          }
-          if (!found && ']' <= c && c <= maxChar) {
-            update(u32"2")
             found = T
           }
           if (!found) {
@@ -2340,7 +2310,7 @@ import SireumGrammarParser._
         case u32"2" =>
           val c = cis(j)
           var found = F
-          if (!found && c === '\'') {
+          if (!found && (c === '\'')) {
             update(u32"3")
             found = T
           }
@@ -2351,39 +2321,11 @@ import SireumGrammarParser._
         case u32"4" =>
           val c = cis(j)
           var found = F
-          if (!found && c === '"') {
+          if (!found && (c === '"' || c === '\'' || c === '\\' || c === 'b' || c === 'f' || c === 'n' || c === 'r' || c === 't')) {
             update(u32"2")
             found = T
           }
-          if (!found && c === '\'') {
-            update(u32"2")
-            found = T
-          }
-          if (!found && c === '\\') {
-            update(u32"2")
-            found = T
-          }
-          if (!found && c === 'b') {
-            update(u32"2")
-            found = T
-          }
-          if (!found && c === 'f') {
-            update(u32"2")
-            found = T
-          }
-          if (!found && c === 'n') {
-            update(u32"2")
-            found = T
-          }
-          if (!found && c === 'r') {
-            update(u32"2")
-            found = T
-          }
-          if (!found && c === 't') {
-            update(u32"2")
-            found = T
-          }
-          if (!found && c === 'u') {
+          if (!found && (c === 'u')) {
             update(u32"5")
             found = T
           }
@@ -2393,15 +2335,7 @@ import SireumGrammarParser._
         case u32"5" =>
           val c = cis(j)
           var found = F
-          if (!found && '0' <= c && c <= '9') {
-            update(u32"6")
-            found = T
-          }
-          if (!found && 'A' <= c && c <= 'F') {
-            update(u32"6")
-            found = T
-          }
-          if (!found && 'a' <= c && c <= 'f') {
+          if (!found && ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f')) {
             update(u32"6")
             found = T
           }
@@ -2411,15 +2345,7 @@ import SireumGrammarParser._
         case u32"6" =>
           val c = cis(j)
           var found = F
-          if (!found && '0' <= c && c <= '9') {
-            update(u32"7")
-            found = T
-          }
-          if (!found && 'A' <= c && c <= 'F') {
-            update(u32"7")
-            found = T
-          }
-          if (!found && 'a' <= c && c <= 'f') {
+          if (!found && ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f')) {
             update(u32"7")
             found = T
           }
@@ -2429,15 +2355,7 @@ import SireumGrammarParser._
         case u32"7" =>
           val c = cis(j)
           var found = F
-          if (!found && '0' <= c && c <= '9') {
-            update(u32"8")
-            found = T
-          }
-          if (!found && 'A' <= c && c <= 'F') {
-            update(u32"8")
-            found = T
-          }
-          if (!found && 'a' <= c && c <= 'f') {
+          if (!found && ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f')) {
             update(u32"8")
             found = T
           }
@@ -2447,15 +2365,7 @@ import SireumGrammarParser._
         case u32"8" =>
           val c = cis(j)
           var found = F
-          if (!found && '0' <= c && c <= '9') {
-            update(u32"2")
-            found = T
-          }
-          if (!found && 'A' <= c && c <= 'F') {
-            update(u32"2")
-            found = T
-          }
-          if (!found && 'a' <= c && c <= 'f') {
+          if (!found && ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f')) {
             update(u32"2")
             found = T
           }
@@ -2491,7 +2401,7 @@ import SireumGrammarParser._
         case u32"0" =>
           val c = cis(j)
           var found = F
-          if (!found && c === '\'') {
+          if (!found && (c === '\'')) {
             update(u32"1")
             found = T
           }
@@ -2501,20 +2411,12 @@ import SireumGrammarParser._
         case u32"1" =>
           val c = cis(j)
           var found = F
-          if (!found && minChar <= c && c <= '&') {
+          if (!found && (minChar <= c && c <= '&' || '(' <= c && c <= '[' || ']' <= c && c <= maxChar)) {
             update(u32"2")
             found = T
           }
-          if (!found && '(' <= c && c <= '[') {
-            update(u32"2")
-            found = T
-          }
-          if (!found && c === '\\') {
+          if (!found && (c === '\\')) {
             update(u32"10")
-            found = T
-          }
-          if (!found && ']' <= c && c <= maxChar) {
-            update(u32"2")
             found = T
           }
           if (!found) {
@@ -2523,20 +2425,12 @@ import SireumGrammarParser._
         case u32"2" =>
           val c = cis(j)
           var found = F
-          if (!found && minChar <= c && c <= '&') {
+          if (!found && (minChar <= c && c <= '&' || '(' <= c && c <= '[' || ']' <= c && c <= maxChar)) {
             update(u32"3")
             found = T
           }
-          if (!found && '(' <= c && c <= '[') {
-            update(u32"3")
-            found = T
-          }
-          if (!found && c === '\\') {
+          if (!found && (c === '\\')) {
             update(u32"5")
-            found = T
-          }
-          if (!found && ']' <= c && c <= maxChar) {
-            update(u32"3")
             found = T
           }
           if (!found) {
@@ -2545,24 +2439,16 @@ import SireumGrammarParser._
         case u32"3" =>
           val c = cis(j)
           var found = F
-          if (!found && minChar <= c && c <= '&') {
+          if (!found && (minChar <= c && c <= '&' || '(' <= c && c <= '[' || ']' <= c && c <= maxChar)) {
             update(u32"3")
             found = T
           }
-          if (!found && c === '\'') {
+          if (!found && (c === '\'')) {
             update(u32"4")
             found = T
           }
-          if (!found && '(' <= c && c <= '[') {
-            update(u32"3")
-            found = T
-          }
-          if (!found && c === '\\') {
+          if (!found && (c === '\\')) {
             update(u32"5")
-            found = T
-          }
-          if (!found && ']' <= c && c <= maxChar) {
-            update(u32"3")
             found = T
           }
           if (!found) {
@@ -2572,39 +2458,11 @@ import SireumGrammarParser._
         case u32"5" =>
           val c = cis(j)
           var found = F
-          if (!found && c === '"') {
+          if (!found && (c === '"' || c === '\'' || c === '\\' || c === 'b' || c === 'f' || c === 'n' || c === 'r' || c === 't')) {
             update(u32"3")
             found = T
           }
-          if (!found && c === '\'') {
-            update(u32"3")
-            found = T
-          }
-          if (!found && c === '\\') {
-            update(u32"3")
-            found = T
-          }
-          if (!found && c === 'b') {
-            update(u32"3")
-            found = T
-          }
-          if (!found && c === 'f') {
-            update(u32"3")
-            found = T
-          }
-          if (!found && c === 'n') {
-            update(u32"3")
-            found = T
-          }
-          if (!found && c === 'r') {
-            update(u32"3")
-            found = T
-          }
-          if (!found && c === 't') {
-            update(u32"3")
-            found = T
-          }
-          if (!found && c === 'u') {
+          if (!found && (c === 'u')) {
             update(u32"6")
             found = T
           }
@@ -2614,15 +2472,7 @@ import SireumGrammarParser._
         case u32"6" =>
           val c = cis(j)
           var found = F
-          if (!found && '0' <= c && c <= '9') {
-            update(u32"7")
-            found = T
-          }
-          if (!found && 'A' <= c && c <= 'F') {
-            update(u32"7")
-            found = T
-          }
-          if (!found && 'a' <= c && c <= 'f') {
+          if (!found && ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f')) {
             update(u32"7")
             found = T
           }
@@ -2632,15 +2482,7 @@ import SireumGrammarParser._
         case u32"7" =>
           val c = cis(j)
           var found = F
-          if (!found && '0' <= c && c <= '9') {
-            update(u32"8")
-            found = T
-          }
-          if (!found && 'A' <= c && c <= 'F') {
-            update(u32"8")
-            found = T
-          }
-          if (!found && 'a' <= c && c <= 'f') {
+          if (!found && ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f')) {
             update(u32"8")
             found = T
           }
@@ -2650,15 +2492,7 @@ import SireumGrammarParser._
         case u32"8" =>
           val c = cis(j)
           var found = F
-          if (!found && '0' <= c && c <= '9') {
-            update(u32"9")
-            found = T
-          }
-          if (!found && 'A' <= c && c <= 'F') {
-            update(u32"9")
-            found = T
-          }
-          if (!found && 'a' <= c && c <= 'f') {
+          if (!found && ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f')) {
             update(u32"9")
             found = T
           }
@@ -2668,15 +2502,7 @@ import SireumGrammarParser._
         case u32"9" =>
           val c = cis(j)
           var found = F
-          if (!found && '0' <= c && c <= '9') {
-            update(u32"3")
-            found = T
-          }
-          if (!found && 'A' <= c && c <= 'F') {
-            update(u32"3")
-            found = T
-          }
-          if (!found && 'a' <= c && c <= 'f') {
+          if (!found && ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f')) {
             update(u32"3")
             found = T
           }
@@ -2686,39 +2512,11 @@ import SireumGrammarParser._
         case u32"10" =>
           val c = cis(j)
           var found = F
-          if (!found && c === '"') {
+          if (!found && (c === '"' || c === '\'' || c === '\\' || c === 'b' || c === 'f' || c === 'n' || c === 'r' || c === 't')) {
             update(u32"2")
             found = T
           }
-          if (!found && c === '\'') {
-            update(u32"2")
-            found = T
-          }
-          if (!found && c === '\\') {
-            update(u32"2")
-            found = T
-          }
-          if (!found && c === 'b') {
-            update(u32"2")
-            found = T
-          }
-          if (!found && c === 'f') {
-            update(u32"2")
-            found = T
-          }
-          if (!found && c === 'n') {
-            update(u32"2")
-            found = T
-          }
-          if (!found && c === 'r') {
-            update(u32"2")
-            found = T
-          }
-          if (!found && c === 't') {
-            update(u32"2")
-            found = T
-          }
-          if (!found && c === 'u') {
+          if (!found && (c === 'u')) {
             update(u32"11")
             found = T
           }
@@ -2728,15 +2526,7 @@ import SireumGrammarParser._
         case u32"11" =>
           val c = cis(j)
           var found = F
-          if (!found && '0' <= c && c <= '9') {
-            update(u32"12")
-            found = T
-          }
-          if (!found && 'A' <= c && c <= 'F') {
-            update(u32"12")
-            found = T
-          }
-          if (!found && 'a' <= c && c <= 'f') {
+          if (!found && ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f')) {
             update(u32"12")
             found = T
           }
@@ -2746,15 +2536,7 @@ import SireumGrammarParser._
         case u32"12" =>
           val c = cis(j)
           var found = F
-          if (!found && '0' <= c && c <= '9') {
-            update(u32"13")
-            found = T
-          }
-          if (!found && 'A' <= c && c <= 'F') {
-            update(u32"13")
-            found = T
-          }
-          if (!found && 'a' <= c && c <= 'f') {
+          if (!found && ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f')) {
             update(u32"13")
             found = T
           }
@@ -2764,15 +2546,7 @@ import SireumGrammarParser._
         case u32"13" =>
           val c = cis(j)
           var found = F
-          if (!found && '0' <= c && c <= '9') {
-            update(u32"14")
-            found = T
-          }
-          if (!found && 'A' <= c && c <= 'F') {
-            update(u32"14")
-            found = T
-          }
-          if (!found && 'a' <= c && c <= 'f') {
+          if (!found && ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f')) {
             update(u32"14")
             found = T
           }
@@ -2782,15 +2556,7 @@ import SireumGrammarParser._
         case u32"14" =>
           val c = cis(j)
           var found = F
-          if (!found && '0' <= c && c <= '9') {
-            update(u32"2")
-            found = T
-          }
-          if (!found && 'A' <= c && c <= 'F') {
-            update(u32"2")
-            found = T
-          }
-          if (!found && 'a' <= c && c <= 'f') {
+          if (!found && ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f')) {
             update(u32"2")
             found = T
           }
@@ -2826,7 +2592,7 @@ import SireumGrammarParser._
         case u32"0" =>
           val c = cis(j)
           var found = F
-          if (!found && '1' <= c && c <= '9') {
+          if (!found && ('1' <= c && c <= '9')) {
             update(u32"1")
             found = T
           }
@@ -2836,7 +2602,7 @@ import SireumGrammarParser._
         case u32"1" =>
           val c = cis(j)
           var found = F
-          if (!found && '0' <= c && c <= '9') {
+          if (!found && ('0' <= c && c <= '9')) {
             update(u32"1")
             found = T
           }
@@ -2872,7 +2638,7 @@ import SireumGrammarParser._
         case u32"0" =>
           val c = cis(j)
           var found = F
-          if (!found && 'A' <= c && c <= 'Z') {
+          if (!found && ('A' <= c && c <= 'Z')) {
             update(u32"1")
             found = T
           }
@@ -2882,19 +2648,7 @@ import SireumGrammarParser._
         case u32"1" =>
           val c = cis(j)
           var found = F
-          if (!found && '0' <= c && c <= '9') {
-            update(u32"1")
-            found = T
-          }
-          if (!found && 'A' <= c && c <= 'Z') {
-            update(u32"1")
-            found = T
-          }
-          if (!found && c === '_') {
-            update(u32"1")
-            found = T
-          }
-          if (!found && 'a' <= c && c <= 'z') {
+          if (!found && ('0' <= c && c <= '9' || 'A' <= c && c <= 'Z' || c === '_' || 'a' <= c && c <= 'z')) {
             update(u32"1")
             found = T
           }
@@ -2930,7 +2684,7 @@ import SireumGrammarParser._
         case u32"0" =>
           val c = cis(j)
           var found = F
-          if (!found && 'a' <= c && c <= 'z') {
+          if (!found && ('a' <= c && c <= 'z')) {
             update(u32"1")
             found = T
           }
@@ -2940,19 +2694,7 @@ import SireumGrammarParser._
         case u32"1" =>
           val c = cis(j)
           var found = F
-          if (!found && '0' <= c && c <= '9') {
-            update(u32"1")
-            found = T
-          }
-          if (!found && 'A' <= c && c <= 'Z') {
-            update(u32"1")
-            found = T
-          }
-          if (!found && c === '_') {
-            update(u32"1")
-            found = T
-          }
-          if (!found && 'a' <= c && c <= 'z') {
+          if (!found && ('0' <= c && c <= '9' || 'A' <= c && c <= 'Z' || c === '_' || 'a' <= c && c <= 'z')) {
             update(u32"1")
             found = T
           }
@@ -2988,7 +2730,7 @@ import SireumGrammarParser._
         case u32"0" =>
           val c = cis(j)
           var found = F
-          if (!found && c === '@') {
+          if (!found && (c === '@')) {
             update(u32"1")
             found = T
           }
@@ -2998,19 +2740,11 @@ import SireumGrammarParser._
         case u32"1" =>
           val c = cis(j)
           var found = F
-          if (!found && '\u0009' <= c && c <= '\u000A') {
+          if (!found && ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ')) {
             update(u32"1")
             found = T
           }
-          if (!found && c === '\u000D') {
-            update(u32"1")
-            found = T
-          }
-          if (!found && c === ' ') {
-            update(u32"1")
-            found = T
-          }
-          if (!found && c === 'h') {
+          if (!found && (c === 'h')) {
             update(u32"2")
             found = T
           }
@@ -3020,7 +2754,7 @@ import SireumGrammarParser._
         case u32"2" =>
           val c = cis(j)
           var found = F
-          if (!found && c === 'e') {
+          if (!found && (c === 'e')) {
             update(u32"3")
             found = T
           }
@@ -3030,7 +2764,7 @@ import SireumGrammarParser._
         case u32"3" =>
           val c = cis(j)
           var found = F
-          if (!found && c === 'a') {
+          if (!found && (c === 'a')) {
             update(u32"4")
             found = T
           }
@@ -3040,7 +2774,7 @@ import SireumGrammarParser._
         case u32"4" =>
           val c = cis(j)
           var found = F
-          if (!found && c === 'd') {
+          if (!found && (c === 'd')) {
             update(u32"5")
             found = T
           }
@@ -3050,7 +2784,7 @@ import SireumGrammarParser._
         case u32"5" =>
           val c = cis(j)
           var found = F
-          if (!found && c === 'e') {
+          if (!found && (c === 'e')) {
             update(u32"6")
             found = T
           }
@@ -3060,7 +2794,7 @@ import SireumGrammarParser._
         case u32"6" =>
           val c = cis(j)
           var found = F
-          if (!found && c === 'r') {
+          if (!found && (c === 'r')) {
             update(u32"7")
             found = T
           }
@@ -3070,19 +2804,11 @@ import SireumGrammarParser._
         case u32"7" =>
           val c = cis(j)
           var found = F
-          if (!found && '\u0009' <= c && c <= '\u000A') {
+          if (!found && ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ')) {
             update(u32"7")
             found = T
           }
-          if (!found && c === '\u000D') {
-            update(u32"7")
-            found = T
-          }
-          if (!found && c === ' ') {
-            update(u32"7")
-            found = T
-          }
-          if (!found && c === '{') {
+          if (!found && (c === '{')) {
             update(u32"8")
             found = T
           }
@@ -3092,16 +2818,12 @@ import SireumGrammarParser._
         case u32"8" =>
           val c = cis(j)
           var found = F
-          if (!found && minChar <= c && c <= '|') {
+          if (!found && (minChar <= c && c <= '|' || '~' <= c && c <= maxChar)) {
             update(u32"8")
             found = T
           }
-          if (!found && c === '}') {
+          if (!found && (c === '}')) {
             update(u32"9")
-            found = T
-          }
-          if (!found && '~' <= c && c <= maxChar) {
-            update(u32"8")
             found = T
           }
           if (!found) {
@@ -3137,7 +2859,7 @@ import SireumGrammarParser._
         case u32"0" =>
           val c = cis(j)
           var found = F
-          if (!found && c === '@') {
+          if (!found && (c === '@')) {
             update(u32"1")
             found = T
           }
@@ -3147,19 +2869,11 @@ import SireumGrammarParser._
         case u32"1" =>
           val c = cis(j)
           var found = F
-          if (!found && '\u0009' <= c && c <= '\u000A') {
+          if (!found && ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ')) {
             update(u32"1")
             found = T
           }
-          if (!found && c === '\u000D') {
-            update(u32"1")
-            found = T
-          }
-          if (!found && c === ' ') {
-            update(u32"1")
-            found = T
-          }
-          if (!found && c === 'l') {
+          if (!found && (c === 'l')) {
             update(u32"2")
             found = T
           }
@@ -3169,7 +2883,7 @@ import SireumGrammarParser._
         case u32"2" =>
           val c = cis(j)
           var found = F
-          if (!found && c === 'e') {
+          if (!found && (c === 'e')) {
             update(u32"3")
             found = T
           }
@@ -3179,7 +2893,7 @@ import SireumGrammarParser._
         case u32"3" =>
           val c = cis(j)
           var found = F
-          if (!found && c === 'x') {
+          if (!found && (c === 'x')) {
             update(u32"4")
             found = T
           }
@@ -3189,7 +2903,7 @@ import SireumGrammarParser._
         case u32"4" =>
           val c = cis(j)
           var found = F
-          if (!found && c === 'e') {
+          if (!found && (c === 'e')) {
             update(u32"5")
             found = T
           }
@@ -3199,7 +2913,7 @@ import SireumGrammarParser._
         case u32"5" =>
           val c = cis(j)
           var found = F
-          if (!found && c === 'r') {
+          if (!found && (c === 'r')) {
             update(u32"6")
             found = T
           }
@@ -3209,19 +2923,11 @@ import SireumGrammarParser._
         case u32"6" =>
           val c = cis(j)
           var found = F
-          if (!found && '\u0009' <= c && c <= '\u000A') {
+          if (!found && ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ')) {
             update(u32"6")
             found = T
           }
-          if (!found && c === '\u000D') {
-            update(u32"6")
-            found = T
-          }
-          if (!found && c === ' ') {
-            update(u32"6")
-            found = T
-          }
-          if (!found && c === ':') {
+          if (!found && (c === ':')) {
             update(u32"7")
             found = T
           }
@@ -3231,19 +2937,11 @@ import SireumGrammarParser._
         case u32"7" =>
           val c = cis(j)
           var found = F
-          if (!found && '\u0009' <= c && c <= '\u000A') {
+          if (!found && ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ')) {
             update(u32"7")
             found = T
           }
-          if (!found && c === '\u000D') {
-            update(u32"7")
-            found = T
-          }
-          if (!found && c === ' ') {
-            update(u32"7")
-            found = T
-          }
-          if (!found && c === ':') {
+          if (!found && (c === ':')) {
             update(u32"8")
             found = T
           }
@@ -3253,19 +2951,11 @@ import SireumGrammarParser._
         case u32"8" =>
           val c = cis(j)
           var found = F
-          if (!found && '\u0009' <= c && c <= '\u000A') {
+          if (!found && ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ')) {
             update(u32"8")
             found = T
           }
-          if (!found && c === '\u000D') {
-            update(u32"8")
-            found = T
-          }
-          if (!found && c === ' ') {
-            update(u32"8")
-            found = T
-          }
-          if (!found && c === 'h') {
+          if (!found && (c === 'h')) {
             update(u32"9")
             found = T
           }
@@ -3275,7 +2965,7 @@ import SireumGrammarParser._
         case u32"9" =>
           val c = cis(j)
           var found = F
-          if (!found && c === 'e') {
+          if (!found && (c === 'e')) {
             update(u32"10")
             found = T
           }
@@ -3285,7 +2975,7 @@ import SireumGrammarParser._
         case u32"10" =>
           val c = cis(j)
           var found = F
-          if (!found && c === 'a') {
+          if (!found && (c === 'a')) {
             update(u32"11")
             found = T
           }
@@ -3295,7 +2985,7 @@ import SireumGrammarParser._
         case u32"11" =>
           val c = cis(j)
           var found = F
-          if (!found && c === 'd') {
+          if (!found && (c === 'd')) {
             update(u32"12")
             found = T
           }
@@ -3305,7 +2995,7 @@ import SireumGrammarParser._
         case u32"12" =>
           val c = cis(j)
           var found = F
-          if (!found && c === 'e') {
+          if (!found && (c === 'e')) {
             update(u32"13")
             found = T
           }
@@ -3315,7 +3005,7 @@ import SireumGrammarParser._
         case u32"13" =>
           val c = cis(j)
           var found = F
-          if (!found && c === 'r') {
+          if (!found && (c === 'r')) {
             update(u32"14")
             found = T
           }
@@ -3325,19 +3015,11 @@ import SireumGrammarParser._
         case u32"14" =>
           val c = cis(j)
           var found = F
-          if (!found && '\u0009' <= c && c <= '\u000A') {
+          if (!found && ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ')) {
             update(u32"14")
             found = T
           }
-          if (!found && c === '\u000D') {
-            update(u32"14")
-            found = T
-          }
-          if (!found && c === ' ') {
-            update(u32"14")
-            found = T
-          }
-          if (!found && c === '{') {
+          if (!found && (c === '{')) {
             update(u32"15")
             found = T
           }
@@ -3347,16 +3029,12 @@ import SireumGrammarParser._
         case u32"15" =>
           val c = cis(j)
           var found = F
-          if (!found && minChar <= c && c <= '|') {
+          if (!found && (minChar <= c && c <= '|' || '~' <= c && c <= maxChar)) {
             update(u32"15")
             found = T
           }
-          if (!found && c === '}') {
+          if (!found && (c === '}')) {
             update(u32"16")
-            found = T
-          }
-          if (!found && '~' <= c && c <= maxChar) {
-            update(u32"15")
             found = T
           }
           if (!found) {
@@ -3393,7 +3071,7 @@ import SireumGrammarParser._
         case u32"0" =>
           val c = cis(j)
           var found = F
-          if (!found && c === '/') {
+          if (!found && (c === '/')) {
             update(u32"1")
             found = T
           }
@@ -3403,11 +3081,11 @@ import SireumGrammarParser._
         case u32"1" =>
           val c = cis(j)
           var found = F
-          if (!found && c === '*') {
+          if (!found && (c === '*')) {
             update(u32"2")
             found = T
           }
-          if (!found && c === '/') {
+          if (!found && (c === '/')) {
             update(u32"7")
             found = T
           }
@@ -3417,16 +3095,12 @@ import SireumGrammarParser._
         case u32"2" =>
           val c = cis(j)
           var found = F
-          if (!found && minChar <= c && c <= ')') {
+          if (!found && (minChar <= c && c <= ')' || '+' <= c && c <= maxChar)) {
             update(u32"2")
             found = T
           }
-          if (!found && c === '*') {
+          if (!found && (c === '*')) {
             update(u32"3")
-            found = T
-          }
-          if (!found && '+' <= c && c <= maxChar) {
-            update(u32"2")
             found = T
           }
           if (!found) {
@@ -3435,24 +3109,16 @@ import SireumGrammarParser._
         case u32"3" =>
           val c = cis(j)
           var found = F
-          if (!found && minChar <= c && c <= ')') {
+          if (!found && (minChar <= c && c <= ')' || '+' <= c && c <= '.' || '0' <= c && c <= maxChar)) {
             update(u32"2")
             found = T
           }
-          if (!found && c === '*') {
+          if (!found && (c === '*')) {
             update(u32"4")
             found = T
           }
-          if (!found && '+' <= c && c <= '.') {
-            update(u32"2")
-            found = T
-          }
-          if (!found && c === '/') {
+          if (!found && (c === '/')) {
             update(u32"6")
-            found = T
-          }
-          if (!found && '0' <= c && c <= maxChar) {
-            update(u32"2")
             found = T
           }
           if (!found) {
@@ -3461,24 +3127,16 @@ import SireumGrammarParser._
         case u32"4" =>
           val c = cis(j)
           var found = F
-          if (!found && minChar <= c && c <= ')') {
+          if (!found && (minChar <= c && c <= ')' || '+' <= c && c <= '.' || '0' <= c && c <= maxChar)) {
             update(u32"2")
             found = T
           }
-          if (!found && c === '*') {
+          if (!found && (c === '*')) {
             update(u32"3")
             found = T
           }
-          if (!found && '+' <= c && c <= '.') {
-            update(u32"2")
-            found = T
-          }
-          if (!found && c === '/') {
+          if (!found && (c === '/')) {
             update(u32"5")
-            found = T
-          }
-          if (!found && '0' <= c && c <= maxChar) {
-            update(u32"2")
             found = T
           }
           if (!found) {
@@ -3487,16 +3145,12 @@ import SireumGrammarParser._
         case u32"5" =>
           val c = cis(j)
           var found = F
-          if (!found && minChar <= c && c <= ')') {
+          if (!found && (minChar <= c && c <= ')' || '+' <= c && c <= maxChar)) {
             update(u32"2")
             found = T
           }
-          if (!found && c === '*') {
+          if (!found && (c === '*')) {
             update(u32"3")
-            found = T
-          }
-          if (!found && '+' <= c && c <= maxChar) {
-            update(u32"2")
             found = T
           }
           if (!found) {
@@ -3506,24 +3160,16 @@ import SireumGrammarParser._
         case u32"7" =>
           val c = cis(j)
           var found = F
-          if (!found && minChar <= c && c <= '\u0009') {
+          if (!found && (minChar <= c && c <= '\u0009' || '\u000B' <= c && c <= '\u000C' || '\u000E' <= c && c <= maxChar)) {
             update(u32"7")
             found = T
           }
-          if (!found && c === '\u000A') {
+          if (!found && (c === '\u000A')) {
             update(u32"6")
             found = T
           }
-          if (!found && '\u000B' <= c && c <= '\u000C') {
-            update(u32"7")
-            found = T
-          }
-          if (!found && c === '\u000D') {
+          if (!found && (c === '\u000D')) {
             update(u32"8")
-            found = T
-          }
-          if (!found && '\u000E' <= c && c <= maxChar) {
-            update(u32"7")
             found = T
           }
           if (!found) {
@@ -3532,7 +3178,7 @@ import SireumGrammarParser._
         case u32"8" =>
           val c = cis(j)
           var found = F
-          if (!found && c === '\u000A') {
+          if (!found && (c === '\u000A')) {
             update(u32"6")
             found = T
           }
@@ -3568,15 +3214,7 @@ import SireumGrammarParser._
         case u32"0" =>
           val c = cis(j)
           var found = F
-          if (!found && '\u0009' <= c && c <= '\u000A') {
-            update(u32"1")
-            found = T
-          }
-          if (!found && c === '\u000D') {
-            update(u32"1")
-            found = T
-          }
-          if (!found && c === ' ') {
+          if (!found && ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ')) {
             update(u32"1")
             found = T
           }
@@ -3586,15 +3224,7 @@ import SireumGrammarParser._
         case u32"1" =>
           val c = cis(j)
           var found = F
-          if (!found && '\u0009' <= c && c <= '\u000A') {
-            update(u32"1")
-            found = T
-          }
-          if (!found && c === '\u000D') {
-            update(u32"1")
-            found = T
-          }
-          if (!found && c === ' ') {
+          if (!found && ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ')) {
             update(u32"1")
             found = T
           }
