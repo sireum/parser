@@ -87,7 +87,10 @@ object LookAhead {
     var r = HashSSet.empty[LookAhead.Case]
 
     def rec(state: Z, acc: ISZ[LookAhead.Case.Value]): Unit = {
-      if (dfa.accepting.contains(state) || size + acc.size == k) {
+      if (dfa.accepting.contains(state)) {
+        r = r + LookAhead.Case(acc)
+      }
+      if (size + acc.size == k) {
         r = r + LookAhead.Case(acc)
         return
       }

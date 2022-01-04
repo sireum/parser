@@ -201,10 +201,10 @@ import org.sireum.parser.{GrammarAst => AST}
           val trie = p._2
           val sts = genTries(k, trie)
           parserDefs = parserDefs :+
-            st"""${if (memoize) "@memoize" else "@pure"} def ${predictName(p._1)}(j: Z): B = {
-                |  var shouldTry = F
+            st"""${if (memoize) "@memoize" else "@pure"} def ${predictName(p._1)}(j: Z): Z = {
+                |  var num: Z = 0
                 |  ${(sts, "\n")}
-                |  return shouldTry
+                |  return num
                 |}"""
         }
       }
@@ -363,7 +363,7 @@ import org.sireum.parser.{GrammarAst => AST}
                   if (notFoundOpt.isEmpty) {
                     notFoundOpt = Some(st" if !found")
                   }
-                  val predictOpt: Option[ST] = if (predict) Some(st"${predictName(e.name)}(j) && ") else None()
+                  val predictOpt: Option[ST] = if (predict) Some(st"${predictName(e.name)}(j) > 0 && ") else None()
                   val parsename = parseName(e.name)
                   if (!condDefs.contains(e.name)) {
                     condDefs = condDefs + e.name ~>
@@ -462,17 +462,23 @@ import org.sireum.parser.{GrammarAst => AST}
     def rec(depth: Z, trie: LookAhead.Trie): ST = {
 
       val subs: ISZ[ST] =
-        if (trie.accept || depth >= k) ISZ()
+        if (depth >= k) ISZ()
         else for (sub <- trie.subs.values) yield rec(depth + 1, sub)
       val subsST: ST = if (subs.isEmpty) {
-        st"=> shouldTry = T"
+        st"=> num = $depth"
       } else {
         offs = offs + depth
         val idx = st"j$depth"
         val size = st"off$depth"
+        val acceptOpt: Option[ST] = if (trie.accept) Some(
+          st"""if (num == 0) {
+              |  num = $depth
+              |}"""
+        ) else None()
         st"""${if (depth == 0) st"=>" else st"if $size =>"} tokens($idx).tipe match {
             |  ${(subs, "\n")}
             |  case _ =>
+            |    $acceptOpt
             |}"""
       }
       val cond: ST = trie.value match {
@@ -525,9 +531,6 @@ import org.sireum.parser.{GrammarAst => AST}
             val (lo, hi) = data
             cs = cs :+ (if (lo == hi) st"c === ${c2ST(lo)}" else st"${c2ST(lo)} <= c && c <= ${c2ST(hi)}")
           }
-          if (notFoundOpt.isEmpty) {
-            notFoundOpt = Some(st"!found && ")
-          }
           notFoundOpt match {
             case Some(nf) =>
               conds = conds :+
@@ -537,10 +540,13 @@ import org.sireum.parser.{GrammarAst => AST}
                     |}"""
             case _ =>
               conds = conds :+
-                st"""if ${(cs, " || ")}) {
+                st"""if (${(cs, " || ")}) {
                     |  update(u32"$dest")
                     |  found = T
                     |}"""
+          }
+          if (notFoundOpt.isEmpty) {
+            notFoundOpt = Some(st"!found && ")
           }
         }
       }

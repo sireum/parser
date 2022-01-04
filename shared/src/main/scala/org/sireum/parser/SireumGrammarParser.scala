@@ -241,7 +241,7 @@ import SireumGrammarParser._
         case u32"1" =>
           found = F
           tokens(j).tipe match {
-            case _ if predictId(j) && parseIdH(u32"2") => return Either.Right(failIndex)
+            case _ if predictId(j) > 0 && parseIdH(u32"2") => return Either.Right(failIndex)
             case _ =>
           }
           if (!found) {
@@ -263,7 +263,7 @@ import SireumGrammarParser._
         case u32"3" =>
           found = F
           tokens(j).tipe match {
-            case _ if predictOptionsSpec(j) && parseOptionsSpecH(u32"4") => return Either.Right(failIndex)
+            case _ if predictOptionsSpec(j) > 0 && parseOptionsSpecH(u32"4") => return Either.Right(failIndex)
             case u32"0xEDD2348C" /* PHEADER */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
@@ -274,8 +274,8 @@ import SireumGrammarParser._
               j = j + 1
               update(u32"6")
               found = T
-            case _ if !found && predictParserRule(j) && parseParserRuleH(u32"6") => return Either.Right(failIndex)
-            case _ if !found && predictLexerRule(j) && parseLexerRuleH(u32"7") => return Either.Right(failIndex)
+            case _ if !found && predictParserRule(j) > 0 && parseParserRuleH(u32"6") => return Either.Right(failIndex)
+            case _ if !found && predictLexerRule(j) > 0 && parseLexerRuleH(u32"7") => return Either.Right(failIndex)
             case u32"0xFC5CB374" /* EOF */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
@@ -299,8 +299,8 @@ import SireumGrammarParser._
               j = j + 1
               update(u32"6")
               found = T
-            case _ if !found && predictParserRule(j) && parseParserRuleH(u32"6") => return Either.Right(failIndex)
-            case _ if !found && predictLexerRule(j) && parseLexerRuleH(u32"7") => return Either.Right(failIndex)
+            case _ if !found && predictParserRule(j) > 0 && parseParserRuleH(u32"6") => return Either.Right(failIndex)
+            case _ if !found && predictLexerRule(j) > 0 && parseLexerRuleH(u32"7") => return Either.Right(failIndex)
             case u32"0xFC5CB374" /* EOF */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
@@ -319,8 +319,8 @@ import SireumGrammarParser._
               j = j + 1
               update(u32"6")
               found = T
-            case _ if !found && predictParserRule(j) && parseParserRuleH(u32"6") => return Either.Right(failIndex)
-            case _ if !found && predictLexerRule(j) && parseLexerRuleH(u32"7") => return Either.Right(failIndex)
+            case _ if !found && predictParserRule(j) > 0 && parseParserRuleH(u32"6") => return Either.Right(failIndex)
+            case _ if !found && predictLexerRule(j) > 0 && parseLexerRuleH(u32"7") => return Either.Right(failIndex)
             case u32"0xFC5CB374" /* EOF */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
@@ -334,8 +334,8 @@ import SireumGrammarParser._
         case u32"6" =>
           found = F
           tokens(j).tipe match {
-            case _ if predictParserRule(j) && parseParserRuleH(u32"6") => return Either.Right(failIndex)
-            case _ if !found && predictLexerRule(j) && parseLexerRuleH(u32"7") => return Either.Right(failIndex)
+            case _ if predictParserRule(j) > 0 && parseParserRuleH(u32"6") => return Either.Right(failIndex)
+            case _ if !found && predictLexerRule(j) > 0 && parseLexerRuleH(u32"7") => return Either.Right(failIndex)
             case u32"0xFC5CB374" /* EOF */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
@@ -349,7 +349,7 @@ import SireumGrammarParser._
         case u32"7" =>
           found = F
           tokens(j).tipe match {
-            case _ if predictLexerRule(j) && parseLexerRuleH(u32"7") => return Either.Right(failIndex)
+            case _ if predictLexerRule(j) > 0 && parseLexerRuleH(u32"7") => return Either.Right(failIndex)
             case u32"0xFC5CB374" /* EOF */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
@@ -441,7 +441,7 @@ import SireumGrammarParser._
         case u32"2" =>
           found = F
           tokens(j).tipe match {
-            case _ if predictOption(j) && parseOptionH(u32"3") => return Either.Right(failIndex)
+            case _ if predictOption(j) > 0 && parseOptionH(u32"3") => return Either.Right(failIndex)
             case _ =>
           }
           if (!found) {
@@ -450,7 +450,7 @@ import SireumGrammarParser._
         case u32"3" =>
           found = F
           tokens(j).tipe match {
-            case _ if predictOption(j) && parseOptionH(u32"3") => return Either.Right(failIndex)
+            case _ if predictOption(j) > 0 && parseOptionH(u32"3") => return Either.Right(failIndex)
             case u32"0x5BF60471" /* "}" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
@@ -535,7 +535,7 @@ import SireumGrammarParser._
         case u32"0" =>
           found = F
           tokens(j).tipe match {
-            case _ if predictId(j) && parseIdH(u32"1") => return Either.Right(failIndex)
+            case _ if predictId(j) > 0 && parseIdH(u32"1") => return Either.Right(failIndex)
             case _ =>
           }
           if (!found) {
@@ -557,7 +557,7 @@ import SireumGrammarParser._
         case u32"2" =>
           found = F
           tokens(j).tipe match {
-            case _ if predictOptionValue(j) && parseOptionValueH(u32"3") => return Either.Right(failIndex)
+            case _ if predictOptionValue(j) > 0 && parseOptionValueH(u32"3") => return Either.Right(failIndex)
             case _ =>
           }
           if (!found) {
@@ -631,7 +631,7 @@ import SireumGrammarParser._
         case u32"0" =>
           found = F
           tokens(j).tipe match {
-            case _ if predictId(j) && parseIdH(u32"1") => return Either.Right(failIndex)
+            case _ if predictId(j) > 0 && parseIdH(u32"1") => return Either.Right(failIndex)
             case u32"0x589C233C" /* INT */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
@@ -723,7 +723,7 @@ import SireumGrammarParser._
         case u32"2" =>
           found = F
           tokens(j).tipe match {
-            case _ if predictAlt(j) && parseAltH(u32"3") => return Either.Right(failIndex)
+            case _ if predictAlt(j) > 0 && parseAltH(u32"3") => return Either.Right(failIndex)
             case _ =>
           }
           if (!found) {
@@ -750,7 +750,7 @@ import SireumGrammarParser._
         case u32"4" =>
           found = F
           tokens(j).tipe match {
-            case _ if predictAlt(j) && parseAltH(u32"3") => return Either.Right(failIndex)
+            case _ if predictAlt(j) > 0 && parseAltH(u32"3") => return Either.Right(failIndex)
             case _ =>
           }
           if (!found) {
@@ -874,7 +874,7 @@ import SireumGrammarParser._
         case u32"3" =>
           found = F
           tokens(j).tipe match {
-            case _ if predictAlt(j) && parseAltH(u32"4") => return Either.Right(failIndex)
+            case _ if predictAlt(j) > 0 && parseAltH(u32"4") => return Either.Right(failIndex)
             case _ =>
           }
           if (!found) {
@@ -888,7 +888,7 @@ import SireumGrammarParser._
               j = j + 1
               update(u32"5")
               found = T
-            case _ if !found && predictChannel(j) && parseChannelH(u32"8") => return Either.Right(failIndex)
+            case _ if !found && predictChannel(j) > 0 && parseChannelH(u32"8") => return Either.Right(failIndex)
             case u32"0x36F2899D" /* ";" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
@@ -902,7 +902,7 @@ import SireumGrammarParser._
         case u32"5" =>
           found = F
           tokens(j).tipe match {
-            case _ if predictAlt(j) && parseAltH(u32"6") => return Either.Right(failIndex)
+            case _ if predictAlt(j) > 0 && parseAltH(u32"6") => return Either.Right(failIndex)
             case _ =>
           }
           if (!found) {
@@ -948,7 +948,7 @@ import SireumGrammarParser._
         case u32"9" =>
           found = F
           tokens(j).tipe match {
-            case _ if predictAlt(j) && parseAltH(u32"10") => return Either.Right(failIndex)
+            case _ if predictAlt(j) > 0 && parseAltH(u32"10") => return Either.Right(failIndex)
             case _ =>
           }
           if (!found) {
@@ -957,7 +957,7 @@ import SireumGrammarParser._
         case u32"10" =>
           found = F
           tokens(j).tipe match {
-            case _ if predictChannel(j) && parseChannelH(u32"8") => return Either.Right(failIndex)
+            case _ if predictChannel(j) > 0 && parseChannelH(u32"8") => return Either.Right(failIndex)
             case _ =>
           }
           if (!found) {
@@ -1030,7 +1030,7 @@ import SireumGrammarParser._
         case u32"1" =>
           found = F
           tokens(j).tipe match {
-            case _ if predictAlt(j) && parseAltH(u32"2") => return Either.Right(failIndex)
+            case _ if predictAlt(j) > 0 && parseAltH(u32"2") => return Either.Right(failIndex)
             case _ =>
           }
           if (!found) {
@@ -1057,7 +1057,7 @@ import SireumGrammarParser._
         case u32"3" =>
           found = F
           tokens(j).tipe match {
-            case _ if predictAlt(j) && parseAltH(u32"2") => return Either.Right(failIndex)
+            case _ if predictAlt(j) > 0 && parseAltH(u32"2") => return Either.Right(failIndex)
             case _ =>
           }
           if (!found) {
@@ -1118,7 +1118,7 @@ import SireumGrammarParser._
         case u32"0" =>
           found = F
           tokens(j).tipe match {
-            case _ if predictElement(j) && parseElementH(u32"1") => return Either.Right(failIndex)
+            case _ if predictElement(j) > 0 && parseElementH(u32"1") => return Either.Right(failIndex)
             case _ =>
           }
           if (!found) {
@@ -1127,7 +1127,7 @@ import SireumGrammarParser._
         case u32"1" =>
           found = F
           tokens(j).tipe match {
-            case _ if predictElement(j) && parseElementH(u32"1") => return Either.Right(failIndex)
+            case _ if predictElement(j) > 0 && parseElementH(u32"1") => return Either.Right(failIndex)
             case _ =>
           }
           if (!found) {
@@ -1207,8 +1207,8 @@ import SireumGrammarParser._
         case u32"0" =>
           found = F
           tokens(j).tipe match {
-            case _ if predictAtom(j) && parseAtomH(u32"1") => return Either.Right(failIndex)
-            case _ if !found && predictBlock(j) && parseBlockH(u32"1") => return Either.Right(failIndex)
+            case _ if predictAtom(j) > 0 && parseAtomH(u32"1") => return Either.Right(failIndex)
+            case _ if !found && predictBlock(j) > 0 && parseBlockH(u32"1") => return Either.Right(failIndex)
             case _ =>
           }
           if (!found) {
@@ -1330,9 +1330,9 @@ import SireumGrammarParser._
         case u32"0" =>
           found = F
           tokens(j).tipe match {
-            case _ if predictRange(j) && parseRangeH(u32"1") => return Either.Right(failIndex)
-            case _ if !found && predictTerminal(j) && parseTerminalH(u32"1") => return Either.Right(failIndex)
-            case _ if !found && predictNot(j) && parseNotH(u32"1") => return Either.Right(failIndex)
+            case _ if predictRange(j) > 0 && parseRangeH(u32"1") => return Either.Right(failIndex)
+            case _ if !found && predictTerminal(j) > 0 && parseTerminalH(u32"1") => return Either.Right(failIndex)
+            case _ if !found && predictNot(j) > 0 && parseNotH(u32"1") => return Either.Right(failIndex)
             case u32"0xD2EDBEA1" /* PID */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
@@ -1421,7 +1421,7 @@ import SireumGrammarParser._
               j = j + 1
               update(u32"2")
               found = T
-            case _ if !found && predictBlock(j) && parseBlockH(u32"2") => return Either.Right(failIndex)
+            case _ if !found && predictBlock(j) > 0 && parseBlockH(u32"2") => return Either.Right(failIndex)
             case _ =>
           }
           if (!found) {
@@ -1737,263 +1737,386 @@ import SireumGrammarParser._
     return retVal(j, resOpt, initial, T)
   }
 
-  @pure def predictParserRule(j: Z): B = {
-    var shouldTry = F
+  @pure def predictParserRule(j: Z): Z = {
+    var num: Z = 0
     val j1 = j + 1
     val off1 = j1 < tokens.size
     tokens(j).tipe match {
       case u32"0xD2EDBEA1" /* PID */ if off1 => tokens(j1).tipe match {
-        case u32"0x763C38BE" /* ":" */ => shouldTry = T
+        case u32"0x763C38BE" /* ":" */ => num = 2
         case _ =>
       }
       case _ =>
     }
-    return shouldTry
+    return num
   }
 
-  @pure def predictAtom(j: Z): B = {
-    var shouldTry = F
-    val j1 = j + 1
-    val off1 = j1 < tokens.size
-    tokens(j).tipe match {
-      case u32"0xE95F063A" /* CHAR */ => shouldTry = T
-      case u32"0x8E18F45B" /* LID */ => shouldTry = T
-      case u32"0xA7CF0FE0" /* STRING */ => shouldTry = T
-      case u32"0x6890427A" /* "." */ => shouldTry = T
-      case u32"0xAAB7E55C" /* "~" */ if off1 => tokens(j1).tipe match {
-        case u32"0xE95F063A" /* CHAR */ => shouldTry = T
-        case u32"0xA7CF0FE0" /* STRING */ => shouldTry = T
-        case u32"0x71F6371D" /* "(" */ => shouldTry = T
-        case _ =>
-      }
-      case u32"0xD2EDBEA1" /* PID */ => shouldTry = T
-      case _ =>
-    }
-    return shouldTry
-  }
-
-  @pure def predictOptionsSpec(j: Z): B = {
-    var shouldTry = F
-    val j1 = j + 1
-    val off1 = j1 < tokens.size
-    tokens(j).tipe match {
-      case u32"0xED16D169" /* "options" */ if off1 => tokens(j1).tipe match {
-        case u32"0xFDCE65E5" /* "{" */ => shouldTry = T
-        case _ =>
-      }
-      case _ =>
-    }
-    return shouldTry
-  }
-
-  @pure def predictAlt(j: Z): B = {
-    var shouldTry = F
-    val j1 = j + 1
-    val off1 = j1 < tokens.size
-    tokens(j).tipe match {
-      case u32"0xE95F063A" /* CHAR */ => shouldTry = T
-      case u32"0x8E18F45B" /* LID */ => shouldTry = T
-      case u32"0xA7CF0FE0" /* STRING */ => shouldTry = T
-      case u32"0x6890427A" /* "." */ => shouldTry = T
-      case u32"0xAAB7E55C" /* "~" */ if off1 => tokens(j1).tipe match {
-        case u32"0xE95F063A" /* CHAR */ => shouldTry = T
-        case u32"0xA7CF0FE0" /* STRING */ => shouldTry = T
-        case u32"0x71F6371D" /* "(" */ => shouldTry = T
-        case _ =>
-      }
-      case u32"0xD2EDBEA1" /* PID */ => shouldTry = T
-      case u32"0x71F6371D" /* "(" */ if off1 => tokens(j1).tipe match {
-        case u32"0xE95F063A" /* CHAR */ => shouldTry = T
-        case u32"0x8E18F45B" /* LID */ => shouldTry = T
-        case u32"0xA7CF0FE0" /* STRING */ => shouldTry = T
-        case u32"0x6890427A" /* "." */ => shouldTry = T
-        case u32"0xAAB7E55C" /* "~" */ => shouldTry = T
-        case u32"0xD2EDBEA1" /* PID */ => shouldTry = T
-        case u32"0x71F6371D" /* "(" */ => shouldTry = T
-        case _ =>
-      }
-      case _ =>
-    }
-    return shouldTry
-  }
-
-  @pure def predictTerminal(j: Z): B = {
-    var shouldTry = F
-    tokens(j).tipe match {
-      case u32"0x8E18F45B" /* LID */ => shouldTry = T
-      case u32"0xE95F063A" /* CHAR */ => shouldTry = T
-      case u32"0xA7CF0FE0" /* STRING */ => shouldTry = T
-      case u32"0x6890427A" /* "." */ => shouldTry = T
-      case _ =>
-    }
-    return shouldTry
-  }
-
-  @pure def predictLexerRule(j: Z): B = {
-    var shouldTry = F
-    val j1 = j + 1
-    val off1 = j1 < tokens.size
-    tokens(j).tipe match {
-      case u32"0x072BDD2B" /* "fragment" */ if off1 => tokens(j1).tipe match {
-        case u32"0x8E18F45B" /* LID */ => shouldTry = T
-        case _ =>
-      }
-      case u32"0x8E18F45B" /* LID */ if off1 => tokens(j1).tipe match {
-        case u32"0x763C38BE" /* ":" */ => shouldTry = T
-        case _ =>
-      }
-      case _ =>
-    }
-    return shouldTry
-  }
-
-  @pure def predictElement(j: Z): B = {
-    var shouldTry = F
-    val j1 = j + 1
-    val off1 = j1 < tokens.size
-    tokens(j).tipe match {
-      case u32"0xE95F063A" /* CHAR */ => shouldTry = T
-      case u32"0x8E18F45B" /* LID */ => shouldTry = T
-      case u32"0xA7CF0FE0" /* STRING */ => shouldTry = T
-      case u32"0x6890427A" /* "." */ => shouldTry = T
-      case u32"0xAAB7E55C" /* "~" */ if off1 => tokens(j1).tipe match {
-        case u32"0xE95F063A" /* CHAR */ => shouldTry = T
-        case u32"0xA7CF0FE0" /* STRING */ => shouldTry = T
-        case u32"0x71F6371D" /* "(" */ => shouldTry = T
-        case _ =>
-      }
-      case u32"0xD2EDBEA1" /* PID */ => shouldTry = T
-      case u32"0x71F6371D" /* "(" */ if off1 => tokens(j1).tipe match {
-        case u32"0xE95F063A" /* CHAR */ => shouldTry = T
-        case u32"0x8E18F45B" /* LID */ => shouldTry = T
-        case u32"0xA7CF0FE0" /* STRING */ => shouldTry = T
-        case u32"0x6890427A" /* "." */ => shouldTry = T
-        case u32"0xAAB7E55C" /* "~" */ => shouldTry = T
-        case u32"0xD2EDBEA1" /* PID */ => shouldTry = T
-        case u32"0x71F6371D" /* "(" */ => shouldTry = T
-        case _ =>
-      }
-      case _ =>
-    }
-    return shouldTry
-  }
-
-  @pure def predictChannel(j: Z): B = {
-    var shouldTry = F
-    val j1 = j + 1
-    val off1 = j1 < tokens.size
-    tokens(j).tipe match {
-      case u32"0xFDCE65E5" /* "{" */ if off1 => tokens(j1).tipe match {
-        case u32"0x46562B21" /* "$channel" */ => shouldTry = T
-        case _ =>
-      }
-      case _ =>
-    }
-    return shouldTry
-  }
-
-  @pure def predictOption(j: Z): B = {
-    var shouldTry = F
-    val j1 = j + 1
-    val off1 = j1 < tokens.size
-    tokens(j).tipe match {
-      case u32"0x8E18F45B" /* LID */ if off1 => tokens(j1).tipe match {
-        case u32"0xEF954474" /* "=" */ => shouldTry = T
-        case _ =>
-      }
-      case u32"0xD2EDBEA1" /* PID */ if off1 => tokens(j1).tipe match {
-        case u32"0xEF954474" /* "=" */ => shouldTry = T
-        case _ =>
-      }
-      case _ =>
-    }
-    return shouldTry
-  }
-
-  @pure def predictOptionValue(j: Z): B = {
-    var shouldTry = F
-    tokens(j).tipe match {
-      case u32"0x8E18F45B" /* LID */ => shouldTry = T
-      case u32"0xD2EDBEA1" /* PID */ => shouldTry = T
-      case u32"0x589C233C" /* INT */ => shouldTry = T
-      case _ =>
-    }
-    return shouldTry
-  }
-
-  @pure def predictBlock(j: Z): B = {
-    var shouldTry = F
-    val j1 = j + 1
-    val off1 = j1 < tokens.size
-    tokens(j).tipe match {
-      case u32"0x71F6371D" /* "(" */ if off1 => tokens(j1).tipe match {
-        case u32"0xE95F063A" /* CHAR */ => shouldTry = T
-        case u32"0x8E18F45B" /* LID */ => shouldTry = T
-        case u32"0xA7CF0FE0" /* STRING */ => shouldTry = T
-        case u32"0x6890427A" /* "." */ => shouldTry = T
-        case u32"0xAAB7E55C" /* "~" */ => shouldTry = T
-        case u32"0xD2EDBEA1" /* PID */ => shouldTry = T
-        case u32"0x71F6371D" /* "(" */ => shouldTry = T
-        case _ =>
-      }
-      case _ =>
-    }
-    return shouldTry
-  }
-
-  @pure def predictGrammarDef(j: Z): B = {
-    var shouldTry = F
-    val j1 = j + 1
-    val off1 = j1 < tokens.size
-    tokens(j).tipe match {
-      case u32"0xAEB64436" /* "grammar" */ if off1 => tokens(j1).tipe match {
-        case u32"0x8E18F45B" /* LID */ => shouldTry = T
-        case u32"0xD2EDBEA1" /* PID */ => shouldTry = T
-        case _ =>
-      }
-      case _ =>
-    }
-    return shouldTry
-  }
-
-  @pure def predictRange(j: Z): B = {
-    var shouldTry = F
+  @pure def predictAtom(j: Z): Z = {
+    var num: Z = 0
     val j1 = j + 1
     val off1 = j1 < tokens.size
     tokens(j).tipe match {
       case u32"0xE95F063A" /* CHAR */ if off1 => tokens(j1).tipe match {
-        case u32"0x3A15194D" /* ".." */ => shouldTry = T
+        case u32"0x3A15194D" /* ".." */ => num = 2
+        case _ =>
+          if (num == 0) {
+            num = 1
+          }
+      }
+      case u32"0x8E18F45B" /* LID */ => num = 1
+      case u32"0xA7CF0FE0" /* STRING */ => num = 1
+      case u32"0x6890427A" /* "." */ => num = 1
+      case u32"0xAAB7E55C" /* "~" */ if off1 => tokens(j1).tipe match {
+        case u32"0xE95F063A" /* CHAR */ => num = 2
+        case u32"0xA7CF0FE0" /* STRING */ => num = 2
+        case u32"0x71F6371D" /* "(" */ => num = 2
+        case _ =>
+      }
+      case u32"0xD2EDBEA1" /* PID */ => num = 1
+      case _ =>
+    }
+    return num
+  }
+
+  @pure def predictOptionsSpec(j: Z): Z = {
+    var num: Z = 0
+    val j1 = j + 1
+    val off1 = j1 < tokens.size
+    tokens(j).tipe match {
+      case u32"0xED16D169" /* "options" */ if off1 => tokens(j1).tipe match {
+        case u32"0xFDCE65E5" /* "{" */ => num = 2
         case _ =>
       }
       case _ =>
     }
-    return shouldTry
+    return num
   }
 
-  @pure def predictId(j: Z): B = {
-    var shouldTry = F
+  @pure def predictAlt(j: Z): Z = {
+    var num: Z = 0
+    val j1 = j + 1
+    val off1 = j1 < tokens.size
     tokens(j).tipe match {
-      case u32"0x8E18F45B" /* LID */ => shouldTry = T
-      case u32"0xD2EDBEA1" /* PID */ => shouldTry = T
+      case u32"0xE95F063A" /* CHAR */ if off1 => tokens(j1).tipe match {
+        case u32"0x3A15194D" /* ".." */ => num = 2
+        case u32"0xE95F063A" /* CHAR */ => num = 2
+        case u32"0x8E18F45B" /* LID */ => num = 2
+        case u32"0xA7CF0FE0" /* STRING */ => num = 2
+        case u32"0x6890427A" /* "." */ => num = 2
+        case u32"0xAAB7E55C" /* "~" */ => num = 2
+        case u32"0xD2EDBEA1" /* PID */ => num = 2
+        case u32"0x71F6371D" /* "(" */ => num = 2
+        case u32"0xD827FEB7" /* "?" */ => num = 2
+        case u32"0x82283B4B" /* "*" */ => num = 2
+        case u32"0x797D7BC8" /* "+" */ => num = 2
+        case _ =>
+          if (num == 0) {
+            num = 1
+          }
+      }
+      case u32"0x8E18F45B" /* LID */ if off1 => tokens(j1).tipe match {
+        case u32"0xE95F063A" /* CHAR */ => num = 2
+        case u32"0x8E18F45B" /* LID */ => num = 2
+        case u32"0xA7CF0FE0" /* STRING */ => num = 2
+        case u32"0x6890427A" /* "." */ => num = 2
+        case u32"0xAAB7E55C" /* "~" */ => num = 2
+        case u32"0xD2EDBEA1" /* PID */ => num = 2
+        case u32"0x71F6371D" /* "(" */ => num = 2
+        case u32"0xD827FEB7" /* "?" */ => num = 2
+        case u32"0x82283B4B" /* "*" */ => num = 2
+        case u32"0x797D7BC8" /* "+" */ => num = 2
+        case _ =>
+          if (num == 0) {
+            num = 1
+          }
+      }
+      case u32"0xA7CF0FE0" /* STRING */ if off1 => tokens(j1).tipe match {
+        case u32"0xE95F063A" /* CHAR */ => num = 2
+        case u32"0x8E18F45B" /* LID */ => num = 2
+        case u32"0xA7CF0FE0" /* STRING */ => num = 2
+        case u32"0x6890427A" /* "." */ => num = 2
+        case u32"0xAAB7E55C" /* "~" */ => num = 2
+        case u32"0xD2EDBEA1" /* PID */ => num = 2
+        case u32"0x71F6371D" /* "(" */ => num = 2
+        case u32"0xD827FEB7" /* "?" */ => num = 2
+        case u32"0x82283B4B" /* "*" */ => num = 2
+        case u32"0x797D7BC8" /* "+" */ => num = 2
+        case _ =>
+          if (num == 0) {
+            num = 1
+          }
+      }
+      case u32"0x6890427A" /* "." */ if off1 => tokens(j1).tipe match {
+        case u32"0xE95F063A" /* CHAR */ => num = 2
+        case u32"0x8E18F45B" /* LID */ => num = 2
+        case u32"0xA7CF0FE0" /* STRING */ => num = 2
+        case u32"0x6890427A" /* "." */ => num = 2
+        case u32"0xAAB7E55C" /* "~" */ => num = 2
+        case u32"0xD2EDBEA1" /* PID */ => num = 2
+        case u32"0x71F6371D" /* "(" */ => num = 2
+        case u32"0xD827FEB7" /* "?" */ => num = 2
+        case u32"0x82283B4B" /* "*" */ => num = 2
+        case u32"0x797D7BC8" /* "+" */ => num = 2
+        case _ =>
+          if (num == 0) {
+            num = 1
+          }
+      }
+      case u32"0xAAB7E55C" /* "~" */ if off1 => tokens(j1).tipe match {
+        case u32"0xE95F063A" /* CHAR */ => num = 2
+        case u32"0xA7CF0FE0" /* STRING */ => num = 2
+        case u32"0x71F6371D" /* "(" */ => num = 2
+        case _ =>
+      }
+      case u32"0xD2EDBEA1" /* PID */ if off1 => tokens(j1).tipe match {
+        case u32"0xE95F063A" /* CHAR */ => num = 2
+        case u32"0x8E18F45B" /* LID */ => num = 2
+        case u32"0xA7CF0FE0" /* STRING */ => num = 2
+        case u32"0x6890427A" /* "." */ => num = 2
+        case u32"0xAAB7E55C" /* "~" */ => num = 2
+        case u32"0xD2EDBEA1" /* PID */ => num = 2
+        case u32"0x71F6371D" /* "(" */ => num = 2
+        case u32"0xD827FEB7" /* "?" */ => num = 2
+        case u32"0x82283B4B" /* "*" */ => num = 2
+        case u32"0x797D7BC8" /* "+" */ => num = 2
+        case _ =>
+          if (num == 0) {
+            num = 1
+          }
+      }
+      case u32"0x71F6371D" /* "(" */ if off1 => tokens(j1).tipe match {
+        case u32"0xE95F063A" /* CHAR */ => num = 2
+        case u32"0x8E18F45B" /* LID */ => num = 2
+        case u32"0xA7CF0FE0" /* STRING */ => num = 2
+        case u32"0x6890427A" /* "." */ => num = 2
+        case u32"0xAAB7E55C" /* "~" */ => num = 2
+        case u32"0xD2EDBEA1" /* PID */ => num = 2
+        case u32"0x71F6371D" /* "(" */ => num = 2
+        case _ =>
+      }
       case _ =>
     }
-    return shouldTry
+    return num
   }
 
-  @pure def predictNot(j: Z): B = {
-    var shouldTry = F
+  @pure def predictTerminal(j: Z): Z = {
+    var num: Z = 0
+    tokens(j).tipe match {
+      case u32"0x8E18F45B" /* LID */ => num = 1
+      case u32"0xE95F063A" /* CHAR */ => num = 1
+      case u32"0xA7CF0FE0" /* STRING */ => num = 1
+      case u32"0x6890427A" /* "." */ => num = 1
+      case _ =>
+    }
+    return num
+  }
+
+  @pure def predictLexerRule(j: Z): Z = {
+    var num: Z = 0
+    val j1 = j + 1
+    val off1 = j1 < tokens.size
+    tokens(j).tipe match {
+      case u32"0x072BDD2B" /* "fragment" */ if off1 => tokens(j1).tipe match {
+        case u32"0x8E18F45B" /* LID */ => num = 2
+        case _ =>
+      }
+      case u32"0x8E18F45B" /* LID */ if off1 => tokens(j1).tipe match {
+        case u32"0x763C38BE" /* ":" */ => num = 2
+        case _ =>
+      }
+      case _ =>
+    }
+    return num
+  }
+
+  @pure def predictElement(j: Z): Z = {
+    var num: Z = 0
+    val j1 = j + 1
+    val off1 = j1 < tokens.size
+    tokens(j).tipe match {
+      case u32"0xE95F063A" /* CHAR */ if off1 => tokens(j1).tipe match {
+        case u32"0x3A15194D" /* ".." */ => num = 2
+        case u32"0xD827FEB7" /* "?" */ => num = 2
+        case u32"0x82283B4B" /* "*" */ => num = 2
+        case u32"0x797D7BC8" /* "+" */ => num = 2
+        case _ =>
+          if (num == 0) {
+            num = 1
+          }
+      }
+      case u32"0x8E18F45B" /* LID */ if off1 => tokens(j1).tipe match {
+        case u32"0xD827FEB7" /* "?" */ => num = 2
+        case u32"0x82283B4B" /* "*" */ => num = 2
+        case u32"0x797D7BC8" /* "+" */ => num = 2
+        case _ =>
+          if (num == 0) {
+            num = 1
+          }
+      }
+      case u32"0xA7CF0FE0" /* STRING */ if off1 => tokens(j1).tipe match {
+        case u32"0xD827FEB7" /* "?" */ => num = 2
+        case u32"0x82283B4B" /* "*" */ => num = 2
+        case u32"0x797D7BC8" /* "+" */ => num = 2
+        case _ =>
+          if (num == 0) {
+            num = 1
+          }
+      }
+      case u32"0x6890427A" /* "." */ if off1 => tokens(j1).tipe match {
+        case u32"0xD827FEB7" /* "?" */ => num = 2
+        case u32"0x82283B4B" /* "*" */ => num = 2
+        case u32"0x797D7BC8" /* "+" */ => num = 2
+        case _ =>
+          if (num == 0) {
+            num = 1
+          }
+      }
+      case u32"0xAAB7E55C" /* "~" */ if off1 => tokens(j1).tipe match {
+        case u32"0xE95F063A" /* CHAR */ => num = 2
+        case u32"0xA7CF0FE0" /* STRING */ => num = 2
+        case u32"0x71F6371D" /* "(" */ => num = 2
+        case _ =>
+      }
+      case u32"0xD2EDBEA1" /* PID */ if off1 => tokens(j1).tipe match {
+        case u32"0xD827FEB7" /* "?" */ => num = 2
+        case u32"0x82283B4B" /* "*" */ => num = 2
+        case u32"0x797D7BC8" /* "+" */ => num = 2
+        case _ =>
+          if (num == 0) {
+            num = 1
+          }
+      }
+      case u32"0x71F6371D" /* "(" */ if off1 => tokens(j1).tipe match {
+        case u32"0xE95F063A" /* CHAR */ => num = 2
+        case u32"0x8E18F45B" /* LID */ => num = 2
+        case u32"0xA7CF0FE0" /* STRING */ => num = 2
+        case u32"0x6890427A" /* "." */ => num = 2
+        case u32"0xAAB7E55C" /* "~" */ => num = 2
+        case u32"0xD2EDBEA1" /* PID */ => num = 2
+        case u32"0x71F6371D" /* "(" */ => num = 2
+        case _ =>
+      }
+      case _ =>
+    }
+    return num
+  }
+
+  @pure def predictChannel(j: Z): Z = {
+    var num: Z = 0
+    val j1 = j + 1
+    val off1 = j1 < tokens.size
+    tokens(j).tipe match {
+      case u32"0xFDCE65E5" /* "{" */ if off1 => tokens(j1).tipe match {
+        case u32"0x46562B21" /* "$channel" */ => num = 2
+        case _ =>
+      }
+      case _ =>
+    }
+    return num
+  }
+
+  @pure def predictOption(j: Z): Z = {
+    var num: Z = 0
+    val j1 = j + 1
+    val off1 = j1 < tokens.size
+    tokens(j).tipe match {
+      case u32"0x8E18F45B" /* LID */ if off1 => tokens(j1).tipe match {
+        case u32"0xEF954474" /* "=" */ => num = 2
+        case _ =>
+      }
+      case u32"0xD2EDBEA1" /* PID */ if off1 => tokens(j1).tipe match {
+        case u32"0xEF954474" /* "=" */ => num = 2
+        case _ =>
+      }
+      case _ =>
+    }
+    return num
+  }
+
+  @pure def predictOptionValue(j: Z): Z = {
+    var num: Z = 0
+    tokens(j).tipe match {
+      case u32"0x8E18F45B" /* LID */ => num = 1
+      case u32"0xD2EDBEA1" /* PID */ => num = 1
+      case u32"0x589C233C" /* INT */ => num = 1
+      case _ =>
+    }
+    return num
+  }
+
+  @pure def predictBlock(j: Z): Z = {
+    var num: Z = 0
+    val j1 = j + 1
+    val off1 = j1 < tokens.size
+    tokens(j).tipe match {
+      case u32"0x71F6371D" /* "(" */ if off1 => tokens(j1).tipe match {
+        case u32"0xE95F063A" /* CHAR */ => num = 2
+        case u32"0x8E18F45B" /* LID */ => num = 2
+        case u32"0xA7CF0FE0" /* STRING */ => num = 2
+        case u32"0x6890427A" /* "." */ => num = 2
+        case u32"0xAAB7E55C" /* "~" */ => num = 2
+        case u32"0xD2EDBEA1" /* PID */ => num = 2
+        case u32"0x71F6371D" /* "(" */ => num = 2
+        case _ =>
+      }
+      case _ =>
+    }
+    return num
+  }
+
+  @pure def predictGrammarDef(j: Z): Z = {
+    var num: Z = 0
+    val j1 = j + 1
+    val off1 = j1 < tokens.size
+    tokens(j).tipe match {
+      case u32"0xAEB64436" /* "grammar" */ if off1 => tokens(j1).tipe match {
+        case u32"0x8E18F45B" /* LID */ => num = 2
+        case u32"0xD2EDBEA1" /* PID */ => num = 2
+        case _ =>
+      }
+      case _ =>
+    }
+    return num
+  }
+
+  @pure def predictRange(j: Z): Z = {
+    var num: Z = 0
+    val j1 = j + 1
+    val off1 = j1 < tokens.size
+    tokens(j).tipe match {
+      case u32"0xE95F063A" /* CHAR */ if off1 => tokens(j1).tipe match {
+        case u32"0x3A15194D" /* ".." */ => num = 2
+        case _ =>
+      }
+      case _ =>
+    }
+    return num
+  }
+
+  @pure def predictId(j: Z): Z = {
+    var num: Z = 0
+    tokens(j).tipe match {
+      case u32"0x8E18F45B" /* LID */ => num = 1
+      case u32"0xD2EDBEA1" /* PID */ => num = 1
+      case _ =>
+    }
+    return num
+  }
+
+  @pure def predictNot(j: Z): Z = {
+    var num: Z = 0
     val j1 = j + 1
     val off1 = j1 < tokens.size
     tokens(j).tipe match {
       case u32"0xAAB7E55C" /* "~" */ if off1 => tokens(j1).tipe match {
-        case u32"0xE95F063A" /* CHAR */ => shouldTry = T
-        case u32"0xA7CF0FE0" /* STRING */ => shouldTry = T
-        case u32"0x71F6371D" /* "(" */ => shouldTry = T
+        case u32"0xE95F063A" /* CHAR */ => num = 2
+        case u32"0xA7CF0FE0" /* STRING */ => num = 2
+        case u32"0x71F6371D" /* "(" */ => num = 2
         case _ =>
       }
       case _ =>
     }
-    return shouldTry
+    return num
   }
 
   def retVal(n: Z, resOpt: Option[Result], initial: B, noBacktrack: B): Either[Result, Z] = {
@@ -2286,7 +2409,7 @@ import SireumGrammarParser._
         case u32"0" =>
           val c = cis(j)
           var found = F
-          if (!found && (c === '\'')) {
+          if (c === '\'') {
             update(u32"1")
             found = T
           }
@@ -2296,7 +2419,7 @@ import SireumGrammarParser._
         case u32"1" =>
           val c = cis(j)
           var found = F
-          if (!found && (minChar <= c && c <= '&' || '(' <= c && c <= '[' || ']' <= c && c <= maxChar)) {
+          if (minChar <= c && c <= '&' || '(' <= c && c <= '[' || ']' <= c && c <= maxChar) {
             update(u32"2")
             found = T
           }
@@ -2310,7 +2433,7 @@ import SireumGrammarParser._
         case u32"2" =>
           val c = cis(j)
           var found = F
-          if (!found && (c === '\'')) {
+          if (c === '\'') {
             update(u32"3")
             found = T
           }
@@ -2321,7 +2444,7 @@ import SireumGrammarParser._
         case u32"4" =>
           val c = cis(j)
           var found = F
-          if (!found && (c === '"' || c === '\'' || c === '\\' || c === 'b' || c === 'f' || c === 'n' || c === 'r' || c === 't')) {
+          if (c === '"' || c === '\'' || c === '\\' || c === 'b' || c === 'f' || c === 'n' || c === 'r' || c === 't') {
             update(u32"2")
             found = T
           }
@@ -2335,7 +2458,7 @@ import SireumGrammarParser._
         case u32"5" =>
           val c = cis(j)
           var found = F
-          if (!found && ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f')) {
+          if ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f') {
             update(u32"6")
             found = T
           }
@@ -2345,7 +2468,7 @@ import SireumGrammarParser._
         case u32"6" =>
           val c = cis(j)
           var found = F
-          if (!found && ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f')) {
+          if ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f') {
             update(u32"7")
             found = T
           }
@@ -2355,7 +2478,7 @@ import SireumGrammarParser._
         case u32"7" =>
           val c = cis(j)
           var found = F
-          if (!found && ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f')) {
+          if ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f') {
             update(u32"8")
             found = T
           }
@@ -2365,7 +2488,7 @@ import SireumGrammarParser._
         case u32"8" =>
           val c = cis(j)
           var found = F
-          if (!found && ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f')) {
+          if ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f') {
             update(u32"2")
             found = T
           }
@@ -2401,7 +2524,7 @@ import SireumGrammarParser._
         case u32"0" =>
           val c = cis(j)
           var found = F
-          if (!found && (c === '\'')) {
+          if (c === '\'') {
             update(u32"1")
             found = T
           }
@@ -2411,7 +2534,7 @@ import SireumGrammarParser._
         case u32"1" =>
           val c = cis(j)
           var found = F
-          if (!found && (minChar <= c && c <= '&' || '(' <= c && c <= '[' || ']' <= c && c <= maxChar)) {
+          if (minChar <= c && c <= '&' || '(' <= c && c <= '[' || ']' <= c && c <= maxChar) {
             update(u32"2")
             found = T
           }
@@ -2425,7 +2548,7 @@ import SireumGrammarParser._
         case u32"2" =>
           val c = cis(j)
           var found = F
-          if (!found && (minChar <= c && c <= '&' || '(' <= c && c <= '[' || ']' <= c && c <= maxChar)) {
+          if (minChar <= c && c <= '&' || '(' <= c && c <= '[' || ']' <= c && c <= maxChar) {
             update(u32"3")
             found = T
           }
@@ -2439,7 +2562,7 @@ import SireumGrammarParser._
         case u32"3" =>
           val c = cis(j)
           var found = F
-          if (!found && (minChar <= c && c <= '&' || '(' <= c && c <= '[' || ']' <= c && c <= maxChar)) {
+          if (minChar <= c && c <= '&' || '(' <= c && c <= '[' || ']' <= c && c <= maxChar) {
             update(u32"3")
             found = T
           }
@@ -2458,7 +2581,7 @@ import SireumGrammarParser._
         case u32"5" =>
           val c = cis(j)
           var found = F
-          if (!found && (c === '"' || c === '\'' || c === '\\' || c === 'b' || c === 'f' || c === 'n' || c === 'r' || c === 't')) {
+          if (c === '"' || c === '\'' || c === '\\' || c === 'b' || c === 'f' || c === 'n' || c === 'r' || c === 't') {
             update(u32"3")
             found = T
           }
@@ -2472,7 +2595,7 @@ import SireumGrammarParser._
         case u32"6" =>
           val c = cis(j)
           var found = F
-          if (!found && ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f')) {
+          if ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f') {
             update(u32"7")
             found = T
           }
@@ -2482,7 +2605,7 @@ import SireumGrammarParser._
         case u32"7" =>
           val c = cis(j)
           var found = F
-          if (!found && ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f')) {
+          if ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f') {
             update(u32"8")
             found = T
           }
@@ -2492,7 +2615,7 @@ import SireumGrammarParser._
         case u32"8" =>
           val c = cis(j)
           var found = F
-          if (!found && ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f')) {
+          if ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f') {
             update(u32"9")
             found = T
           }
@@ -2502,7 +2625,7 @@ import SireumGrammarParser._
         case u32"9" =>
           val c = cis(j)
           var found = F
-          if (!found && ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f')) {
+          if ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f') {
             update(u32"3")
             found = T
           }
@@ -2512,7 +2635,7 @@ import SireumGrammarParser._
         case u32"10" =>
           val c = cis(j)
           var found = F
-          if (!found && (c === '"' || c === '\'' || c === '\\' || c === 'b' || c === 'f' || c === 'n' || c === 'r' || c === 't')) {
+          if (c === '"' || c === '\'' || c === '\\' || c === 'b' || c === 'f' || c === 'n' || c === 'r' || c === 't') {
             update(u32"2")
             found = T
           }
@@ -2526,7 +2649,7 @@ import SireumGrammarParser._
         case u32"11" =>
           val c = cis(j)
           var found = F
-          if (!found && ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f')) {
+          if ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f') {
             update(u32"12")
             found = T
           }
@@ -2536,7 +2659,7 @@ import SireumGrammarParser._
         case u32"12" =>
           val c = cis(j)
           var found = F
-          if (!found && ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f')) {
+          if ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f') {
             update(u32"13")
             found = T
           }
@@ -2546,7 +2669,7 @@ import SireumGrammarParser._
         case u32"13" =>
           val c = cis(j)
           var found = F
-          if (!found && ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f')) {
+          if ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f') {
             update(u32"14")
             found = T
           }
@@ -2556,7 +2679,7 @@ import SireumGrammarParser._
         case u32"14" =>
           val c = cis(j)
           var found = F
-          if (!found && ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f')) {
+          if ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f') {
             update(u32"2")
             found = T
           }
@@ -2592,7 +2715,7 @@ import SireumGrammarParser._
         case u32"0" =>
           val c = cis(j)
           var found = F
-          if (!found && ('1' <= c && c <= '9')) {
+          if ('1' <= c && c <= '9') {
             update(u32"1")
             found = T
           }
@@ -2602,7 +2725,7 @@ import SireumGrammarParser._
         case u32"1" =>
           val c = cis(j)
           var found = F
-          if (!found && ('0' <= c && c <= '9')) {
+          if ('0' <= c && c <= '9') {
             update(u32"1")
             found = T
           }
@@ -2638,7 +2761,7 @@ import SireumGrammarParser._
         case u32"0" =>
           val c = cis(j)
           var found = F
-          if (!found && ('A' <= c && c <= 'Z')) {
+          if ('A' <= c && c <= 'Z') {
             update(u32"1")
             found = T
           }
@@ -2648,7 +2771,7 @@ import SireumGrammarParser._
         case u32"1" =>
           val c = cis(j)
           var found = F
-          if (!found && ('0' <= c && c <= '9' || 'A' <= c && c <= 'Z' || c === '_' || 'a' <= c && c <= 'z')) {
+          if ('0' <= c && c <= '9' || 'A' <= c && c <= 'Z' || c === '_' || 'a' <= c && c <= 'z') {
             update(u32"1")
             found = T
           }
@@ -2684,7 +2807,7 @@ import SireumGrammarParser._
         case u32"0" =>
           val c = cis(j)
           var found = F
-          if (!found && ('a' <= c && c <= 'z')) {
+          if ('a' <= c && c <= 'z') {
             update(u32"1")
             found = T
           }
@@ -2694,7 +2817,7 @@ import SireumGrammarParser._
         case u32"1" =>
           val c = cis(j)
           var found = F
-          if (!found && ('0' <= c && c <= '9' || 'A' <= c && c <= 'Z' || c === '_' || 'a' <= c && c <= 'z')) {
+          if ('0' <= c && c <= '9' || 'A' <= c && c <= 'Z' || c === '_' || 'a' <= c && c <= 'z') {
             update(u32"1")
             found = T
           }
@@ -2730,7 +2853,7 @@ import SireumGrammarParser._
         case u32"0" =>
           val c = cis(j)
           var found = F
-          if (!found && (c === '@')) {
+          if (c === '@') {
             update(u32"1")
             found = T
           }
@@ -2740,7 +2863,7 @@ import SireumGrammarParser._
         case u32"1" =>
           val c = cis(j)
           var found = F
-          if (!found && ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ')) {
+          if ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ') {
             update(u32"1")
             found = T
           }
@@ -2754,7 +2877,7 @@ import SireumGrammarParser._
         case u32"2" =>
           val c = cis(j)
           var found = F
-          if (!found && (c === 'e')) {
+          if (c === 'e') {
             update(u32"3")
             found = T
           }
@@ -2764,7 +2887,7 @@ import SireumGrammarParser._
         case u32"3" =>
           val c = cis(j)
           var found = F
-          if (!found && (c === 'a')) {
+          if (c === 'a') {
             update(u32"4")
             found = T
           }
@@ -2774,7 +2897,7 @@ import SireumGrammarParser._
         case u32"4" =>
           val c = cis(j)
           var found = F
-          if (!found && (c === 'd')) {
+          if (c === 'd') {
             update(u32"5")
             found = T
           }
@@ -2784,7 +2907,7 @@ import SireumGrammarParser._
         case u32"5" =>
           val c = cis(j)
           var found = F
-          if (!found && (c === 'e')) {
+          if (c === 'e') {
             update(u32"6")
             found = T
           }
@@ -2794,7 +2917,7 @@ import SireumGrammarParser._
         case u32"6" =>
           val c = cis(j)
           var found = F
-          if (!found && (c === 'r')) {
+          if (c === 'r') {
             update(u32"7")
             found = T
           }
@@ -2804,7 +2927,7 @@ import SireumGrammarParser._
         case u32"7" =>
           val c = cis(j)
           var found = F
-          if (!found && ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ')) {
+          if ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ') {
             update(u32"7")
             found = T
           }
@@ -2818,7 +2941,7 @@ import SireumGrammarParser._
         case u32"8" =>
           val c = cis(j)
           var found = F
-          if (!found && (minChar <= c && c <= '|' || '~' <= c && c <= maxChar)) {
+          if (minChar <= c && c <= '|' || '~' <= c && c <= maxChar) {
             update(u32"8")
             found = T
           }
@@ -2859,7 +2982,7 @@ import SireumGrammarParser._
         case u32"0" =>
           val c = cis(j)
           var found = F
-          if (!found && (c === '@')) {
+          if (c === '@') {
             update(u32"1")
             found = T
           }
@@ -2869,7 +2992,7 @@ import SireumGrammarParser._
         case u32"1" =>
           val c = cis(j)
           var found = F
-          if (!found && ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ')) {
+          if ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ') {
             update(u32"1")
             found = T
           }
@@ -2883,7 +3006,7 @@ import SireumGrammarParser._
         case u32"2" =>
           val c = cis(j)
           var found = F
-          if (!found && (c === 'e')) {
+          if (c === 'e') {
             update(u32"3")
             found = T
           }
@@ -2893,7 +3016,7 @@ import SireumGrammarParser._
         case u32"3" =>
           val c = cis(j)
           var found = F
-          if (!found && (c === 'x')) {
+          if (c === 'x') {
             update(u32"4")
             found = T
           }
@@ -2903,7 +3026,7 @@ import SireumGrammarParser._
         case u32"4" =>
           val c = cis(j)
           var found = F
-          if (!found && (c === 'e')) {
+          if (c === 'e') {
             update(u32"5")
             found = T
           }
@@ -2913,7 +3036,7 @@ import SireumGrammarParser._
         case u32"5" =>
           val c = cis(j)
           var found = F
-          if (!found && (c === 'r')) {
+          if (c === 'r') {
             update(u32"6")
             found = T
           }
@@ -2923,7 +3046,7 @@ import SireumGrammarParser._
         case u32"6" =>
           val c = cis(j)
           var found = F
-          if (!found && ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ')) {
+          if ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ') {
             update(u32"6")
             found = T
           }
@@ -2937,7 +3060,7 @@ import SireumGrammarParser._
         case u32"7" =>
           val c = cis(j)
           var found = F
-          if (!found && ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ')) {
+          if ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ') {
             update(u32"7")
             found = T
           }
@@ -2951,7 +3074,7 @@ import SireumGrammarParser._
         case u32"8" =>
           val c = cis(j)
           var found = F
-          if (!found && ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ')) {
+          if ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ') {
             update(u32"8")
             found = T
           }
@@ -2965,7 +3088,7 @@ import SireumGrammarParser._
         case u32"9" =>
           val c = cis(j)
           var found = F
-          if (!found && (c === 'e')) {
+          if (c === 'e') {
             update(u32"10")
             found = T
           }
@@ -2975,7 +3098,7 @@ import SireumGrammarParser._
         case u32"10" =>
           val c = cis(j)
           var found = F
-          if (!found && (c === 'a')) {
+          if (c === 'a') {
             update(u32"11")
             found = T
           }
@@ -2985,7 +3108,7 @@ import SireumGrammarParser._
         case u32"11" =>
           val c = cis(j)
           var found = F
-          if (!found && (c === 'd')) {
+          if (c === 'd') {
             update(u32"12")
             found = T
           }
@@ -2995,7 +3118,7 @@ import SireumGrammarParser._
         case u32"12" =>
           val c = cis(j)
           var found = F
-          if (!found && (c === 'e')) {
+          if (c === 'e') {
             update(u32"13")
             found = T
           }
@@ -3005,7 +3128,7 @@ import SireumGrammarParser._
         case u32"13" =>
           val c = cis(j)
           var found = F
-          if (!found && (c === 'r')) {
+          if (c === 'r') {
             update(u32"14")
             found = T
           }
@@ -3015,7 +3138,7 @@ import SireumGrammarParser._
         case u32"14" =>
           val c = cis(j)
           var found = F
-          if (!found && ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ')) {
+          if ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ') {
             update(u32"14")
             found = T
           }
@@ -3029,7 +3152,7 @@ import SireumGrammarParser._
         case u32"15" =>
           val c = cis(j)
           var found = F
-          if (!found && (minChar <= c && c <= '|' || '~' <= c && c <= maxChar)) {
+          if (minChar <= c && c <= '|' || '~' <= c && c <= maxChar) {
             update(u32"15")
             found = T
           }
@@ -3071,7 +3194,7 @@ import SireumGrammarParser._
         case u32"0" =>
           val c = cis(j)
           var found = F
-          if (!found && (c === '/')) {
+          if (c === '/') {
             update(u32"1")
             found = T
           }
@@ -3081,7 +3204,7 @@ import SireumGrammarParser._
         case u32"1" =>
           val c = cis(j)
           var found = F
-          if (!found && (c === '*')) {
+          if (c === '*') {
             update(u32"2")
             found = T
           }
@@ -3095,7 +3218,7 @@ import SireumGrammarParser._
         case u32"2" =>
           val c = cis(j)
           var found = F
-          if (!found && (minChar <= c && c <= ')' || '+' <= c && c <= maxChar)) {
+          if (minChar <= c && c <= ')' || '+' <= c && c <= maxChar) {
             update(u32"2")
             found = T
           }
@@ -3109,7 +3232,7 @@ import SireumGrammarParser._
         case u32"3" =>
           val c = cis(j)
           var found = F
-          if (!found && (minChar <= c && c <= ')' || '+' <= c && c <= '.' || '0' <= c && c <= maxChar)) {
+          if (minChar <= c && c <= ')' || '+' <= c && c <= '.' || '0' <= c && c <= maxChar) {
             update(u32"2")
             found = T
           }
@@ -3127,7 +3250,7 @@ import SireumGrammarParser._
         case u32"4" =>
           val c = cis(j)
           var found = F
-          if (!found && (minChar <= c && c <= ')' || '+' <= c && c <= '.' || '0' <= c && c <= maxChar)) {
+          if (minChar <= c && c <= ')' || '+' <= c && c <= '.' || '0' <= c && c <= maxChar) {
             update(u32"2")
             found = T
           }
@@ -3145,7 +3268,7 @@ import SireumGrammarParser._
         case u32"5" =>
           val c = cis(j)
           var found = F
-          if (!found && (minChar <= c && c <= ')' || '+' <= c && c <= maxChar)) {
+          if (minChar <= c && c <= ')' || '+' <= c && c <= maxChar) {
             update(u32"2")
             found = T
           }
@@ -3160,7 +3283,7 @@ import SireumGrammarParser._
         case u32"7" =>
           val c = cis(j)
           var found = F
-          if (!found && (minChar <= c && c <= '\u0009' || '\u000B' <= c && c <= '\u000C' || '\u000E' <= c && c <= maxChar)) {
+          if (minChar <= c && c <= '\u0009' || '\u000B' <= c && c <= '\u000C' || '\u000E' <= c && c <= maxChar) {
             update(u32"7")
             found = T
           }
@@ -3178,7 +3301,7 @@ import SireumGrammarParser._
         case u32"8" =>
           val c = cis(j)
           var found = F
-          if (!found && (c === '\u000A')) {
+          if (c === '\u000A') {
             update(u32"6")
             found = T
           }
@@ -3214,7 +3337,7 @@ import SireumGrammarParser._
         case u32"0" =>
           val c = cis(j)
           var found = F
-          if (!found && ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ')) {
+          if ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ') {
             update(u32"1")
             found = T
           }
@@ -3224,7 +3347,7 @@ import SireumGrammarParser._
         case u32"1" =>
           val c = cis(j)
           var found = F
-          if (!found && ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ')) {
+          if ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ') {
             update(u32"1")
             found = T
           }
