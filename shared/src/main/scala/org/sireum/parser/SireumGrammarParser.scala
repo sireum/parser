@@ -240,9 +240,9 @@ import SireumGrammarParser._
           }
         case u32"1" =>
           found = F
-          tokens(j).tipe match {
-            case _ if predictId(j) > 0 && parseIdH(u32"2") => return Either.Right(failIndex)
-            case _ =>
+          val n_id = predictId(j)
+          if (n_id > 0 && parseIdH(u32"2")) {
+            return Either.Right(failIndex)
           }
           if (!found) {
             return retVal(max, resOpt, initial, T)
@@ -262,21 +262,32 @@ import SireumGrammarParser._
           }
         case u32"3" =>
           found = F
+          val n_optionsSpec = predictOptionsSpec(j)
+          val n_parserRule = predictParserRule(j)
+          val n_lexerRule = predictLexerRule(j)
+          for (n <- 2 to 1 by -1 if !found) {
+            if (n_optionsSpec == n && parseOptionsSpecH(u32"4")) {
+              return Either.Right(failIndex)
+            }
+            if (!found && n_parserRule == n && parseParserRuleH(u32"6")) {
+              return Either.Right(failIndex)
+            }
+            if (!found && n_lexerRule == n && parseLexerRuleH(u32"7")) {
+              return Either.Right(failIndex)
+            }
+          }
           tokens(j).tipe match {
-            case _ if predictOptionsSpec(j) > 0 && parseOptionsSpecH(u32"4") => return Either.Right(failIndex)
-            case u32"0xEDD2348C" /* PHEADER */ if !found =>
+            case u32"0xEDD2348C" /* "PHEADER" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"5")
               found = T
-            case u32"0x2322FC01" /* LHEADER */ if !found =>
+            case u32"0x2322FC01" /* "LHEADER" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"6")
               found = T
-            case _ if !found && predictParserRule(j) > 0 && parseParserRuleH(u32"6") => return Either.Right(failIndex)
-            case _ if !found && predictLexerRule(j) > 0 && parseLexerRuleH(u32"7") => return Either.Right(failIndex)
-            case u32"0xFC5CB374" /* EOF */ if !found =>
+            case u32"0xFC5CB374" /* "EOF" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"8")
@@ -288,20 +299,28 @@ import SireumGrammarParser._
           }
         case u32"4" =>
           found = F
+          val n_parserRule = predictParserRule(j)
+          val n_lexerRule = predictLexerRule(j)
+          for (n <- 2 to 1 by -1 if !found) {
+            if (n_parserRule == n && parseParserRuleH(u32"6")) {
+              return Either.Right(failIndex)
+            }
+            if (!found && n_lexerRule == n && parseLexerRuleH(u32"7")) {
+              return Either.Right(failIndex)
+            }
+          }
           tokens(j).tipe match {
-            case u32"0xEDD2348C" /* PHEADER */ =>
+            case u32"0xEDD2348C" /* "PHEADER" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"5")
               found = T
-            case u32"0x2322FC01" /* LHEADER */ =>
+            case u32"0x2322FC01" /* "LHEADER" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"6")
               found = T
-            case _ if !found && predictParserRule(j) > 0 && parseParserRuleH(u32"6") => return Either.Right(failIndex)
-            case _ if !found && predictLexerRule(j) > 0 && parseLexerRuleH(u32"7") => return Either.Right(failIndex)
-            case u32"0xFC5CB374" /* EOF */ if !found =>
+            case u32"0xFC5CB374" /* "EOF" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"8")
@@ -313,15 +332,23 @@ import SireumGrammarParser._
           }
         case u32"5" =>
           found = F
+          val n_parserRule = predictParserRule(j)
+          val n_lexerRule = predictLexerRule(j)
+          for (n <- 2 to 1 by -1 if !found) {
+            if (n_parserRule == n && parseParserRuleH(u32"6")) {
+              return Either.Right(failIndex)
+            }
+            if (!found && n_lexerRule == n && parseLexerRuleH(u32"7")) {
+              return Either.Right(failIndex)
+            }
+          }
           tokens(j).tipe match {
-            case u32"0x2322FC01" /* LHEADER */ =>
+            case u32"0x2322FC01" /* "LHEADER" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"6")
               found = T
-            case _ if !found && predictParserRule(j) > 0 && parseParserRuleH(u32"6") => return Either.Right(failIndex)
-            case _ if !found && predictLexerRule(j) > 0 && parseLexerRuleH(u32"7") => return Either.Right(failIndex)
-            case u32"0xFC5CB374" /* EOF */ if !found =>
+            case u32"0xFC5CB374" /* "EOF" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"8")
@@ -333,10 +360,18 @@ import SireumGrammarParser._
           }
         case u32"6" =>
           found = F
+          val n_parserRule = predictParserRule(j)
+          val n_lexerRule = predictLexerRule(j)
+          for (n <- 2 to 1 by -1 if !found) {
+            if (n_parserRule == n && parseParserRuleH(u32"6")) {
+              return Either.Right(failIndex)
+            }
+            if (!found && n_lexerRule == n && parseLexerRuleH(u32"7")) {
+              return Either.Right(failIndex)
+            }
+          }
           tokens(j).tipe match {
-            case _ if predictParserRule(j) > 0 && parseParserRuleH(u32"6") => return Either.Right(failIndex)
-            case _ if !found && predictLexerRule(j) > 0 && parseLexerRuleH(u32"7") => return Either.Right(failIndex)
-            case u32"0xFC5CB374" /* EOF */ if !found =>
+            case u32"0xFC5CB374" /* "EOF" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"8")
@@ -348,9 +383,12 @@ import SireumGrammarParser._
           }
         case u32"7" =>
           found = F
+          val n_lexerRule = predictLexerRule(j)
+          if (n_lexerRule > 0 && parseLexerRuleH(u32"7")) {
+            return Either.Right(failIndex)
+          }
           tokens(j).tipe match {
-            case _ if predictLexerRule(j) > 0 && parseLexerRuleH(u32"7") => return Either.Right(failIndex)
-            case u32"0xFC5CB374" /* EOF */ if !found =>
+            case u32"0xFC5CB374" /* "EOF" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"8")
@@ -440,17 +478,20 @@ import SireumGrammarParser._
           }
         case u32"2" =>
           found = F
-          tokens(j).tipe match {
-            case _ if predictOption(j) > 0 && parseOptionH(u32"3") => return Either.Right(failIndex)
-            case _ =>
+          val n_option = predictOption(j)
+          if (n_option > 0 && parseOptionH(u32"3")) {
+            return Either.Right(failIndex)
           }
           if (!found) {
             return retVal(max, resOpt, initial, T)
           }
         case u32"3" =>
           found = F
+          val n_option = predictOption(j)
+          if (n_option > 0 && parseOptionH(u32"3")) {
+            return Either.Right(failIndex)
+          }
           tokens(j).tipe match {
-            case _ if predictOption(j) > 0 && parseOptionH(u32"3") => return Either.Right(failIndex)
             case u32"0x5BF60471" /* "}" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
@@ -534,9 +575,9 @@ import SireumGrammarParser._
       state match {
         case u32"0" =>
           found = F
-          tokens(j).tipe match {
-            case _ if predictId(j) > 0 && parseIdH(u32"1") => return Either.Right(failIndex)
-            case _ =>
+          val n_id = predictId(j)
+          if (n_id > 0 && parseIdH(u32"1")) {
+            return Either.Right(failIndex)
           }
           if (!found) {
             return retVal(max, resOpt, initial, T)
@@ -556,9 +597,9 @@ import SireumGrammarParser._
           }
         case u32"2" =>
           found = F
-          tokens(j).tipe match {
-            case _ if predictOptionValue(j) > 0 && parseOptionValueH(u32"3") => return Either.Right(failIndex)
-            case _ =>
+          val n_optionValue = predictOptionValue(j)
+          if (n_optionValue > 0 && parseOptionValueH(u32"3")) {
+            return Either.Right(failIndex)
           }
           if (!found) {
             return retVal(max, resOpt, initial, T)
@@ -630,9 +671,12 @@ import SireumGrammarParser._
       state match {
         case u32"0" =>
           found = F
+          val n_id = predictId(j)
+          if (n_id > 0 && parseIdH(u32"1")) {
+            return Either.Right(failIndex)
+          }
           tokens(j).tipe match {
-            case _ if predictId(j) > 0 && parseIdH(u32"1") => return Either.Right(failIndex)
-            case u32"0x589C233C" /* INT */ if !found =>
+            case u32"0x589C233C" /* "INT" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"1")
@@ -697,7 +741,7 @@ import SireumGrammarParser._
         case u32"0" =>
           found = F
           tokens(j).tipe match {
-            case u32"0xD2EDBEA1" /* PID */ =>
+            case u32"0xD2EDBEA1" /* "PID" */ =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"1")
@@ -722,9 +766,9 @@ import SireumGrammarParser._
           }
         case u32"2" =>
           found = F
-          tokens(j).tipe match {
-            case _ if predictAlt(j) > 0 && parseAltH(u32"3") => return Either.Right(failIndex)
-            case _ =>
+          val n_alt = predictAlt(j)
+          if (n_alt > 0 && parseAltH(u32"3")) {
+            return Either.Right(failIndex)
           }
           if (!found) {
             return retVal(max, resOpt, initial, T)
@@ -737,7 +781,7 @@ import SireumGrammarParser._
               j = j + 1
               update(u32"4")
               found = T
-            case u32"0x36F2899D" /* ";" */ =>
+            case u32"0x36F2899D" /* ";" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"5")
@@ -749,9 +793,9 @@ import SireumGrammarParser._
           }
         case u32"4" =>
           found = F
-          tokens(j).tipe match {
-            case _ if predictAlt(j) > 0 && parseAltH(u32"3") => return Either.Right(failIndex)
-            case _ =>
+          val n_alt = predictAlt(j)
+          if (n_alt > 0 && parseAltH(u32"3")) {
+            return Either.Right(failIndex)
           }
           if (!found) {
             return retVal(max, resOpt, initial, T)
@@ -835,7 +879,7 @@ import SireumGrammarParser._
               j = j + 1
               update(u32"1")
               found = T
-            case u32"0x8E18F45B" /* LID */ =>
+            case u32"0x8E18F45B" /* "LID" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"2")
@@ -848,7 +892,7 @@ import SireumGrammarParser._
         case u32"1" =>
           found = F
           tokens(j).tipe match {
-            case u32"0x8E18F45B" /* LID */ =>
+            case u32"0x8E18F45B" /* "LID" */ =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"2")
@@ -873,22 +917,25 @@ import SireumGrammarParser._
           }
         case u32"3" =>
           found = F
-          tokens(j).tipe match {
-            case _ if predictAlt(j) > 0 && parseAltH(u32"4") => return Either.Right(failIndex)
-            case _ =>
+          val n_alt = predictAlt(j)
+          if (n_alt > 0 && parseAltH(u32"4")) {
+            return Either.Right(failIndex)
           }
           if (!found) {
             return retVal(max, resOpt, initial, T)
           }
         case u32"4" =>
           found = F
+          val n_channel = predictChannel(j)
+          if (n_channel > 0 && parseChannelH(u32"8")) {
+            return Either.Right(failIndex)
+          }
           tokens(j).tipe match {
-            case u32"0x687111E8" /* "|" */ =>
+            case u32"0x687111E8" /* "|" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"5")
               found = T
-            case _ if !found && predictChannel(j) > 0 && parseChannelH(u32"8") => return Either.Right(failIndex)
             case u32"0x36F2899D" /* ";" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
@@ -901,9 +948,9 @@ import SireumGrammarParser._
           }
         case u32"5" =>
           found = F
-          tokens(j).tipe match {
-            case _ if predictAlt(j) > 0 && parseAltH(u32"6") => return Either.Right(failIndex)
-            case _ =>
+          val n_alt = predictAlt(j)
+          if (n_alt > 0 && parseAltH(u32"6")) {
+            return Either.Right(failIndex)
           }
           if (!found) {
             return retVal(max, resOpt, initial, T)
@@ -916,7 +963,7 @@ import SireumGrammarParser._
               j = j + 1
               update(u32"5")
               found = T
-            case u32"0x36F2899D" /* ";" */ =>
+            case u32"0x36F2899D" /* ";" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"7")
@@ -935,7 +982,7 @@ import SireumGrammarParser._
               j = j + 1
               update(u32"9")
               found = T
-            case u32"0x36F2899D" /* ";" */ =>
+            case u32"0x36F2899D" /* ";" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"7")
@@ -947,18 +994,18 @@ import SireumGrammarParser._
           }
         case u32"9" =>
           found = F
-          tokens(j).tipe match {
-            case _ if predictAlt(j) > 0 && parseAltH(u32"10") => return Either.Right(failIndex)
-            case _ =>
+          val n_alt = predictAlt(j)
+          if (n_alt > 0 && parseAltH(u32"10")) {
+            return Either.Right(failIndex)
           }
           if (!found) {
             return retVal(max, resOpt, initial, T)
           }
         case u32"10" =>
           found = F
-          tokens(j).tipe match {
-            case _ if predictChannel(j) > 0 && parseChannelH(u32"8") => return Either.Right(failIndex)
-            case _ =>
+          val n_channel = predictChannel(j)
+          if (n_channel > 0 && parseChannelH(u32"8")) {
+            return Either.Right(failIndex)
           }
           if (!found) {
             return retVal(max, resOpt, initial, T)
@@ -1029,9 +1076,9 @@ import SireumGrammarParser._
           }
         case u32"1" =>
           found = F
-          tokens(j).tipe match {
-            case _ if predictAlt(j) > 0 && parseAltH(u32"2") => return Either.Right(failIndex)
-            case _ =>
+          val n_alt = predictAlt(j)
+          if (n_alt > 0 && parseAltH(u32"2")) {
+            return Either.Right(failIndex)
           }
           if (!found) {
             return retVal(max, resOpt, initial, T)
@@ -1044,7 +1091,7 @@ import SireumGrammarParser._
               j = j + 1
               update(u32"3")
               found = T
-            case u32"0xB9401340" /* ")" */ =>
+            case u32"0xB9401340" /* ")" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"4")
@@ -1056,9 +1103,9 @@ import SireumGrammarParser._
           }
         case u32"3" =>
           found = F
-          tokens(j).tipe match {
-            case _ if predictAlt(j) > 0 && parseAltH(u32"2") => return Either.Right(failIndex)
-            case _ =>
+          val n_alt = predictAlt(j)
+          if (n_alt > 0 && parseAltH(u32"2")) {
+            return Either.Right(failIndex)
           }
           if (!found) {
             return retVal(max, resOpt, initial, T)
@@ -1117,18 +1164,18 @@ import SireumGrammarParser._
       state match {
         case u32"0" =>
           found = F
-          tokens(j).tipe match {
-            case _ if predictElement(j) > 0 && parseElementH(u32"1") => return Either.Right(failIndex)
-            case _ =>
+          val n_element = predictElement(j)
+          if (n_element > 0 && parseElementH(u32"1")) {
+            return Either.Right(failIndex)
           }
           if (!found) {
             return retVal(max, resOpt, initial, T)
           }
         case u32"1" =>
           found = F
-          tokens(j).tipe match {
-            case _ if predictElement(j) > 0 && parseElementH(u32"1") => return Either.Right(failIndex)
-            case _ =>
+          val n_element = predictElement(j)
+          if (n_element > 0 && parseElementH(u32"1")) {
+            return Either.Right(failIndex)
           }
           if (!found) {
             return retVal(max, resOpt, initial, T)
@@ -1206,10 +1253,15 @@ import SireumGrammarParser._
       state match {
         case u32"0" =>
           found = F
-          tokens(j).tipe match {
-            case _ if predictAtom(j) > 0 && parseAtomH(u32"1") => return Either.Right(failIndex)
-            case _ if !found && predictBlock(j) > 0 && parseBlockH(u32"1") => return Either.Right(failIndex)
-            case _ =>
+          val n_atom = predictAtom(j)
+          val n_block = predictBlock(j)
+          for (n <- 2 to 1 by -1 if !found) {
+            if (n_atom == n && parseAtomH(u32"1")) {
+              return Either.Right(failIndex)
+            }
+            if (!found && n_block == n && parseBlockH(u32"1")) {
+              return Either.Right(failIndex)
+            }
           }
           if (!found) {
             return retVal(max, resOpt, initial, T)
@@ -1222,12 +1274,12 @@ import SireumGrammarParser._
               j = j + 1
               update(u32"2")
               found = T
-            case u32"0x82283B4B" /* "*" */ =>
+            case u32"0x82283B4B" /* "*" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"2")
               found = T
-            case u32"0x797D7BC8" /* "+" */ =>
+            case u32"0x797D7BC8" /* "+" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"2")
@@ -1329,11 +1381,22 @@ import SireumGrammarParser._
       state match {
         case u32"0" =>
           found = F
+          val n_range = predictRange(j)
+          val n_terminal = predictTerminal(j)
+          val n_not = predictNot(j)
+          for (n <- 2 to 1 by -1 if !found) {
+            if (n_range == n && parseRangeH(u32"1")) {
+              return Either.Right(failIndex)
+            }
+            if (!found && n_terminal == n && parseTerminalH(u32"1")) {
+              return Either.Right(failIndex)
+            }
+            if (!found && n_not == n && parseNotH(u32"1")) {
+              return Either.Right(failIndex)
+            }
+          }
           tokens(j).tipe match {
-            case _ if predictRange(j) > 0 && parseRangeH(u32"1") => return Either.Right(failIndex)
-            case _ if !found && predictTerminal(j) > 0 && parseTerminalH(u32"1") => return Either.Right(failIndex)
-            case _ if !found && predictNot(j) > 0 && parseNotH(u32"1") => return Either.Right(failIndex)
-            case u32"0xD2EDBEA1" /* PID */ if !found =>
+            case u32"0xD2EDBEA1" /* "PID" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"1")
@@ -1410,18 +1473,21 @@ import SireumGrammarParser._
           }
         case u32"1" =>
           found = F
+          val n_block = predictBlock(j)
+          if (n_block > 0 && parseBlockH(u32"2")) {
+            return Either.Right(failIndex)
+          }
           tokens(j).tipe match {
-            case u32"0xE95F063A" /* CHAR */ =>
+            case u32"0xE95F063A" /* "CHAR" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"2")
               found = T
-            case u32"0xA7CF0FE0" /* STRING */ =>
+            case u32"0xA7CF0FE0" /* "STRING" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"2")
               found = T
-            case _ if !found && predictBlock(j) > 0 && parseBlockH(u32"2") => return Either.Right(failIndex)
             case _ =>
           }
           if (!found) {
@@ -1464,7 +1530,7 @@ import SireumGrammarParser._
         case u32"0" =>
           found = F
           tokens(j).tipe match {
-            case u32"0xE95F063A" /* CHAR */ =>
+            case u32"0xE95F063A" /* "CHAR" */ =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"1")
@@ -1490,7 +1556,7 @@ import SireumGrammarParser._
         case u32"2" =>
           found = F
           tokens(j).tipe match {
-            case u32"0xE95F063A" /* CHAR */ =>
+            case u32"0xE95F063A" /* "CHAR" */ =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"3")
@@ -1537,22 +1603,22 @@ import SireumGrammarParser._
         case u32"0" =>
           found = F
           tokens(j).tipe match {
-            case u32"0x8E18F45B" /* LID */ =>
+            case u32"0x8E18F45B" /* "LID" */ =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"1")
               found = T
-            case u32"0xE95F063A" /* CHAR */ =>
+            case u32"0xE95F063A" /* "CHAR" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"1")
               found = T
-            case u32"0xA7CF0FE0" /* STRING */ =>
+            case u32"0xA7CF0FE0" /* "STRING" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"1")
               found = T
-            case u32"0x6890427A" /* "." */ =>
+            case u32"0x6890427A" /* "." */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"1")
@@ -1599,12 +1665,12 @@ import SireumGrammarParser._
         case u32"0" =>
           found = F
           tokens(j).tipe match {
-            case u32"0x8E18F45B" /* LID */ =>
+            case u32"0x8E18F45B" /* "LID" */ =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"1")
               found = T
-            case u32"0xD2EDBEA1" /* PID */ =>
+            case u32"0xD2EDBEA1" /* "PID" */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"1")
@@ -1690,7 +1756,7 @@ import SireumGrammarParser._
         case u32"3" =>
           found = F
           tokens(j).tipe match {
-            case u32"0x8E18F45B" /* LID */ =>
+            case u32"0x8E18F45B" /* "LID" */ =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"4")

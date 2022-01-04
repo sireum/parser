@@ -192,8 +192,11 @@ import org.sireum.parser.{GrammarAst => AST}
       for (p <- parserDfaMap.entries) {
         val valueST = st"""u32"0x${valCode(p._1)}""""
         objectVals = objectVals :+ st"""val T_${p._1}: U32 = $valueST"""
-        parserDefs = parserDefs :+ genParserDfa(memoize, predict, backtracking, parseName(p._1), p._1,
-          st"$valueST /* ${p._1} */", p._2._1, p._2._2)
+        parserDefs = parserDefs :+ (
+          if (predict && !backtracking) genPredictiveParserDfa(k, memoize, backtracking, parseName(p._1), p._1,
+            st"$valueST /* ${p._1} */", p._2._1, p._2._2)
+          else genBacktrackingParserDfa(memoize, predict, parseName(p._1), p._1,
+            st"$valueST /* ${p._1} */", p._2._1, p._2._2))
       }
 
       if (predict) {
@@ -319,87 +322,158 @@ import org.sireum.parser.{GrammarAst => AST}
 
   @strictpure def dfaName(name: String): ST = st"dfa_$name"
 
-  def genParserDfa(memoize: B, predict: B, backtracking: B, name: ST, ruleName: String, valueST: ST, dfa: Dfa,
-                   atoms: ISZ[AST.Element]): ST = {
+  @pure def edgesOf(dfa: Dfa, node: Z): ISZ[(Z, Z, Z)] = {
+    val outgoing = dfa.g.outgoing(node)
+    if (outgoing.size === 1 && Dfa.isReject(outgoing(0))) {
+      return ISZ()
+    }
+    var r = ISZ[(Z, Z, Z)]()
+    for (e <- outgoing) {
+      val edge = e.asInstanceOf[Graph.Edge.Data[Z, (C, C)]]
+      val lo = conversions.U32.toZ(conversions.C.toU32(edge.data._1))
+      val hi = conversions.U32.toZ(conversions.C.toU32(edge.data._2))
+      r = r :+ ((edge.dest, lo, hi))
+    }
+    return r
+  }
+
+  def genPredictiveParserDfa(k: Z, memoize: B, backtracking: B, name: ST, ruleName: String, valueST: ST, dfa: Dfa,
+                             atoms: ISZ[AST.Element]): ST = {
     val noBacktrack: B = !backtracking || ops.StringOps(ruleName).endsWith("_cut")
     var transitions = ISZ[ST]()
     var condDefs = HashSMap.empty[String, ST]
     for (node <- dfa.g.nodesInverse) {
+      var refNameDests = HashSSet.empty[(String, Z)]
       var cases = ISZ[ST]()
-      val outgoing = dfa.g.outgoing(node)
-      if (!(outgoing.size === 1 && Dfa.isReject(outgoing(0)))) {
-        var notFoundOpt: Option[ST] = None()
-        var notFoundRefOpt: Option[ST] = None()
-        for (e <- outgoing) {
-          val edge = e.asInstanceOf[Graph.Edge.Data[Z, (C, C)]]
-          val lo = conversions.U32.toZ(conversions.C.toU32(edge.data._1))
-          val hi = conversions.U32.toZ(conversions.C.toU32(edge.data._2))
-          for (i <- lo to hi) {
-            atoms(i) match {
-              case e: AST.Element.Char =>
-                val s = conversions.String.fromCis(ISZ(e.value))
-                cases = cases :+
-                  st"""case u32"0x${(valCode(s), "")}" /* "${escape(s)}" */$notFoundOpt =>
-                      |  trees = trees :+ tokens(j)
-                      |  j = j + 1
-                      |  update(u32"${edge.dest}")
-                      |  found = T"""
-              case e: AST.Element.Str =>
-                cases = cases :+
-                  st"""case u32"0x${(valCode(e.value), "")}" /* "${escape(e.value)}" */$notFoundOpt =>
-                      |  trees = trees :+ tokens(j)
-                      |  j = j + 1
-                      |  update(u32"${edge.dest}")
-                      |  found = T"""
-              case e: AST.Element.Ref =>
-                if (e.isTerminal) {
-                  cases = cases :+
-                    st"""case u32"0x${(valCode(e.name), "")}" /* ${e.name} */$notFoundOpt =>
-                        |  trees = trees :+ tokens(j)
-                        |  j = j + 1
-                        |  update(u32"${edge.dest}")
-                        |  found = T"""
-                } else {
-                  if (notFoundOpt.isEmpty) {
-                    notFoundOpt = Some(st" if !found")
-                  }
-                  val predictOpt: Option[ST] = if (predict) Some(st"${predictName(e.name)}(j) > 0 && ") else None()
-                  val parsename = parseName(e.name)
-                  if (!condDefs.contains(e.name)) {
-                    condDefs = condDefs + e.name ~>
-                      st"""def ${parsename}H(nextState: U32): B = {
-                          |  ${parseName(e.name)}(j) match {
-                          |    case Either.Left(r) =>
-                          |      trees = trees :+ r.tree
-                          |      j = r.newIndex
-                          |      update(nextState)
-                          |      found = T
-                          |      return F
-                          |    case Either.Right(r) =>
-                          |      if (r < 0) {
-                          |        failIndex = r
-                          |        return T
-                          |      } else if (max < r) {
-                          |        max = r
-                          |      }
-                          |      return F
-                          |  }
-                          |}"""
-                  }
-                  cases = cases :+
-                    st"""case _ if $notFoundRefOpt$predictOpt${parsename}H(u32"${edge.dest}") => return Either.Right(failIndex)"""
+      for (t <- edgesOf(dfa, node)) {
+        val (dest, lo, hi) = t
+        for (i <- lo to hi) {
+          atoms(i) match {
+            case e: AST.Element.Ref if !e.isTerminal =>
+              refNameDests = refNameDests + ((e.name, dest))
+              if (!condDefs.contains(e.name)) {
+                condDefs = condDefs + e.name ~> condDefST(e.name)
+              }
+            case _ =>
+          }
+        }
+      }
+      var notFoundOpt: Option[ST] = if (refNameDests.isEmpty) None() else Some(st" if !found")
+      for (t <- edgesOf(dfa, node)) {
+        val (dest, lo, hi) = t
+        for (i <- lo to hi) {
+          atoms(i) match {
+            case e: AST.Element.Char =>
+              cases = cases :+ terminalST(conversions.String.fromCis(ISZ(e.value)), dest, F, notFoundOpt)
+            case e: AST.Element.Str =>
+              cases = cases :+ terminalST(e.value, dest, F, notFoundOpt)
+            case e: AST.Element.Ref if e.isTerminal =>
+              cases = cases :+ terminalST(e.name, dest, T, notFoundOpt)
+            case _ =>
+          }
+          if (notFoundOpt.isEmpty) {
+            notFoundOpt = Some(st" if !found")
+          }
+        }
+      }
+      if (cases.isEmpty && refNameDests.isEmpty) {
+        transitions = transitions :+
+          st"""case u32"$node" => return retVal(max, resOpt, initial, ${if (noBacktrack) "T" else "F"})"""
+      } else {
+        val matchOpt: Option[ST] = if (cases.isEmpty) None() else Some(
+          st"""tokens(j).tipe match {
+              |  ${(cases, "\n")}
+              |  case _ =>
+              |}"""
+        )
+        var refs = ISZ[ST]()
+        var checkRefs = ISZ[ST]()
+        var nfo: Option[ST] = None()
+        for (p <- refNameDests.elements) {
+          refs = refs :+ st"""val n_${p._1} = ${predictName(p._1)}(j)"""
+          if (refNameDests.size > 1) {
+            checkRefs = checkRefs :+
+              st"""if (${nfo}n_${p._1} == n && ${parseName(p._1)}H(u32"${p._2}")) {
+                  |  return Either.Right(failIndex)
+                  |}"""
+          }
+          if (nfo.isEmpty) {
+            nfo = Some(st"!found && ")
+          }
+        }
+        val checkRefsOpt: Option[ST] = if (refNameDests.isEmpty) {
+          None()
+        } else {
+          if (refNameDests.size == 1) {
+            val p = refNameDests.elements(0)
+            Some(
+              st"""if (n_${p._1} > 0 && ${parseName(p._1)}H(u32"${p._2}")) {
+                  |  return Either.Right(failIndex)
+                  |}"""
+            )
+          } else {
+            Some(
+              st"""for (n <- $k to 1 by -1 if !found) {
+                  |  ${(checkRefs, "\n")}
+                  |}"""
+            )
+          }
+        }
+        transitions = transitions :+
+          st"""case u32"$node" =>
+              |  found = F
+              |  ${(refs, "\n")}
+              |  $checkRefsOpt
+              |  $matchOpt
+              |  if (!found) {
+              |    return retVal(max, resOpt, initial, ${if (noBacktrack) "T" else "F"})
+              |  }"""
+      }
+    }
+    return parserDfaST(memoize, name, ruleName, valueST, dfa, condDefs.values, transitions, noBacktrack)
+  }
+
+  def genBacktrackingParserDfa(memoize: B, predict: B, name: ST, ruleName: String, valueST: ST, dfa: Dfa,
+                               atoms: ISZ[AST.Element]): ST = {
+    val noBacktrack: B = F
+    var transitions = ISZ[ST]()
+    var condDefs = HashSMap.empty[String, ST]
+    for (node <- dfa.g.nodesInverse) {
+      var cases = ISZ[ST]()
+      var notFoundOpt: Option[ST] = None()
+      var notFoundRefOpt: Option[ST] = None()
+      for (t <- edgesOf(dfa, node)) {
+        val (dest, lo, hi) = t
+        for (i <- lo to hi) {
+          atoms(i) match {
+            case e: AST.Element.Char =>
+              cases = cases :+ terminalST(conversions.String.fromCis(ISZ(e.value)), dest, F, notFoundOpt)
+            case e: AST.Element.Str =>
+              cases = cases :+ terminalST(e.value, dest, F, notFoundOpt)
+            case e: AST.Element.Ref =>
+              if (e.isTerminal) {
+                cases = cases :+ terminalST(e.name, dest, T, notFoundOpt)
+              } else {
+                if (notFoundOpt.isEmpty) {
+                  notFoundOpt = Some(st" if !found")
                 }
-              case e => halt(s"Infeasible: $e")
-            }
-            if (notFoundRefOpt.isEmpty) {
-              notFoundRefOpt = Some(st"!found && ")
-            }
+                val predictOpt: Option[ST] = if (predict) Some(st"${predictName(e.name)}(j) > 0 && ") else None()
+                val parsename = parseName(e.name)
+                if (!condDefs.contains(e.name)) {
+                  condDefs = condDefs + e.name ~> condDefST(e.name)
+                }
+                cases = cases :+
+                  st"""case _ if $notFoundRefOpt$predictOpt${parsename}H(u32"$dest") => return Either.Right(failIndex)"""
+              }
+            case e => halt(s"Infeasible: $e")
+          }
+          if (notFoundRefOpt.isEmpty) {
+            notFoundRefOpt = Some(st"!found && ")
           }
         }
       }
       if (cases.isEmpty) {
-        transitions = transitions :+
-          st"""case u32"$node" => return retVal(max, resOpt, initial, ${if (noBacktrack) "T" else "F"})"""
+        transitions = transitions :+ st"""case u32"$node" => return retVal(max, resOpt, initial, F)"""
       } else {
         val matchOpt: Option[ST] = if (cases.isEmpty) None() else Some(
           st"""tokens(j).tipe match {
@@ -416,43 +490,72 @@ import org.sireum.parser.{GrammarAst => AST}
               |  }"""
       }
     }
-    val r =
-      st"""${if (memoize) "@memoize" else "@pure"} def $name(i: Z): Either[Result, Z] = {
-          |  var state = u32"0"
-          |  var resOpt: Option[Result] = None()
-          |  var trees = ISZ[ParseTree]()
-          |  var j = i
-          |  var max = i
-          |  var initial = T
-          |  var found = F
-          |  var failIndex: Z = 0
-          |
-          |  def update(newState: U32): Unit = {
-          |    initial = F
-          |    state = newState
-          |    state match {
-          |      ${(for (s <- dfa.accepting.elements) yield st"""case u32"$s" => """, "\n")}
-          |      case _ => return
-          |    }
-          |    resOpt = Some(Result(ParseTree.Node(trees, $tqs$ruleName$tqs, $valueST, None()), j))
-          |  }
-          |
-          |  ${(condDefs.values, "\n\n")}
-          |
-          |  while (j < tokens.size) {
-          |    state match {
-          |      ${(transitions, "\n")}
-          |      case _ => halt("Infeasible")
-          |    }
-          |    if (max < j) {
-          |      max = j
-          |    }
-          |  }
-          |
-          |  return retVal(j, resOpt, initial, ${if (noBacktrack) "T" else "F"})
-          |}"""
-    return r
+    return parserDfaST(memoize, name, ruleName, valueST, dfa, condDefs.values, transitions, noBacktrack)
   }
+
+  @strictpure def condDefST(name: String): ST =
+    st"""def ${parseName(name)}H(nextState: U32): B = {
+        |  ${parseName(name)}(j) match {
+        |    case Either.Left(r) =>
+        |      trees = trees :+ r.tree
+        |      j = r.newIndex
+        |      update(nextState)
+        |      found = T
+        |      return F
+        |    case Either.Right(r) =>
+        |      if (r < 0) {
+        |        failIndex = r
+        |        return T
+        |      } else if (max < r) {
+        |        max = r
+        |      }
+        |      return F
+        |  }
+        |}"""
+
+  @strictpure def parserDfaST(memoize: B, name: ST, ruleName: String, valueST: ST, dfa: Dfa, condDefs: ISZ[ST],
+                              transitions: ISZ[ST], noBacktrack: B): ST =
+    st"""${if (memoize) "@memoize" else "@pure"} def $name(i: Z): Either[Result, Z] = {
+        |  var state = u32"0"
+        |  var resOpt: Option[Result] = None()
+        |  var trees = ISZ[ParseTree]()
+        |  var j = i
+        |  var max = i
+        |  var initial = T
+        |  var found = F
+        |  var failIndex: Z = 0
+        |
+        |  def update(newState: U32): Unit = {
+        |    initial = F
+        |    state = newState
+        |    state match {
+        |      ${(for (s <- dfa.accepting.elements) yield st"""case u32"$s" => """, "\n")}
+        |      case _ => return
+        |    }
+        |    resOpt = Some(Result(ParseTree.Node(trees, $tqs$ruleName$tqs, $valueST, None()), j))
+        |  }
+        |
+        |  ${(condDefs, "\n\n")}
+        |
+        |  while (j < tokens.size) {
+        |    state match {
+        |      ${(transitions, "\n")}
+        |      case _ => halt("Infeasible")
+        |    }
+        |    if (max < j) {
+        |      max = j
+        |    }
+        |  }
+        |
+        |  return retVal(j, resOpt, initial, ${if (noBacktrack) "T" else "F"})
+        |}"""
+
+  @strictpure def terminalST(text: String, dest: Z, plain: B, notFoundOpt: Option[ST]): ST =
+    st"""case u32"0x${(valCode(text), "")}" /* "${if (plain) text else escape(text)}" */$notFoundOpt =>
+        |  trees = trees :+ tokens(j)
+        |  j = j + 1
+        |  update(u32"$dest")
+        |  found = T"""
 
   def genTries(k: Z, ruleTrie: LookAhead.Trie): ISZ[ST] = {
     var r = ISZ[ST]()
