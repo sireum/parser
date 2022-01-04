@@ -35,7 +35,7 @@ import org.sireum.parser.{GrammarAst => AST}
   val tqs: String = "\"\"\""
 
   def gen(licenseOpt: Option[ST], fileInfo: ST, packageOpt: Option[ST], name: String, ast: AST.Grammar,
-          memoize: B, reporter: Reporter): Option[ST] = {
+          memoize: B, predictive: B, reporter: Reporter): Option[ST] = {
 
     val options = HashMap.empty[String, String] ++ ast.options
     var kOpt: Option[Z] = None()
@@ -48,10 +48,7 @@ import org.sireum.parser.{GrammarAst => AST}
       }
       case _ =>
     }
-    if (kOpt.isEmpty) {
-      reporter.error(None(), "ParserGenerator", s"Please specify the k lookahead option")
-      return None()
-    }
+    val predict: B = if (kOpt.isEmpty) F else predictive
 
     val lexerDfaMap = ParserGenerator.Ext.computeLexerDfas(ast, reporter)
 
@@ -184,7 +181,7 @@ import org.sireum.parser.{GrammarAst => AST}
 
     val k = kOpt.get
 
-    val laMap = LookAhead.compute(k, nameRuleMap, parserDfaMap, reporter)
+    val laMap = LookAhead.compute(if (predict) k else 1, nameRuleMap, parserDfaMap, reporter)
 
     if (reporter.hasError) {
       return None()
@@ -195,19 +192,21 @@ import org.sireum.parser.{GrammarAst => AST}
       for (p <- parserDfaMap.entries) {
         val valueST = st"""u32"0x${valCode(p._1)}""""
         objectVals = objectVals :+ st"""val T_${p._1}: U32 = $valueST"""
-        parserDefs = parserDefs :+ genParserDfa(memoize, parseName(p._1), p._1, st"$valueST /* ${p._1} */",
+        parserDefs = parserDefs :+ genParserDfa(memoize, predict, parseName(p._1), p._1, st"$valueST /* ${p._1} */",
           p._2._1, p._2._2)
       }
 
-      for (p <- laMap.entries) {
-        val trie = p._2
-        val sts = genTries(k, trie)
-        parserDefs = parserDefs :+
-          st"""${if (memoize) "@memoize" else "@pure"} def ${predictName(p._1)}(j: Z): B = {
-              |  var shouldTry = F
-              |  ${(sts, "\n")}
-              |  return shouldTry
-              |}"""
+      if (predict) {
+        for (p <- laMap.entries) {
+          val trie = p._2
+          val sts = genTries(k, trie)
+          parserDefs = parserDefs :+
+            st"""${if (memoize) "@memoize" else "@pure"} def ${predictName(p._1)}(j: Z): B = {
+                |  var shouldTry = F
+                |  ${(sts, "\n")}
+                |  return shouldTry
+                |}"""
+        }
       }
     }
 
@@ -320,7 +319,7 @@ import org.sireum.parser.{GrammarAst => AST}
 
   @strictpure def dfaName(name: String): ST = st"dfa_$name"
 
-  def genParserDfa(memoize: B, name: ST, ruleName: String, valueST: ST, dfa: Dfa, atoms: ISZ[AST.Element]): ST = {
+  def genParserDfa(memoize: B, predict: B, name: ST, ruleName: String, valueST: ST, dfa: Dfa, atoms: ISZ[AST.Element]): ST = {
     val noBacktrack: B = ops.StringOps(ruleName).endsWith("_cut")
     var transitions = ISZ[ST]()
     for (node <- dfa.g.nodesInverse) {
@@ -358,8 +357,9 @@ import org.sireum.parser.{GrammarAst => AST}
                         |  update(u32"${edge.dest}")
                         |  found = T"""
                 } else {
+                  val predictOpt: Option[ST] = if (predict) Some(st" && ${predictName(e.name)}(j)") else None()
                   conds = conds :+
-                    st"""if (!found && ${predictName(e.name)}(j)) {
+                    st"""if (!found$predictOpt) {
                         |  ${parseName(e.name)}(j) match {
                         |    case Either.Left(r) =>
                         |      trees = trees :+ r.tree
@@ -463,6 +463,7 @@ import org.sireum.parser.{GrammarAst => AST}
       }
       return cond
     }
+
     if (ruleTrie.accept || ruleTrie.subs.isEmpty) {
       r = r :+ st"shouldTry = T"
     } else {
@@ -610,12 +611,13 @@ import org.sireum.parser.{GrammarAst => AST}
 
   @memoize def genNameString(s: String): ST = {
     val cis = conversions.String.toCis(s)
-    return st"lit_${(for (c <-cis) yield genNameH(c), "")}"
+    return st"lit_${(for (c <- cis) yield genNameH(c), "")}"
   }
 
   def literalCharStrNames(ast: AST.Grammar): HashSMap[Either[C, String], String] = {
     var r = HashSMap.empty[Either[C, String], String]
     var seen = HashSet.empty[String]
+
     def collectElement(e: AST.Element): Unit = {
       e match {
         case e: AST.Element.Block =>
@@ -643,6 +645,7 @@ import org.sireum.parser.{GrammarAst => AST}
           seen = seen + e.value
       }
     }
+
     for (r <- ast.rules if !r.isLexer; alt <- r.alts; e <- alt.elements) {
       collectElement(e)
     }
@@ -656,6 +659,7 @@ object ParserGenerator {
 
   @ext("DfaBuilder") object Ext {
     def computeParserDfas(ast: AST.Grammar): HashSMap[String, (Dfa, ISZ[AST.Element])] = $
+
     def computeLexerDfas(ast: AST.Grammar, reporter: Reporter): HashSMap[String, Dfa] = $
   }
 }
