@@ -149,11 +149,13 @@ import SireumGrammarParser._
       state match {
         case u32"0" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0xAEB64436" /* "grammar" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"1")
-            found = T
+          tokens(j).tipe match {
+            case u32"0xAEB64436" /* "grammar" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"1")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
@@ -180,17 +182,37 @@ import SireumGrammarParser._
           }
         case u32"2" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0x36F2899D" /* ";" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"3")
-            found = T
+          tokens(j).tipe match {
+            case u32"0x36F2899D" /* ";" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"3")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
           }
         case u32"3" =>
           var found = F
+          tokens(j).tipe match {
+            case u32"0xEDD2348C" /* PHEADER */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"5")
+              found = T
+            case u32"0x2322FC01" /* LHEADER */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"6")
+              found = T
+            case u32"0xFC5CB374" /* EOF */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"8")
+              found = T
+            case _ =>
+          }
           if (!found && predictOptionsSpec(j)) {
             parseOptionsSpec(j) match {
               case Either.Left(r) =>
@@ -206,18 +228,6 @@ import SireumGrammarParser._
                 }
             }
           }
-          if (!found && tokens(j).tipe == u32"0xEDD2348C" /* PHEADER */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"5")
-            found = T
-          }
-          if (!found && tokens(j).tipe == u32"0x2322FC01" /* LHEADER */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"6")
-            found = T
-          }
           if (!found && predictParserRule(j)) {
             parseParserRule(j) match {
               case Either.Left(r) =>
@@ -247,29 +257,29 @@ import SireumGrammarParser._
                   max = r
                 }
             }
-          }
-          if (!found && tokens(j).tipe == u32"0xFC5CB374" /* EOF */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"8")
-            found = T
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
           }
         case u32"4" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0xEDD2348C" /* PHEADER */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"5")
-            found = T
-          }
-          if (!found && tokens(j).tipe == u32"0x2322FC01" /* LHEADER */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"6")
-            found = T
+          tokens(j).tipe match {
+            case u32"0xEDD2348C" /* PHEADER */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"5")
+              found = T
+            case u32"0x2322FC01" /* LHEADER */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"6")
+              found = T
+            case u32"0xFC5CB374" /* EOF */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"8")
+              found = T
+            case _ =>
           }
           if (!found && predictParserRule(j)) {
             parseParserRule(j) match {
@@ -300,23 +310,24 @@ import SireumGrammarParser._
                   max = r
                 }
             }
-          }
-          if (!found && tokens(j).tipe == u32"0xFC5CB374" /* EOF */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"8")
-            found = T
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
           }
         case u32"5" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0x2322FC01" /* LHEADER */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"6")
-            found = T
+          tokens(j).tipe match {
+            case u32"0x2322FC01" /* LHEADER */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"6")
+              found = T
+            case u32"0xFC5CB374" /* EOF */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"8")
+              found = T
+            case _ =>
           }
           if (!found && predictParserRule(j)) {
             parseParserRule(j) match {
@@ -347,18 +358,20 @@ import SireumGrammarParser._
                   max = r
                 }
             }
-          }
-          if (!found && tokens(j).tipe == u32"0xFC5CB374" /* EOF */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"8")
-            found = T
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
           }
         case u32"6" =>
           var found = F
+          tokens(j).tipe match {
+            case u32"0xFC5CB374" /* EOF */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"8")
+              found = T
+            case _ =>
+          }
           if (!found && predictParserRule(j)) {
             parseParserRule(j) match {
               case Either.Left(r) =>
@@ -389,17 +402,19 @@ import SireumGrammarParser._
                 }
             }
           }
-          if (!found && tokens(j).tipe == u32"0xFC5CB374" /* EOF */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"8")
-            found = T
-          }
           if (!found) {
             return retVal(max, resOpt, initial, F)
           }
         case u32"7" =>
           var found = F
+          tokens(j).tipe match {
+            case u32"0xFC5CB374" /* EOF */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"8")
+              found = T
+            case _ =>
+          }
           if (!found && predictLexerRule(j)) {
             parseLexerRule(j) match {
               case Either.Left(r) =>
@@ -414,12 +429,6 @@ import SireumGrammarParser._
                   max = r
                 }
             }
-          }
-          if (!found && tokens(j).tipe == u32"0xFC5CB374" /* EOF */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"8")
-            found = T
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
@@ -457,22 +466,26 @@ import SireumGrammarParser._
       state match {
         case u32"0" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0xED16D169" /* "options" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"1")
-            found = T
+          tokens(j).tipe match {
+            case u32"0xED16D169" /* "options" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"1")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
           }
         case u32"1" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0xFDCE65E5" /* "{" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"2")
-            found = T
+          tokens(j).tipe match {
+            case u32"0xFDCE65E5" /* "{" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"2")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
@@ -499,6 +512,14 @@ import SireumGrammarParser._
           }
         case u32"3" =>
           var found = F
+          tokens(j).tipe match {
+            case u32"0x5BF60471" /* "}" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"4")
+              found = T
+            case _ =>
+          }
           if (!found && predictOption(j)) {
             parseOption(j) match {
               case Either.Left(r) =>
@@ -513,12 +534,6 @@ import SireumGrammarParser._
                   max = r
                 }
             }
-          }
-          if (!found && tokens(j).tipe == u32"0x5BF60471" /* "}" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"4")
-            found = T
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
@@ -576,11 +591,13 @@ import SireumGrammarParser._
           }
         case u32"1" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0xEF954474" /* "=" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"2")
-            found = T
+          tokens(j).tipe match {
+            case u32"0xEF954474" /* "=" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"2")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
@@ -607,11 +624,13 @@ import SireumGrammarParser._
           }
         case u32"3" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0x36F2899D" /* ";" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"4")
-            found = T
+          tokens(j).tipe match {
+            case u32"0x36F2899D" /* ";" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"4")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
@@ -649,6 +668,14 @@ import SireumGrammarParser._
       state match {
         case u32"0" =>
           var found = F
+          tokens(j).tipe match {
+            case u32"0x589C233C" /* INT */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"1")
+              found = T
+            case _ =>
+          }
           if (!found && predictId(j)) {
             parseId(j) match {
               case Either.Left(r) =>
@@ -663,12 +690,6 @@ import SireumGrammarParser._
                   max = r
                 }
             }
-          }
-          if (!found && tokens(j).tipe == u32"0x589C233C" /* INT */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"1")
-            found = T
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
@@ -706,22 +727,26 @@ import SireumGrammarParser._
       state match {
         case u32"0" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0xD2EDBEA1" /* PID */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"1")
-            found = T
+          tokens(j).tipe match {
+            case u32"0xD2EDBEA1" /* PID */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"1")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
           }
         case u32"1" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0x763C38BE" /* ":" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"2")
-            found = T
+          tokens(j).tipe match {
+            case u32"0x763C38BE" /* ":" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"2")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
@@ -748,17 +773,18 @@ import SireumGrammarParser._
           }
         case u32"3" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0x687111E8" /* "|" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"4")
-            found = T
-          }
-          if (!found && tokens(j).tipe == u32"0x36F2899D" /* ";" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"5")
-            found = T
+          tokens(j).tipe match {
+            case u32"0x687111E8" /* "|" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"4")
+              found = T
+            case u32"0x36F2899D" /* ";" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"5")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
@@ -816,39 +842,44 @@ import SireumGrammarParser._
       state match {
         case u32"0" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0x072BDD2B" /* "fragment" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"1")
-            found = T
-          }
-          if (!found && tokens(j).tipe == u32"0x8E18F45B" /* LID */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"2")
-            found = T
+          tokens(j).tipe match {
+            case u32"0x072BDD2B" /* "fragment" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"1")
+              found = T
+            case u32"0x8E18F45B" /* LID */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"2")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
           }
         case u32"1" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0x8E18F45B" /* LID */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"2")
-            found = T
+          tokens(j).tipe match {
+            case u32"0x8E18F45B" /* LID */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"2")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
           }
         case u32"2" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0x763C38BE" /* ":" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"3")
-            found = T
+          tokens(j).tipe match {
+            case u32"0x763C38BE" /* ":" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"3")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
@@ -875,11 +906,18 @@ import SireumGrammarParser._
           }
         case u32"4" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0x687111E8" /* "|" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"5")
-            found = T
+          tokens(j).tipe match {
+            case u32"0x687111E8" /* "|" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"5")
+              found = T
+            case u32"0x36F2899D" /* ";" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"7")
+              found = T
+            case _ =>
           }
           if (!found && predictChannel(j)) {
             parseChannel(j) match {
@@ -895,12 +933,6 @@ import SireumGrammarParser._
                   max = r
                 }
             }
-          }
-          if (!found && tokens(j).tipe == u32"0x36F2899D" /* ";" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"7")
-            found = T
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
@@ -927,17 +959,18 @@ import SireumGrammarParser._
           }
         case u32"6" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0x687111E8" /* "|" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"5")
-            found = T
-          }
-          if (!found && tokens(j).tipe == u32"0x36F2899D" /* ";" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"7")
-            found = T
+          tokens(j).tipe match {
+            case u32"0x687111E8" /* "|" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"5")
+              found = T
+            case u32"0x36F2899D" /* ";" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"7")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
@@ -945,17 +978,18 @@ import SireumGrammarParser._
         case u32"7" => return retVal(max, resOpt, initial, F)
         case u32"8" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0x687111E8" /* "|" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"9")
-            found = T
-          }
-          if (!found && tokens(j).tipe == u32"0x36F2899D" /* ";" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"7")
-            found = T
+          tokens(j).tipe match {
+            case u32"0x687111E8" /* "|" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"9")
+              found = T
+            case u32"0x36F2899D" /* ";" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"7")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
@@ -1032,11 +1066,13 @@ import SireumGrammarParser._
       state match {
         case u32"0" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0x71F6371D" /* "(" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"1")
-            found = T
+          tokens(j).tipe match {
+            case u32"0x71F6371D" /* "(" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"1")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
@@ -1063,17 +1099,18 @@ import SireumGrammarParser._
           }
         case u32"2" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0x687111E8" /* "|" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"3")
-            found = T
-          }
-          if (!found && tokens(j).tipe == u32"0xB9401340" /* ")" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"4")
-            found = T
+          tokens(j).tipe match {
+            case u32"0x687111E8" /* "|" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"3")
+              found = T
+            case u32"0xB9401340" /* ")" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"4")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
@@ -1237,23 +1274,23 @@ import SireumGrammarParser._
           }
         case u32"1" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0xD827FEB7" /* "?" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"2")
-            found = T
-          }
-          if (!found && tokens(j).tipe == u32"0x82283B4B" /* "*" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"2")
-            found = T
-          }
-          if (!found && tokens(j).tipe == u32"0x797D7BC8" /* "+" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"2")
-            found = T
+          tokens(j).tipe match {
+            case u32"0xD827FEB7" /* "?" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"2")
+              found = T
+            case u32"0x82283B4B" /* "*" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"2")
+              found = T
+            case u32"0x797D7BC8" /* "+" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"2")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
@@ -1291,6 +1328,14 @@ import SireumGrammarParser._
       state match {
         case u32"0" =>
           var found = F
+          tokens(j).tipe match {
+            case u32"0xD2EDBEA1" /* PID */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"1")
+              found = T
+            case _ =>
+          }
           if (!found && predictRange(j)) {
             parseRange(j) match {
               case Either.Left(r) =>
@@ -1336,12 +1381,6 @@ import SireumGrammarParser._
                 }
             }
           }
-          if (!found && tokens(j).tipe == u32"0xD2EDBEA1" /* PID */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"1")
-            found = T
-          }
           if (!found) {
             return retVal(max, resOpt, initial, F)
           }
@@ -1378,28 +1417,31 @@ import SireumGrammarParser._
       state match {
         case u32"0" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0xAAB7E55C" /* "~" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"1")
-            found = T
+          tokens(j).tipe match {
+            case u32"0xAAB7E55C" /* "~" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"1")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
           }
         case u32"1" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0xE95F063A" /* CHAR */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"2")
-            found = T
-          }
-          if (!found && tokens(j).tipe == u32"0xA7CF0FE0" /* STRING */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"2")
-            found = T
+          tokens(j).tipe match {
+            case u32"0xE95F063A" /* CHAR */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"2")
+              found = T
+            case u32"0xA7CF0FE0" /* STRING */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"2")
+              found = T
+            case _ =>
           }
           if (!found && predictBlock(j)) {
             parseBlock(j) match {
@@ -1452,33 +1494,39 @@ import SireumGrammarParser._
       state match {
         case u32"0" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0xE95F063A" /* CHAR */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"1")
-            found = T
+          tokens(j).tipe match {
+            case u32"0xE95F063A" /* CHAR */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"1")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
           }
         case u32"1" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0x3A15194D" /* ".." */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"2")
-            found = T
+          tokens(j).tipe match {
+            case u32"0x3A15194D" /* ".." */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"2")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
           }
         case u32"2" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0xE95F063A" /* CHAR */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"3")
-            found = T
+          tokens(j).tipe match {
+            case u32"0xE95F063A" /* CHAR */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"3")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
@@ -1516,29 +1564,28 @@ import SireumGrammarParser._
       state match {
         case u32"0" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0x8E18F45B" /* LID */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"1")
-            found = T
-          }
-          if (!found && tokens(j).tipe == u32"0xE95F063A" /* CHAR */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"1")
-            found = T
-          }
-          if (!found && tokens(j).tipe == u32"0xA7CF0FE0" /* STRING */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"1")
-            found = T
-          }
-          if (!found && tokens(j).tipe == u32"0x6890427A" /* "." */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"1")
-            found = T
+          tokens(j).tipe match {
+            case u32"0x8E18F45B" /* LID */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"1")
+              found = T
+            case u32"0xE95F063A" /* CHAR */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"1")
+              found = T
+            case u32"0xA7CF0FE0" /* STRING */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"1")
+              found = T
+            case u32"0x6890427A" /* "." */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"1")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
@@ -1576,17 +1623,18 @@ import SireumGrammarParser._
       state match {
         case u32"0" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0x8E18F45B" /* LID */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"1")
-            found = T
-          }
-          if (!found && tokens(j).tipe == u32"0xD2EDBEA1" /* PID */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"1")
-            found = T
+          tokens(j).tipe match {
+            case u32"0x8E18F45B" /* LID */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"1")
+              found = T
+            case u32"0xD2EDBEA1" /* PID */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"1")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
@@ -1624,66 +1672,78 @@ import SireumGrammarParser._
       state match {
         case u32"0" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0xFDCE65E5" /* "{" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"1")
-            found = T
+          tokens(j).tipe match {
+            case u32"0xFDCE65E5" /* "{" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"1")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
           }
         case u32"1" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0x46562B21" /* "$channel" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"2")
-            found = T
+          tokens(j).tipe match {
+            case u32"0x46562B21" /* "$channel" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"2")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
           }
         case u32"2" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0xEF954474" /* "=" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"3")
-            found = T
+          tokens(j).tipe match {
+            case u32"0xEF954474" /* "=" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"3")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
           }
         case u32"3" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0x8E18F45B" /* LID */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"4")
-            found = T
+          tokens(j).tipe match {
+            case u32"0x8E18F45B" /* LID */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"4")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
           }
         case u32"4" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0x36F2899D" /* ";" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"5")
-            found = T
+          tokens(j).tipe match {
+            case u32"0x36F2899D" /* ";" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"5")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
           }
         case u32"5" =>
           var found = F
-          if (!found && tokens(j).tipe == u32"0x5BF60471" /* "}" */) {
-            trees = trees :+ tokens(j)
-            j = j + 1
-            update(u32"6")
-            found = T
+          tokens(j).tipe match {
+            case u32"0x5BF60471" /* "}" */ =>
+              trees = trees :+ tokens(j)
+              j = j + 1
+              update(u32"6")
+              found = T
+            case _ =>
           }
           if (!found) {
             return retVal(max, resOpt, initial, F)
@@ -1703,8 +1763,12 @@ import SireumGrammarParser._
     var shouldTry = F
     val j1 = j + 1
     val off1 = j1 < tokens.size
-    if (!shouldTry && tokens(j).tipe == u32"0xD2EDBEA1" /* PID */  && (off1 && tokens(j1).tipe == u32"0x763C38BE" /* ":" */ )) {
-      shouldTry = T
+    tokens(j).tipe match {
+      case u32"0xD2EDBEA1" /* PID */ if off1 => tokens(j1).tipe match {
+        case u32"0x763C38BE" /* ":" */ => shouldTry = T
+        case _ =>
+      }
+      case _ =>
     }
     return shouldTry
   }
@@ -1713,23 +1777,19 @@ import SireumGrammarParser._
     var shouldTry = F
     val j1 = j + 1
     val off1 = j1 < tokens.size
-    if (!shouldTry && tokens(j).tipe == u32"0xE95F063A" /* CHAR */ ) {
-      shouldTry = T
-    }
-    if (!shouldTry && tokens(j).tipe == u32"0x8E18F45B" /* LID */ ) {
-      shouldTry = T
-    }
-    if (!shouldTry && tokens(j).tipe == u32"0xA7CF0FE0" /* STRING */ ) {
-      shouldTry = T
-    }
-    if (!shouldTry && tokens(j).tipe == u32"0x6890427A" /* "." */ ) {
-      shouldTry = T
-    }
-    if (!shouldTry && tokens(j).tipe == u32"0xAAB7E55C" /* "~" */  && (off1 && tokens(j1).tipe == u32"0xE95F063A" /* CHAR */  || off1 && tokens(j1).tipe == u32"0xA7CF0FE0" /* STRING */  || off1 && tokens(j1).tipe == u32"0x71F6371D" /* "(" */ )) {
-      shouldTry = T
-    }
-    if (!shouldTry && tokens(j).tipe == u32"0xD2EDBEA1" /* PID */ ) {
-      shouldTry = T
+    tokens(j).tipe match {
+      case u32"0xE95F063A" /* CHAR */ => shouldTry = T
+      case u32"0x8E18F45B" /* LID */ => shouldTry = T
+      case u32"0xA7CF0FE0" /* STRING */ => shouldTry = T
+      case u32"0x6890427A" /* "." */ => shouldTry = T
+      case u32"0xAAB7E55C" /* "~" */ if off1 => tokens(j1).tipe match {
+        case u32"0xE95F063A" /* CHAR */ => shouldTry = T
+        case u32"0xA7CF0FE0" /* STRING */ => shouldTry = T
+        case u32"0x71F6371D" /* "(" */ => shouldTry = T
+        case _ =>
+      }
+      case u32"0xD2EDBEA1" /* PID */ => shouldTry = T
+      case _ =>
     }
     return shouldTry
   }
@@ -1738,8 +1798,12 @@ import SireumGrammarParser._
     var shouldTry = F
     val j1 = j + 1
     val off1 = j1 < tokens.size
-    if (!shouldTry && tokens(j).tipe == u32"0xED16D169" /* "options" */  && (off1 && tokens(j1).tipe == u32"0xFDCE65E5" /* "{" */ )) {
-      shouldTry = T
+    tokens(j).tipe match {
+      case u32"0xED16D169" /* "options" */ if off1 => tokens(j1).tipe match {
+        case u32"0xFDCE65E5" /* "{" */ => shouldTry = T
+        case _ =>
+      }
+      case _ =>
     }
     return shouldTry
   }
@@ -1748,43 +1812,41 @@ import SireumGrammarParser._
     var shouldTry = F
     val j1 = j + 1
     val off1 = j1 < tokens.size
-    if (!shouldTry && tokens(j).tipe == u32"0xE95F063A" /* CHAR */ ) {
-      shouldTry = T
-    }
-    if (!shouldTry && tokens(j).tipe == u32"0x8E18F45B" /* LID */ ) {
-      shouldTry = T
-    }
-    if (!shouldTry && tokens(j).tipe == u32"0xA7CF0FE0" /* STRING */ ) {
-      shouldTry = T
-    }
-    if (!shouldTry && tokens(j).tipe == u32"0x6890427A" /* "." */ ) {
-      shouldTry = T
-    }
-    if (!shouldTry && tokens(j).tipe == u32"0xAAB7E55C" /* "~" */  && (off1 && tokens(j1).tipe == u32"0xE95F063A" /* CHAR */  || off1 && tokens(j1).tipe == u32"0xA7CF0FE0" /* STRING */  || off1 && tokens(j1).tipe == u32"0x71F6371D" /* "(" */ )) {
-      shouldTry = T
-    }
-    if (!shouldTry && tokens(j).tipe == u32"0xD2EDBEA1" /* PID */ ) {
-      shouldTry = T
-    }
-    if (!shouldTry && tokens(j).tipe == u32"0x71F6371D" /* "(" */  && (off1 && tokens(j1).tipe == u32"0xE95F063A" /* CHAR */  || off1 && tokens(j1).tipe == u32"0x8E18F45B" /* LID */  || off1 && tokens(j1).tipe == u32"0xA7CF0FE0" /* STRING */  || off1 && tokens(j1).tipe == u32"0x6890427A" /* "." */  || off1 && tokens(j1).tipe == u32"0xAAB7E55C" /* "~" */  || off1 && tokens(j1).tipe == u32"0xD2EDBEA1" /* PID */  || off1 && tokens(j1).tipe == u32"0x71F6371D" /* "(" */ )) {
-      shouldTry = T
+    tokens(j).tipe match {
+      case u32"0xE95F063A" /* CHAR */ => shouldTry = T
+      case u32"0x8E18F45B" /* LID */ => shouldTry = T
+      case u32"0xA7CF0FE0" /* STRING */ => shouldTry = T
+      case u32"0x6890427A" /* "." */ => shouldTry = T
+      case u32"0xAAB7E55C" /* "~" */ if off1 => tokens(j1).tipe match {
+        case u32"0xE95F063A" /* CHAR */ => shouldTry = T
+        case u32"0xA7CF0FE0" /* STRING */ => shouldTry = T
+        case u32"0x71F6371D" /* "(" */ => shouldTry = T
+        case _ =>
+      }
+      case u32"0xD2EDBEA1" /* PID */ => shouldTry = T
+      case u32"0x71F6371D" /* "(" */ if off1 => tokens(j1).tipe match {
+        case u32"0xE95F063A" /* CHAR */ => shouldTry = T
+        case u32"0x8E18F45B" /* LID */ => shouldTry = T
+        case u32"0xA7CF0FE0" /* STRING */ => shouldTry = T
+        case u32"0x6890427A" /* "." */ => shouldTry = T
+        case u32"0xAAB7E55C" /* "~" */ => shouldTry = T
+        case u32"0xD2EDBEA1" /* PID */ => shouldTry = T
+        case u32"0x71F6371D" /* "(" */ => shouldTry = T
+        case _ =>
+      }
+      case _ =>
     }
     return shouldTry
   }
 
   @pure def predictTerminal(j: Z): B = {
     var shouldTry = F
-    if (!shouldTry && tokens(j).tipe == u32"0x8E18F45B" /* LID */ ) {
-      shouldTry = T
-    }
-    if (!shouldTry && tokens(j).tipe == u32"0xE95F063A" /* CHAR */ ) {
-      shouldTry = T
-    }
-    if (!shouldTry && tokens(j).tipe == u32"0xA7CF0FE0" /* STRING */ ) {
-      shouldTry = T
-    }
-    if (!shouldTry && tokens(j).tipe == u32"0x6890427A" /* "." */ ) {
-      shouldTry = T
+    tokens(j).tipe match {
+      case u32"0x8E18F45B" /* LID */ => shouldTry = T
+      case u32"0xE95F063A" /* CHAR */ => shouldTry = T
+      case u32"0xA7CF0FE0" /* STRING */ => shouldTry = T
+      case u32"0x6890427A" /* "." */ => shouldTry = T
+      case _ =>
     }
     return shouldTry
   }
@@ -1793,11 +1855,16 @@ import SireumGrammarParser._
     var shouldTry = F
     val j1 = j + 1
     val off1 = j1 < tokens.size
-    if (!shouldTry && tokens(j).tipe == u32"0x072BDD2B" /* "fragment" */  && (off1 && tokens(j1).tipe == u32"0x8E18F45B" /* LID */ )) {
-      shouldTry = T
-    }
-    if (!shouldTry && tokens(j).tipe == u32"0x8E18F45B" /* LID */  && (off1 && tokens(j1).tipe == u32"0x763C38BE" /* ":" */ )) {
-      shouldTry = T
+    tokens(j).tipe match {
+      case u32"0x072BDD2B" /* "fragment" */ if off1 => tokens(j1).tipe match {
+        case u32"0x8E18F45B" /* LID */ => shouldTry = T
+        case _ =>
+      }
+      case u32"0x8E18F45B" /* LID */ if off1 => tokens(j1).tipe match {
+        case u32"0x763C38BE" /* ":" */ => shouldTry = T
+        case _ =>
+      }
+      case _ =>
     }
     return shouldTry
   }
@@ -1806,26 +1873,29 @@ import SireumGrammarParser._
     var shouldTry = F
     val j1 = j + 1
     val off1 = j1 < tokens.size
-    if (!shouldTry && tokens(j).tipe == u32"0xE95F063A" /* CHAR */ ) {
-      shouldTry = T
-    }
-    if (!shouldTry && tokens(j).tipe == u32"0x8E18F45B" /* LID */ ) {
-      shouldTry = T
-    }
-    if (!shouldTry && tokens(j).tipe == u32"0xA7CF0FE0" /* STRING */ ) {
-      shouldTry = T
-    }
-    if (!shouldTry && tokens(j).tipe == u32"0x6890427A" /* "." */ ) {
-      shouldTry = T
-    }
-    if (!shouldTry && tokens(j).tipe == u32"0xAAB7E55C" /* "~" */  && (off1 && tokens(j1).tipe == u32"0xE95F063A" /* CHAR */  || off1 && tokens(j1).tipe == u32"0xA7CF0FE0" /* STRING */  || off1 && tokens(j1).tipe == u32"0x71F6371D" /* "(" */ )) {
-      shouldTry = T
-    }
-    if (!shouldTry && tokens(j).tipe == u32"0xD2EDBEA1" /* PID */ ) {
-      shouldTry = T
-    }
-    if (!shouldTry && tokens(j).tipe == u32"0x71F6371D" /* "(" */  && (off1 && tokens(j1).tipe == u32"0xE95F063A" /* CHAR */  || off1 && tokens(j1).tipe == u32"0x8E18F45B" /* LID */  || off1 && tokens(j1).tipe == u32"0xA7CF0FE0" /* STRING */  || off1 && tokens(j1).tipe == u32"0x6890427A" /* "." */  || off1 && tokens(j1).tipe == u32"0xAAB7E55C" /* "~" */  || off1 && tokens(j1).tipe == u32"0xD2EDBEA1" /* PID */  || off1 && tokens(j1).tipe == u32"0x71F6371D" /* "(" */ )) {
-      shouldTry = T
+    tokens(j).tipe match {
+      case u32"0xE95F063A" /* CHAR */ => shouldTry = T
+      case u32"0x8E18F45B" /* LID */ => shouldTry = T
+      case u32"0xA7CF0FE0" /* STRING */ => shouldTry = T
+      case u32"0x6890427A" /* "." */ => shouldTry = T
+      case u32"0xAAB7E55C" /* "~" */ if off1 => tokens(j1).tipe match {
+        case u32"0xE95F063A" /* CHAR */ => shouldTry = T
+        case u32"0xA7CF0FE0" /* STRING */ => shouldTry = T
+        case u32"0x71F6371D" /* "(" */ => shouldTry = T
+        case _ =>
+      }
+      case u32"0xD2EDBEA1" /* PID */ => shouldTry = T
+      case u32"0x71F6371D" /* "(" */ if off1 => tokens(j1).tipe match {
+        case u32"0xE95F063A" /* CHAR */ => shouldTry = T
+        case u32"0x8E18F45B" /* LID */ => shouldTry = T
+        case u32"0xA7CF0FE0" /* STRING */ => shouldTry = T
+        case u32"0x6890427A" /* "." */ => shouldTry = T
+        case u32"0xAAB7E55C" /* "~" */ => shouldTry = T
+        case u32"0xD2EDBEA1" /* PID */ => shouldTry = T
+        case u32"0x71F6371D" /* "(" */ => shouldTry = T
+        case _ =>
+      }
+      case _ =>
     }
     return shouldTry
   }
@@ -1834,8 +1904,12 @@ import SireumGrammarParser._
     var shouldTry = F
     val j1 = j + 1
     val off1 = j1 < tokens.size
-    if (!shouldTry && tokens(j).tipe == u32"0xFDCE65E5" /* "{" */  && (off1 && tokens(j1).tipe == u32"0x46562B21" /* "$channel" */ )) {
-      shouldTry = T
+    tokens(j).tipe match {
+      case u32"0xFDCE65E5" /* "{" */ if off1 => tokens(j1).tipe match {
+        case u32"0x46562B21" /* "$channel" */ => shouldTry = T
+        case _ =>
+      }
+      case _ =>
     }
     return shouldTry
   }
@@ -1844,25 +1918,27 @@ import SireumGrammarParser._
     var shouldTry = F
     val j1 = j + 1
     val off1 = j1 < tokens.size
-    if (!shouldTry && tokens(j).tipe == u32"0x8E18F45B" /* LID */  && (off1 && tokens(j1).tipe == u32"0xEF954474" /* "=" */ )) {
-      shouldTry = T
-    }
-    if (!shouldTry && tokens(j).tipe == u32"0xD2EDBEA1" /* PID */  && (off1 && tokens(j1).tipe == u32"0xEF954474" /* "=" */ )) {
-      shouldTry = T
+    tokens(j).tipe match {
+      case u32"0x8E18F45B" /* LID */ if off1 => tokens(j1).tipe match {
+        case u32"0xEF954474" /* "=" */ => shouldTry = T
+        case _ =>
+      }
+      case u32"0xD2EDBEA1" /* PID */ if off1 => tokens(j1).tipe match {
+        case u32"0xEF954474" /* "=" */ => shouldTry = T
+        case _ =>
+      }
+      case _ =>
     }
     return shouldTry
   }
 
   @pure def predictOptionValue(j: Z): B = {
     var shouldTry = F
-    if (!shouldTry && tokens(j).tipe == u32"0x8E18F45B" /* LID */ ) {
-      shouldTry = T
-    }
-    if (!shouldTry && tokens(j).tipe == u32"0xD2EDBEA1" /* PID */ ) {
-      shouldTry = T
-    }
-    if (!shouldTry && tokens(j).tipe == u32"0x589C233C" /* INT */ ) {
-      shouldTry = T
+    tokens(j).tipe match {
+      case u32"0x8E18F45B" /* LID */ => shouldTry = T
+      case u32"0xD2EDBEA1" /* PID */ => shouldTry = T
+      case u32"0x589C233C" /* INT */ => shouldTry = T
+      case _ =>
     }
     return shouldTry
   }
@@ -1871,8 +1947,18 @@ import SireumGrammarParser._
     var shouldTry = F
     val j1 = j + 1
     val off1 = j1 < tokens.size
-    if (!shouldTry && tokens(j).tipe == u32"0x71F6371D" /* "(" */  && (off1 && tokens(j1).tipe == u32"0xE95F063A" /* CHAR */  || off1 && tokens(j1).tipe == u32"0x8E18F45B" /* LID */  || off1 && tokens(j1).tipe == u32"0xA7CF0FE0" /* STRING */  || off1 && tokens(j1).tipe == u32"0x6890427A" /* "." */  || off1 && tokens(j1).tipe == u32"0xAAB7E55C" /* "~" */  || off1 && tokens(j1).tipe == u32"0xD2EDBEA1" /* PID */  || off1 && tokens(j1).tipe == u32"0x71F6371D" /* "(" */ )) {
-      shouldTry = T
+    tokens(j).tipe match {
+      case u32"0x71F6371D" /* "(" */ if off1 => tokens(j1).tipe match {
+        case u32"0xE95F063A" /* CHAR */ => shouldTry = T
+        case u32"0x8E18F45B" /* LID */ => shouldTry = T
+        case u32"0xA7CF0FE0" /* STRING */ => shouldTry = T
+        case u32"0x6890427A" /* "." */ => shouldTry = T
+        case u32"0xAAB7E55C" /* "~" */ => shouldTry = T
+        case u32"0xD2EDBEA1" /* PID */ => shouldTry = T
+        case u32"0x71F6371D" /* "(" */ => shouldTry = T
+        case _ =>
+      }
+      case _ =>
     }
     return shouldTry
   }
@@ -1881,8 +1967,13 @@ import SireumGrammarParser._
     var shouldTry = F
     val j1 = j + 1
     val off1 = j1 < tokens.size
-    if (!shouldTry && tokens(j).tipe == u32"0xAEB64436" /* "grammar" */  && (off1 && tokens(j1).tipe == u32"0x8E18F45B" /* LID */  || off1 && tokens(j1).tipe == u32"0xD2EDBEA1" /* PID */ )) {
-      shouldTry = T
+    tokens(j).tipe match {
+      case u32"0xAEB64436" /* "grammar" */ if off1 => tokens(j1).tipe match {
+        case u32"0x8E18F45B" /* LID */ => shouldTry = T
+        case u32"0xD2EDBEA1" /* PID */ => shouldTry = T
+        case _ =>
+      }
+      case _ =>
     }
     return shouldTry
   }
@@ -1891,19 +1982,22 @@ import SireumGrammarParser._
     var shouldTry = F
     val j1 = j + 1
     val off1 = j1 < tokens.size
-    if (!shouldTry && tokens(j).tipe == u32"0xE95F063A" /* CHAR */  && (off1 && tokens(j1).tipe == u32"0x3A15194D" /* ".." */ )) {
-      shouldTry = T
+    tokens(j).tipe match {
+      case u32"0xE95F063A" /* CHAR */ if off1 => tokens(j1).tipe match {
+        case u32"0x3A15194D" /* ".." */ => shouldTry = T
+        case _ =>
+      }
+      case _ =>
     }
     return shouldTry
   }
 
   @pure def predictId(j: Z): B = {
     var shouldTry = F
-    if (!shouldTry && tokens(j).tipe == u32"0x8E18F45B" /* LID */ ) {
-      shouldTry = T
-    }
-    if (!shouldTry && tokens(j).tipe == u32"0xD2EDBEA1" /* PID */ ) {
-      shouldTry = T
+    tokens(j).tipe match {
+      case u32"0x8E18F45B" /* LID */ => shouldTry = T
+      case u32"0xD2EDBEA1" /* PID */ => shouldTry = T
+      case _ =>
     }
     return shouldTry
   }
@@ -1912,8 +2006,14 @@ import SireumGrammarParser._
     var shouldTry = F
     val j1 = j + 1
     val off1 = j1 < tokens.size
-    if (!shouldTry && tokens(j).tipe == u32"0xAAB7E55C" /* "~" */  && (off1 && tokens(j1).tipe == u32"0xE95F063A" /* CHAR */  || off1 && tokens(j1).tipe == u32"0xA7CF0FE0" /* STRING */  || off1 && tokens(j1).tipe == u32"0x71F6371D" /* "(" */ )) {
-      shouldTry = T
+    tokens(j).tipe match {
+      case u32"0xAAB7E55C" /* "~" */ if off1 => tokens(j1).tipe match {
+        case u32"0xE95F063A" /* CHAR */ => shouldTry = T
+        case u32"0xA7CF0FE0" /* STRING */ => shouldTry = T
+        case u32"0x71F6371D" /* "(" */ => shouldTry = T
+        case _ =>
+      }
+      case _ =>
     }
     return shouldTry
   }

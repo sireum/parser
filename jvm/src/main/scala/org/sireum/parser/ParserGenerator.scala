@@ -325,6 +325,7 @@ import org.sireum.parser.{GrammarAst => AST}
     var transitions = ISZ[ST]()
     for (node <- dfa.g.nodesInverse) {
       var conds = ISZ[ST]()
+      var cases = ISZ[ST]()
       val outgoing = dfa.g.outgoing(node)
       if (!(outgoing.size === 1 && Dfa.isReject(outgoing(0)))) {
         for (e <- outgoing) {
@@ -335,30 +336,27 @@ import org.sireum.parser.{GrammarAst => AST}
             atoms(i) match {
               case e: AST.Element.Char =>
                 val s = conversions.String.fromCis(ISZ(e.value))
-                conds = conds :+
-                  st"""if (!found && tokens(j).tipe == u32"0x${(valCode(s), "")}" /* "${escape(s)}" */) {
+                cases = cases :+
+                  st"""case u32"0x${(valCode(s), "")}" /* "${escape(s)}" */ =>
                       |  trees = trees :+ tokens(j)
                       |  j = j + 1
                       |  update(u32"${edge.dest}")
-                      |  found = T
-                      |}"""
+                      |  found = T"""
               case e: AST.Element.Str =>
-                conds = conds :+
-                  st"""if (!found && tokens(j).tipe == u32"0x${(valCode(e.value), "")}" /* "${escape(e.value)}" */) {
+                cases = cases :+
+                  st"""case u32"0x${(valCode(e.value), "")}" /* "${escape(e.value)}" */ =>
                       |  trees = trees :+ tokens(j)
                       |  j = j + 1
                       |  update(u32"${edge.dest}")
-                      |  found = T
-                      |}"""
+                      |  found = T"""
               case e: AST.Element.Ref =>
                 if (e.isTerminal) {
-                  conds = conds :+
-                    st"""if (!found && tokens(j).tipe == u32"0x${(valCode(e.name), "")}" /* ${e.name} */) {
+                  cases = cases :+
+                    st"""case u32"0x${(valCode(e.name), "")}" /* ${e.name} */ =>
                         |  trees = trees :+ tokens(j)
                         |  j = j + 1
                         |  update(u32"${edge.dest}")
-                        |  found = T
-                        |}"""
+                        |  found = T"""
                 } else {
                   conds = conds :+
                     st"""if (!found && ${predictName(e.name)}(j)) {
@@ -382,13 +380,20 @@ import org.sireum.parser.{GrammarAst => AST}
           }
         }
       }
-      if (conds.isEmpty) {
+      if (conds.isEmpty && cases.isEmpty) {
         transitions = transitions :+
           st"""case u32"$node" => return retVal(max, resOpt, initial, ${if (noBacktrack) "T" else "F"})"""
       } else {
+        val matchOpt: Option[ST] = if (cases.isEmpty) None() else Some(
+          st"""tokens(j).tipe match {
+              |  ${(cases, "\n")}
+              |  case _ =>
+              |}"""
+        )
         transitions = transitions :+
           st"""case u32"$node" =>
               |  var found = F
+              |  $matchOpt
               |  ${(conds, "\n")}
               |  if (!found) {
               |    return retVal(max, resOpt, initial, ${if (noBacktrack) "T" else "F"})
@@ -435,32 +440,37 @@ import org.sireum.parser.{GrammarAst => AST}
     var offs = HashSSet.empty[Z]
 
     def rec(depth: Z, trie: LookAhead.Trie): ST = {
-      val (idx, size): (ST, ST) = if (depth == 0) {
-        (st"j", st"?")
-      } else {
-        offs = offs + depth
-        (st"j$depth", st"off$depth")
-      }
+
       val subs: ISZ[ST] =
         if (trie.accept || depth >= k) ISZ()
         else for (sub <- trie.subs.values) yield rec(depth + 1, sub)
-      val subsOpt: Option[ST] = if (subs.isEmpty) None() else Some(st" && (${(subs, " || ")})")
-      val cond: ST = trie.value match {
-        case v: LookAhead.Case.Value.Str => st"""tokens($idx).tipe == u32"0x${valCode(v.value)}" /* "${escape(v.value)}" */ """
-        case v: LookAhead.Case.Value.Terminal => st"""tokens($idx).tipe == u32"0x${(valCode(v.name), "")}" /* ${v.name} */ """
+      val subsST: ST = if (subs.isEmpty) {
+        st"=> shouldTry = T"
+      } else {
+        offs = offs + depth
+        val idx = st"j$depth"
+        val size = st"off$depth"
+        st"""${if (depth == 0) st"=>" else st"if $size =>"} tokens($idx).tipe match {
+            |  ${(subs, "\n")}
+            |  case _ =>
+            |}"""
       }
-      return if (depth == 0) st"$cond$subsOpt" else st"$size && $cond$subsOpt"
+      val cond: ST = trie.value match {
+        case v: LookAhead.Case.Value.Str =>
+          st"""case u32"0x${valCode(v.value)}" /* "${escape(v.value)}" */ $subsST"""
+        case v: LookAhead.Case.Value.Terminal =>
+          st"""case u32"0x${(valCode(v.name), "")}" /* ${v.name} */ $subsST"""
+      }
+      return cond
     }
     if (ruleTrie.accept || ruleTrie.subs.isEmpty) {
       r = r :+ st"shouldTry = T"
     } else {
-      for (trie <- ruleTrie.subs.values) {
-        val cond = rec(0, trie)
-        r = r :+
-          st"""if (!shouldTry && $cond) {
-              |  shouldTry = T
-              |}"""
-      }
+      r = r :+
+        st"""tokens(j).tipe match {
+            |  ${(for (trie <- ruleTrie.subs.values) yield rec(1, trie), "\n")}
+            |  case _ =>
+            |}"""
     }
 
     var vars = ISZ[ST]()
