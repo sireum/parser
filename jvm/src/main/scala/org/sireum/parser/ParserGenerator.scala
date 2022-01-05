@@ -568,7 +568,7 @@ import org.sireum.parser.{GrammarAst => AST}
         if (depth >= k) ISZ()
         else for (sub <- trie.subs.values) yield rec(depth + 1, sub)
       val subsST: ST = if (subs.isEmpty) {
-        st"=> num = $depth"
+        st"num = $depth"
       } else {
         offs = offs + depth
         val idx = st"j$depth"
@@ -578,19 +578,30 @@ import org.sireum.parser.{GrammarAst => AST}
               |  num = $depth
               |}"""
         ) else None()
-        st"""${if (depth == 0) st"=>" else st"if $size =>"} tokens($idx).tipe match {
-            |  ${(subs, "\n")}
-            |  case _ =>
-            |    $acceptOpt
-            |}"""
+        if (depth == 0) {
+          st"""tokens($idx).tipe match {
+              |  ${(subs, "\n")}
+              |  case _ =>
+              |}
+              |$acceptOpt"""
+        } else {
+          st"""if ($size) {
+              |  tokens($idx).tipe match {
+              |    ${(subs, "\n")}
+              |    case _ =>
+              |  }
+              |}
+              |$acceptOpt"""
+        }
       }
       val cond: ST = trie.value match {
-        case v: LookAhead.Case.Value.Str =>
-          st"""case u32"0x${valCode(v.value)}" /* "${escape(v.value)}" */ $subsST"""
-        case v: LookAhead.Case.Value.Terminal =>
-          st"""case u32"0x${(valCode(v.name), "")}" /* ${v.name} */ $subsST"""
+        case v: LookAhead.Case.Value.Str => st"""case u32"0x${valCode(v.value)}" /* "${escape(v.value)}" */"""
+        case v: LookAhead.Case.Value.Terminal => st"""case u32"0x${(valCode(v.name), "")}" /* ${v.name} */"""
       }
-      return cond
+      val r: ST = if (subs.isEmpty) st"$cond => $subsST" else
+        st"""$cond =>
+            |  $subsST"""
+      return r
     }
 
     if (ruleTrie.accept || ruleTrie.subs.isEmpty) {

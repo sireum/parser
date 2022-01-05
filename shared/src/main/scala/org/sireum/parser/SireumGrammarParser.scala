@@ -1808,10 +1808,14 @@ import SireumGrammarParser._
     val j1 = j + 1
     val off1 = j1 < tokens.size
     tokens(j).tipe match {
-      case u32"0xD2EDBEA1" /* PID */ if off1 => tokens(j1).tipe match {
-        case u32"0x763C38BE" /* ":" */ => num = 2
-        case _ =>
-      }
+      case u32"0xD2EDBEA1" /* PID */ =>
+        if (off1) {
+          tokens(j1).tipe match {
+            case u32"0x763C38BE" /* ":" */ => num = 2
+            case _ =>
+          }
+        }
+
       case _ =>
     }
     return num
@@ -1822,22 +1826,29 @@ import SireumGrammarParser._
     val j1 = j + 1
     val off1 = j1 < tokens.size
     tokens(j).tipe match {
-      case u32"0xE95F063A" /* CHAR */ if off1 => tokens(j1).tipe match {
-        case u32"0x3A15194D" /* ".." */ => num = 2
-        case _ =>
-          if (num == 0) {
-            num = 1
+      case u32"0xE95F063A" /* CHAR */ =>
+        if (off1) {
+          tokens(j1).tipe match {
+            case u32"0x3A15194D" /* ".." */ => num = 2
+            case _ =>
           }
-      }
+        }
+        if (num == 0) {
+          num = 1
+        }
       case u32"0x8E18F45B" /* LID */ => num = 1
       case u32"0xA7CF0FE0" /* STRING */ => num = 1
       case u32"0x6890427A" /* "." */ => num = 1
-      case u32"0xAAB7E55C" /* "~" */ if off1 => tokens(j1).tipe match {
-        case u32"0xE95F063A" /* CHAR */ => num = 2
-        case u32"0xA7CF0FE0" /* STRING */ => num = 2
-        case u32"0x71F6371D" /* "(" */ => num = 2
-        case _ =>
-      }
+      case u32"0xAAB7E55C" /* "~" */ =>
+        if (off1) {
+          tokens(j1).tipe match {
+            case u32"0xE95F063A" /* CHAR */ => num = 2
+            case u32"0xA7CF0FE0" /* STRING */ => num = 2
+            case u32"0x71F6371D" /* "(" */ => num = 2
+            case _ =>
+          }
+        }
+
       case u32"0xD2EDBEA1" /* PID */ => num = 1
       case _ =>
     }
@@ -1849,10 +1860,14 @@ import SireumGrammarParser._
     val j1 = j + 1
     val off1 = j1 < tokens.size
     tokens(j).tipe match {
-      case u32"0xED16D169" /* "options" */ if off1 => tokens(j1).tipe match {
-        case u32"0xFDCE65E5" /* "{" */ => num = 2
-        case _ =>
-      }
+      case u32"0xED16D169" /* "options" */ =>
+        if (off1) {
+          tokens(j1).tipe match {
+            case u32"0xFDCE65E5" /* "{" */ => num = 2
+            case _ =>
+          }
+        }
+
       case _ =>
     }
     return num
@@ -1863,103 +1878,126 @@ import SireumGrammarParser._
     val j1 = j + 1
     val off1 = j1 < tokens.size
     tokens(j).tipe match {
-      case u32"0xE95F063A" /* CHAR */ if off1 => tokens(j1).tipe match {
-        case u32"0x3A15194D" /* ".." */ => num = 2
-        case u32"0xE95F063A" /* CHAR */ => num = 2
-        case u32"0x8E18F45B" /* LID */ => num = 2
-        case u32"0xA7CF0FE0" /* STRING */ => num = 2
-        case u32"0x6890427A" /* "." */ => num = 2
-        case u32"0xAAB7E55C" /* "~" */ => num = 2
-        case u32"0xD2EDBEA1" /* PID */ => num = 2
-        case u32"0x71F6371D" /* "(" */ => num = 2
-        case u32"0xD827FEB7" /* "?" */ => num = 2
-        case u32"0x82283B4B" /* "*" */ => num = 2
-        case u32"0x797D7BC8" /* "+" */ => num = 2
-        case _ =>
-          if (num == 0) {
-            num = 1
+      case u32"0xE95F063A" /* CHAR */ =>
+        if (off1) {
+          tokens(j1).tipe match {
+            case u32"0x3A15194D" /* ".." */ => num = 2
+            case u32"0xE95F063A" /* CHAR */ => num = 2
+            case u32"0x8E18F45B" /* LID */ => num = 2
+            case u32"0xA7CF0FE0" /* STRING */ => num = 2
+            case u32"0x6890427A" /* "." */ => num = 2
+            case u32"0xAAB7E55C" /* "~" */ => num = 2
+            case u32"0xD2EDBEA1" /* PID */ => num = 2
+            case u32"0x71F6371D" /* "(" */ => num = 2
+            case u32"0xD827FEB7" /* "?" */ => num = 2
+            case u32"0x82283B4B" /* "*" */ => num = 2
+            case u32"0x797D7BC8" /* "+" */ => num = 2
+            case _ =>
           }
-      }
-      case u32"0x8E18F45B" /* LID */ if off1 => tokens(j1).tipe match {
-        case u32"0xE95F063A" /* CHAR */ => num = 2
-        case u32"0x8E18F45B" /* LID */ => num = 2
-        case u32"0xA7CF0FE0" /* STRING */ => num = 2
-        case u32"0x6890427A" /* "." */ => num = 2
-        case u32"0xAAB7E55C" /* "~" */ => num = 2
-        case u32"0xD2EDBEA1" /* PID */ => num = 2
-        case u32"0x71F6371D" /* "(" */ => num = 2
-        case u32"0xD827FEB7" /* "?" */ => num = 2
-        case u32"0x82283B4B" /* "*" */ => num = 2
-        case u32"0x797D7BC8" /* "+" */ => num = 2
-        case _ =>
-          if (num == 0) {
-            num = 1
+        }
+        if (num == 0) {
+          num = 1
+        }
+      case u32"0x8E18F45B" /* LID */ =>
+        if (off1) {
+          tokens(j1).tipe match {
+            case u32"0xE95F063A" /* CHAR */ => num = 2
+            case u32"0x8E18F45B" /* LID */ => num = 2
+            case u32"0xA7CF0FE0" /* STRING */ => num = 2
+            case u32"0x6890427A" /* "." */ => num = 2
+            case u32"0xAAB7E55C" /* "~" */ => num = 2
+            case u32"0xD2EDBEA1" /* PID */ => num = 2
+            case u32"0x71F6371D" /* "(" */ => num = 2
+            case u32"0xD827FEB7" /* "?" */ => num = 2
+            case u32"0x82283B4B" /* "*" */ => num = 2
+            case u32"0x797D7BC8" /* "+" */ => num = 2
+            case _ =>
           }
-      }
-      case u32"0xA7CF0FE0" /* STRING */ if off1 => tokens(j1).tipe match {
-        case u32"0xE95F063A" /* CHAR */ => num = 2
-        case u32"0x8E18F45B" /* LID */ => num = 2
-        case u32"0xA7CF0FE0" /* STRING */ => num = 2
-        case u32"0x6890427A" /* "." */ => num = 2
-        case u32"0xAAB7E55C" /* "~" */ => num = 2
-        case u32"0xD2EDBEA1" /* PID */ => num = 2
-        case u32"0x71F6371D" /* "(" */ => num = 2
-        case u32"0xD827FEB7" /* "?" */ => num = 2
-        case u32"0x82283B4B" /* "*" */ => num = 2
-        case u32"0x797D7BC8" /* "+" */ => num = 2
-        case _ =>
-          if (num == 0) {
-            num = 1
+        }
+        if (num == 0) {
+          num = 1
+        }
+      case u32"0xA7CF0FE0" /* STRING */ =>
+        if (off1) {
+          tokens(j1).tipe match {
+            case u32"0xE95F063A" /* CHAR */ => num = 2
+            case u32"0x8E18F45B" /* LID */ => num = 2
+            case u32"0xA7CF0FE0" /* STRING */ => num = 2
+            case u32"0x6890427A" /* "." */ => num = 2
+            case u32"0xAAB7E55C" /* "~" */ => num = 2
+            case u32"0xD2EDBEA1" /* PID */ => num = 2
+            case u32"0x71F6371D" /* "(" */ => num = 2
+            case u32"0xD827FEB7" /* "?" */ => num = 2
+            case u32"0x82283B4B" /* "*" */ => num = 2
+            case u32"0x797D7BC8" /* "+" */ => num = 2
+            case _ =>
           }
-      }
-      case u32"0x6890427A" /* "." */ if off1 => tokens(j1).tipe match {
-        case u32"0xE95F063A" /* CHAR */ => num = 2
-        case u32"0x8E18F45B" /* LID */ => num = 2
-        case u32"0xA7CF0FE0" /* STRING */ => num = 2
-        case u32"0x6890427A" /* "." */ => num = 2
-        case u32"0xAAB7E55C" /* "~" */ => num = 2
-        case u32"0xD2EDBEA1" /* PID */ => num = 2
-        case u32"0x71F6371D" /* "(" */ => num = 2
-        case u32"0xD827FEB7" /* "?" */ => num = 2
-        case u32"0x82283B4B" /* "*" */ => num = 2
-        case u32"0x797D7BC8" /* "+" */ => num = 2
-        case _ =>
-          if (num == 0) {
-            num = 1
+        }
+        if (num == 0) {
+          num = 1
+        }
+      case u32"0x6890427A" /* "." */ =>
+        if (off1) {
+          tokens(j1).tipe match {
+            case u32"0xE95F063A" /* CHAR */ => num = 2
+            case u32"0x8E18F45B" /* LID */ => num = 2
+            case u32"0xA7CF0FE0" /* STRING */ => num = 2
+            case u32"0x6890427A" /* "." */ => num = 2
+            case u32"0xAAB7E55C" /* "~" */ => num = 2
+            case u32"0xD2EDBEA1" /* PID */ => num = 2
+            case u32"0x71F6371D" /* "(" */ => num = 2
+            case u32"0xD827FEB7" /* "?" */ => num = 2
+            case u32"0x82283B4B" /* "*" */ => num = 2
+            case u32"0x797D7BC8" /* "+" */ => num = 2
+            case _ =>
           }
-      }
-      case u32"0xAAB7E55C" /* "~" */ if off1 => tokens(j1).tipe match {
-        case u32"0xE95F063A" /* CHAR */ => num = 2
-        case u32"0xA7CF0FE0" /* STRING */ => num = 2
-        case u32"0x71F6371D" /* "(" */ => num = 2
-        case _ =>
-      }
-      case u32"0xD2EDBEA1" /* PID */ if off1 => tokens(j1).tipe match {
-        case u32"0xE95F063A" /* CHAR */ => num = 2
-        case u32"0x8E18F45B" /* LID */ => num = 2
-        case u32"0xA7CF0FE0" /* STRING */ => num = 2
-        case u32"0x6890427A" /* "." */ => num = 2
-        case u32"0xAAB7E55C" /* "~" */ => num = 2
-        case u32"0xD2EDBEA1" /* PID */ => num = 2
-        case u32"0x71F6371D" /* "(" */ => num = 2
-        case u32"0xD827FEB7" /* "?" */ => num = 2
-        case u32"0x82283B4B" /* "*" */ => num = 2
-        case u32"0x797D7BC8" /* "+" */ => num = 2
-        case _ =>
-          if (num == 0) {
-            num = 1
+        }
+        if (num == 0) {
+          num = 1
+        }
+      case u32"0xAAB7E55C" /* "~" */ =>
+        if (off1) {
+          tokens(j1).tipe match {
+            case u32"0xE95F063A" /* CHAR */ => num = 2
+            case u32"0xA7CF0FE0" /* STRING */ => num = 2
+            case u32"0x71F6371D" /* "(" */ => num = 2
+            case _ =>
           }
-      }
-      case u32"0x71F6371D" /* "(" */ if off1 => tokens(j1).tipe match {
-        case u32"0xE95F063A" /* CHAR */ => num = 2
-        case u32"0x8E18F45B" /* LID */ => num = 2
-        case u32"0xA7CF0FE0" /* STRING */ => num = 2
-        case u32"0x6890427A" /* "." */ => num = 2
-        case u32"0xAAB7E55C" /* "~" */ => num = 2
-        case u32"0xD2EDBEA1" /* PID */ => num = 2
-        case u32"0x71F6371D" /* "(" */ => num = 2
-        case _ =>
-      }
+        }
+
+      case u32"0xD2EDBEA1" /* PID */ =>
+        if (off1) {
+          tokens(j1).tipe match {
+            case u32"0xE95F063A" /* CHAR */ => num = 2
+            case u32"0x8E18F45B" /* LID */ => num = 2
+            case u32"0xA7CF0FE0" /* STRING */ => num = 2
+            case u32"0x6890427A" /* "." */ => num = 2
+            case u32"0xAAB7E55C" /* "~" */ => num = 2
+            case u32"0xD2EDBEA1" /* PID */ => num = 2
+            case u32"0x71F6371D" /* "(" */ => num = 2
+            case u32"0xD827FEB7" /* "?" */ => num = 2
+            case u32"0x82283B4B" /* "*" */ => num = 2
+            case u32"0x797D7BC8" /* "+" */ => num = 2
+            case _ =>
+          }
+        }
+        if (num == 0) {
+          num = 1
+        }
+      case u32"0x71F6371D" /* "(" */ =>
+        if (off1) {
+          tokens(j1).tipe match {
+            case u32"0xE95F063A" /* CHAR */ => num = 2
+            case u32"0x8E18F45B" /* LID */ => num = 2
+            case u32"0xA7CF0FE0" /* STRING */ => num = 2
+            case u32"0x6890427A" /* "." */ => num = 2
+            case u32"0xAAB7E55C" /* "~" */ => num = 2
+            case u32"0xD2EDBEA1" /* PID */ => num = 2
+            case u32"0x71F6371D" /* "(" */ => num = 2
+            case _ =>
+          }
+        }
+
       case _ =>
     }
     return num
@@ -1982,14 +2020,22 @@ import SireumGrammarParser._
     val j1 = j + 1
     val off1 = j1 < tokens.size
     tokens(j).tipe match {
-      case u32"0x072BDD2B" /* "fragment" */ if off1 => tokens(j1).tipe match {
-        case u32"0x8E18F45B" /* LID */ => num = 2
-        case _ =>
-      }
-      case u32"0x8E18F45B" /* LID */ if off1 => tokens(j1).tipe match {
-        case u32"0x763C38BE" /* ":" */ => num = 2
-        case _ =>
-      }
+      case u32"0x072BDD2B" /* "fragment" */ =>
+        if (off1) {
+          tokens(j1).tipe match {
+            case u32"0x8E18F45B" /* LID */ => num = 2
+            case _ =>
+          }
+        }
+
+      case u32"0x8E18F45B" /* LID */ =>
+        if (off1) {
+          tokens(j1).tipe match {
+            case u32"0x763C38BE" /* ":" */ => num = 2
+            case _ =>
+          }
+        }
+
       case _ =>
     }
     return num
@@ -2000,68 +2046,91 @@ import SireumGrammarParser._
     val j1 = j + 1
     val off1 = j1 < tokens.size
     tokens(j).tipe match {
-      case u32"0xE95F063A" /* CHAR */ if off1 => tokens(j1).tipe match {
-        case u32"0x3A15194D" /* ".." */ => num = 2
-        case u32"0xD827FEB7" /* "?" */ => num = 2
-        case u32"0x82283B4B" /* "*" */ => num = 2
-        case u32"0x797D7BC8" /* "+" */ => num = 2
-        case _ =>
-          if (num == 0) {
-            num = 1
+      case u32"0xE95F063A" /* CHAR */ =>
+        if (off1) {
+          tokens(j1).tipe match {
+            case u32"0x3A15194D" /* ".." */ => num = 2
+            case u32"0xD827FEB7" /* "?" */ => num = 2
+            case u32"0x82283B4B" /* "*" */ => num = 2
+            case u32"0x797D7BC8" /* "+" */ => num = 2
+            case _ =>
           }
-      }
-      case u32"0x8E18F45B" /* LID */ if off1 => tokens(j1).tipe match {
-        case u32"0xD827FEB7" /* "?" */ => num = 2
-        case u32"0x82283B4B" /* "*" */ => num = 2
-        case u32"0x797D7BC8" /* "+" */ => num = 2
-        case _ =>
-          if (num == 0) {
-            num = 1
+        }
+        if (num == 0) {
+          num = 1
+        }
+      case u32"0x8E18F45B" /* LID */ =>
+        if (off1) {
+          tokens(j1).tipe match {
+            case u32"0xD827FEB7" /* "?" */ => num = 2
+            case u32"0x82283B4B" /* "*" */ => num = 2
+            case u32"0x797D7BC8" /* "+" */ => num = 2
+            case _ =>
           }
-      }
-      case u32"0xA7CF0FE0" /* STRING */ if off1 => tokens(j1).tipe match {
-        case u32"0xD827FEB7" /* "?" */ => num = 2
-        case u32"0x82283B4B" /* "*" */ => num = 2
-        case u32"0x797D7BC8" /* "+" */ => num = 2
-        case _ =>
-          if (num == 0) {
-            num = 1
+        }
+        if (num == 0) {
+          num = 1
+        }
+      case u32"0xA7CF0FE0" /* STRING */ =>
+        if (off1) {
+          tokens(j1).tipe match {
+            case u32"0xD827FEB7" /* "?" */ => num = 2
+            case u32"0x82283B4B" /* "*" */ => num = 2
+            case u32"0x797D7BC8" /* "+" */ => num = 2
+            case _ =>
           }
-      }
-      case u32"0x6890427A" /* "." */ if off1 => tokens(j1).tipe match {
-        case u32"0xD827FEB7" /* "?" */ => num = 2
-        case u32"0x82283B4B" /* "*" */ => num = 2
-        case u32"0x797D7BC8" /* "+" */ => num = 2
-        case _ =>
-          if (num == 0) {
-            num = 1
+        }
+        if (num == 0) {
+          num = 1
+        }
+      case u32"0x6890427A" /* "." */ =>
+        if (off1) {
+          tokens(j1).tipe match {
+            case u32"0xD827FEB7" /* "?" */ => num = 2
+            case u32"0x82283B4B" /* "*" */ => num = 2
+            case u32"0x797D7BC8" /* "+" */ => num = 2
+            case _ =>
           }
-      }
-      case u32"0xAAB7E55C" /* "~" */ if off1 => tokens(j1).tipe match {
-        case u32"0xE95F063A" /* CHAR */ => num = 2
-        case u32"0xA7CF0FE0" /* STRING */ => num = 2
-        case u32"0x71F6371D" /* "(" */ => num = 2
-        case _ =>
-      }
-      case u32"0xD2EDBEA1" /* PID */ if off1 => tokens(j1).tipe match {
-        case u32"0xD827FEB7" /* "?" */ => num = 2
-        case u32"0x82283B4B" /* "*" */ => num = 2
-        case u32"0x797D7BC8" /* "+" */ => num = 2
-        case _ =>
-          if (num == 0) {
-            num = 1
+        }
+        if (num == 0) {
+          num = 1
+        }
+      case u32"0xAAB7E55C" /* "~" */ =>
+        if (off1) {
+          tokens(j1).tipe match {
+            case u32"0xE95F063A" /* CHAR */ => num = 2
+            case u32"0xA7CF0FE0" /* STRING */ => num = 2
+            case u32"0x71F6371D" /* "(" */ => num = 2
+            case _ =>
           }
-      }
-      case u32"0x71F6371D" /* "(" */ if off1 => tokens(j1).tipe match {
-        case u32"0xE95F063A" /* CHAR */ => num = 2
-        case u32"0x8E18F45B" /* LID */ => num = 2
-        case u32"0xA7CF0FE0" /* STRING */ => num = 2
-        case u32"0x6890427A" /* "." */ => num = 2
-        case u32"0xAAB7E55C" /* "~" */ => num = 2
-        case u32"0xD2EDBEA1" /* PID */ => num = 2
-        case u32"0x71F6371D" /* "(" */ => num = 2
-        case _ =>
-      }
+        }
+
+      case u32"0xD2EDBEA1" /* PID */ =>
+        if (off1) {
+          tokens(j1).tipe match {
+            case u32"0xD827FEB7" /* "?" */ => num = 2
+            case u32"0x82283B4B" /* "*" */ => num = 2
+            case u32"0x797D7BC8" /* "+" */ => num = 2
+            case _ =>
+          }
+        }
+        if (num == 0) {
+          num = 1
+        }
+      case u32"0x71F6371D" /* "(" */ =>
+        if (off1) {
+          tokens(j1).tipe match {
+            case u32"0xE95F063A" /* CHAR */ => num = 2
+            case u32"0x8E18F45B" /* LID */ => num = 2
+            case u32"0xA7CF0FE0" /* STRING */ => num = 2
+            case u32"0x6890427A" /* "." */ => num = 2
+            case u32"0xAAB7E55C" /* "~" */ => num = 2
+            case u32"0xD2EDBEA1" /* PID */ => num = 2
+            case u32"0x71F6371D" /* "(" */ => num = 2
+            case _ =>
+          }
+        }
+
       case _ =>
     }
     return num
@@ -2072,10 +2141,14 @@ import SireumGrammarParser._
     val j1 = j + 1
     val off1 = j1 < tokens.size
     tokens(j).tipe match {
-      case u32"0xFDCE65E5" /* "{" */ if off1 => tokens(j1).tipe match {
-        case u32"0x46562B21" /* "$channel" */ => num = 2
-        case _ =>
-      }
+      case u32"0xFDCE65E5" /* "{" */ =>
+        if (off1) {
+          tokens(j1).tipe match {
+            case u32"0x46562B21" /* "$channel" */ => num = 2
+            case _ =>
+          }
+        }
+
       case _ =>
     }
     return num
@@ -2086,14 +2159,22 @@ import SireumGrammarParser._
     val j1 = j + 1
     val off1 = j1 < tokens.size
     tokens(j).tipe match {
-      case u32"0x8E18F45B" /* LID */ if off1 => tokens(j1).tipe match {
-        case u32"0xEF954474" /* "=" */ => num = 2
-        case _ =>
-      }
-      case u32"0xD2EDBEA1" /* PID */ if off1 => tokens(j1).tipe match {
-        case u32"0xEF954474" /* "=" */ => num = 2
-        case _ =>
-      }
+      case u32"0x8E18F45B" /* LID */ =>
+        if (off1) {
+          tokens(j1).tipe match {
+            case u32"0xEF954474" /* "=" */ => num = 2
+            case _ =>
+          }
+        }
+
+      case u32"0xD2EDBEA1" /* PID */ =>
+        if (off1) {
+          tokens(j1).tipe match {
+            case u32"0xEF954474" /* "=" */ => num = 2
+            case _ =>
+          }
+        }
+
       case _ =>
     }
     return num
@@ -2115,16 +2196,20 @@ import SireumGrammarParser._
     val j1 = j + 1
     val off1 = j1 < tokens.size
     tokens(j).tipe match {
-      case u32"0x71F6371D" /* "(" */ if off1 => tokens(j1).tipe match {
-        case u32"0xE95F063A" /* CHAR */ => num = 2
-        case u32"0x8E18F45B" /* LID */ => num = 2
-        case u32"0xA7CF0FE0" /* STRING */ => num = 2
-        case u32"0x6890427A" /* "." */ => num = 2
-        case u32"0xAAB7E55C" /* "~" */ => num = 2
-        case u32"0xD2EDBEA1" /* PID */ => num = 2
-        case u32"0x71F6371D" /* "(" */ => num = 2
-        case _ =>
-      }
+      case u32"0x71F6371D" /* "(" */ =>
+        if (off1) {
+          tokens(j1).tipe match {
+            case u32"0xE95F063A" /* CHAR */ => num = 2
+            case u32"0x8E18F45B" /* LID */ => num = 2
+            case u32"0xA7CF0FE0" /* STRING */ => num = 2
+            case u32"0x6890427A" /* "." */ => num = 2
+            case u32"0xAAB7E55C" /* "~" */ => num = 2
+            case u32"0xD2EDBEA1" /* PID */ => num = 2
+            case u32"0x71F6371D" /* "(" */ => num = 2
+            case _ =>
+          }
+        }
+
       case _ =>
     }
     return num
@@ -2135,11 +2220,15 @@ import SireumGrammarParser._
     val j1 = j + 1
     val off1 = j1 < tokens.size
     tokens(j).tipe match {
-      case u32"0xAEB64436" /* "grammar" */ if off1 => tokens(j1).tipe match {
-        case u32"0x8E18F45B" /* LID */ => num = 2
-        case u32"0xD2EDBEA1" /* PID */ => num = 2
-        case _ =>
-      }
+      case u32"0xAEB64436" /* "grammar" */ =>
+        if (off1) {
+          tokens(j1).tipe match {
+            case u32"0x8E18F45B" /* LID */ => num = 2
+            case u32"0xD2EDBEA1" /* PID */ => num = 2
+            case _ =>
+          }
+        }
+
       case _ =>
     }
     return num
@@ -2150,10 +2239,14 @@ import SireumGrammarParser._
     val j1 = j + 1
     val off1 = j1 < tokens.size
     tokens(j).tipe match {
-      case u32"0xE95F063A" /* CHAR */ if off1 => tokens(j1).tipe match {
-        case u32"0x3A15194D" /* ".." */ => num = 2
-        case _ =>
-      }
+      case u32"0xE95F063A" /* CHAR */ =>
+        if (off1) {
+          tokens(j1).tipe match {
+            case u32"0x3A15194D" /* ".." */ => num = 2
+            case _ =>
+          }
+        }
+
       case _ =>
     }
     return num
@@ -2174,12 +2267,16 @@ import SireumGrammarParser._
     val j1 = j + 1
     val off1 = j1 < tokens.size
     tokens(j).tipe match {
-      case u32"0xAAB7E55C" /* "~" */ if off1 => tokens(j1).tipe match {
-        case u32"0xE95F063A" /* CHAR */ => num = 2
-        case u32"0xA7CF0FE0" /* STRING */ => num = 2
-        case u32"0x71F6371D" /* "(" */ => num = 2
-        case _ =>
-      }
+      case u32"0xAAB7E55C" /* "~" */ =>
+        if (off1) {
+          tokens(j1).tipe match {
+            case u32"0xE95F063A" /* CHAR */ => num = 2
+            case u32"0xA7CF0FE0" /* STRING */ => num = 2
+            case u32"0x71F6371D" /* "(" */ => num = 2
+            case _ =>
+          }
+        }
+
       case _ =>
     }
     return num
