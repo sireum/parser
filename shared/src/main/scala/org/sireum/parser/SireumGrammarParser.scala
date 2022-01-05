@@ -277,17 +277,17 @@ import SireumGrammarParser._
             }
           }
           tokens(j).tipe match {
-            case u32"0xEDD2348C" /* "PHEADER" */ if !found =>
+            case u32"0xEDD2348C" /* PHEADER */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"5")
               found = T
-            case u32"0x2322FC01" /* "LHEADER" */ if !found =>
+            case u32"0x2322FC01" /* LHEADER */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"6")
               found = T
-            case u32"0xFC5CB374" /* "EOF" */ if !found =>
+            case u32"0xFC5CB374" /* EOF */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"8")
@@ -310,17 +310,17 @@ import SireumGrammarParser._
             }
           }
           tokens(j).tipe match {
-            case u32"0xEDD2348C" /* "PHEADER" */ if !found =>
+            case u32"0xEDD2348C" /* PHEADER */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"5")
               found = T
-            case u32"0x2322FC01" /* "LHEADER" */ if !found =>
+            case u32"0x2322FC01" /* LHEADER */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"6")
               found = T
-            case u32"0xFC5CB374" /* "EOF" */ if !found =>
+            case u32"0xFC5CB374" /* EOF */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"8")
@@ -343,12 +343,12 @@ import SireumGrammarParser._
             }
           }
           tokens(j).tipe match {
-            case u32"0x2322FC01" /* "LHEADER" */ if !found =>
+            case u32"0x2322FC01" /* LHEADER */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"6")
               found = T
-            case u32"0xFC5CB374" /* "EOF" */ if !found =>
+            case u32"0xFC5CB374" /* EOF */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"8")
@@ -371,7 +371,7 @@ import SireumGrammarParser._
             }
           }
           tokens(j).tipe match {
-            case u32"0xFC5CB374" /* "EOF" */ if !found =>
+            case u32"0xFC5CB374" /* EOF */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"8")
@@ -388,7 +388,7 @@ import SireumGrammarParser._
             return Either.Right(failIndex)
           }
           tokens(j).tipe match {
-            case u32"0xFC5CB374" /* "EOF" */ if !found =>
+            case u32"0xFC5CB374" /* EOF */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"8")
@@ -676,7 +676,7 @@ import SireumGrammarParser._
             return Either.Right(failIndex)
           }
           tokens(j).tipe match {
-            case u32"0x589C233C" /* "INT" */ if !found =>
+            case u32"0x589C233C" /* INT */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"1")
@@ -741,7 +741,7 @@ import SireumGrammarParser._
         case u32"0" =>
           found = F
           tokens(j).tipe match {
-            case u32"0xD2EDBEA1" /* "PID" */ =>
+            case u32"0xD2EDBEA1" /* PID */ =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"1")
@@ -879,7 +879,7 @@ import SireumGrammarParser._
               j = j + 1
               update(u32"1")
               found = T
-            case u32"0x8E18F45B" /* "LID" */ if !found =>
+            case u32"0x8E18F45B" /* LID */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"2")
@@ -892,7 +892,7 @@ import SireumGrammarParser._
         case u32"1" =>
           found = F
           tokens(j).tipe match {
-            case u32"0x8E18F45B" /* "LID" */ =>
+            case u32"0x8E18F45B" /* LID */ =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"2")
@@ -1396,7 +1396,7 @@ import SireumGrammarParser._
             }
           }
           tokens(j).tipe match {
-            case u32"0xD2EDBEA1" /* "PID" */ if !found =>
+            case u32"0xD2EDBEA1" /* PID */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"1")
@@ -1478,12 +1478,12 @@ import SireumGrammarParser._
             return Either.Right(failIndex)
           }
           tokens(j).tipe match {
-            case u32"0xE95F063A" /* "CHAR" */ if !found =>
+            case u32"0xE95F063A" /* CHAR */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"2")
               found = T
-            case u32"0xA7CF0FE0" /* "STRING" */ if !found =>
+            case u32"0xA7CF0FE0" /* STRING */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"2")
@@ -1530,7 +1530,7 @@ import SireumGrammarParser._
         case u32"0" =>
           found = F
           tokens(j).tipe match {
-            case u32"0xE95F063A" /* "CHAR" */ =>
+            case u32"0xE95F063A" /* CHAR */ =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"1")
@@ -1556,7 +1556,7 @@ import SireumGrammarParser._
         case u32"2" =>
           found = F
           tokens(j).tipe match {
-            case u32"0xE95F063A" /* "CHAR" */ =>
+            case u32"0xE95F063A" /* CHAR */ =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"3")
@@ -1603,17 +1603,17 @@ import SireumGrammarParser._
         case u32"0" =>
           found = F
           tokens(j).tipe match {
-            case u32"0x8E18F45B" /* "LID" */ =>
+            case u32"0x8E18F45B" /* LID */ =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"1")
               found = T
-            case u32"0xE95F063A" /* "CHAR" */ if !found =>
+            case u32"0xE95F063A" /* CHAR */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"1")
               found = T
-            case u32"0xA7CF0FE0" /* "STRING" */ if !found =>
+            case u32"0xA7CF0FE0" /* STRING */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"1")
@@ -1665,12 +1665,12 @@ import SireumGrammarParser._
         case u32"0" =>
           found = F
           tokens(j).tipe match {
-            case u32"0x8E18F45B" /* "LID" */ =>
+            case u32"0x8E18F45B" /* LID */ =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"1")
               found = T
-            case u32"0xD2EDBEA1" /* "PID" */ if !found =>
+            case u32"0xD2EDBEA1" /* PID */ if !found =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"1")
@@ -1756,7 +1756,7 @@ import SireumGrammarParser._
         case u32"3" =>
           found = F
           tokens(j).tipe match {
-            case u32"0x8E18F45B" /* "LID" */ =>
+            case u32"0x8E18F45B" /* LID */ =>
               trees = trees :+ tokens(j)
               j = j + 1
               update(u32"4")

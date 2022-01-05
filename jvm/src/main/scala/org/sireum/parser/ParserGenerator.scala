@@ -551,7 +551,7 @@ import org.sireum.parser.{GrammarAst => AST}
         |}"""
 
   @strictpure def terminalST(text: String, dest: Z, plain: B, notFoundOpt: Option[ST]): ST =
-    st"""case u32"0x${(valCode(text), "")}" /* "${if (plain) text else escape(text)}" */$notFoundOpt =>
+    st"""case u32"0x${(valCode(text), "")}" /* ${if (plain) text else st"\"${escape(text)}\"" } */$notFoundOpt =>
         |  trees = trees :+ tokens(j)
         |  j = j + 1
         |  update(u32"$dest")
