@@ -258,6 +258,10 @@ import org.sireum.parser.{GrammarAst => AST}
       case _ => None()
     }
 
+    val imptOpt: Option[String] = if (packageOpt.isEmpty || packageOpt.get.render =!= "import org.sireum.parser") Some(
+      "import org.sireum.parser.ParseTree"
+    ) else None()
+
     return Some(
       st"""// #Sireum
           |$licenseOpt
@@ -268,6 +272,7 @@ import org.sireum.parser.{GrammarAst => AST}
           |import org.sireum.U32._
           |import org.sireum.U64._
           |import org.sireum.conversions.U32.toC
+          |$imptOpt
           |
           |@range(min = 0, max = ${maxNumOfStates - 1}) class State
           |
@@ -331,7 +336,7 @@ import org.sireum.parser.{GrammarAst => AST}
           |
           |  object LContext {
           |    @pure def create(accepts: ISZ[State], i: Z): LContext = {
-          |      val accepting = MS.create[State, B](17, F)
+          |      val accepting = MS.create[State, B]($maxNumOfStates, F)
           |      for (accept <- accepts) {
           |        accepting(accept) = T
           |      }
