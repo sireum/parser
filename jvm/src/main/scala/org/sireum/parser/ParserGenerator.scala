@@ -56,6 +56,7 @@ import org.sireum.parser.{GrammarAst => AST}
       return None()
     }
 
+    var maxNumOfStates: Z = 0
     var objectVals = ISZ[ST]()
     var lexerDefs = ISZ[ST]()
 
@@ -104,6 +105,10 @@ import org.sireum.parser.{GrammarAst => AST}
       }
 
       for (p <- lexerDfaMap.entries) {
+        val numOfStates = p._2.g.nodes.size
+        if (numOfStates > maxNumOfStates) {
+          maxNumOfStates = numOfStates
+        }
         val tname = p._1
         val dfaname = dfaName(tname)
         lexerDefs = lexerDefs :+ genLexerDfa(dfaname, p._2)
@@ -152,7 +157,7 @@ import org.sireum.parser.{GrammarAst => AST}
             |        if (stopAtError) {
             |          return r
             |        }
-            |        r = r :+ ParseTree.Leaf(conversions.String.fromCis(ISZ(cis(i))), "<ERROR>",u32"0x${(valCode("<ERROR>"), "")}", F, posOpt)
+            |        r = r :+ ParseTree.Leaf(conversions.String.fromCis(ISZ(cis(i))), "<ERROR>", u32"0x${(valCode("<ERROR>"), "")}", F, posOpt)
             |        i = i + 1
             |    }
             |  }
@@ -161,15 +166,16 @@ import org.sireum.parser.{GrammarAst => AST}
             |}
             |
             |@pure def tokenize(i: Z): Option[Result] = {
-            |  var r = Result(ParseTree.Leaf("", "", u32"-2", T, None()), -1)
-            |  def update(rOpt: Option[Result]): Unit = {
-            |    rOpt match {
-            |      case Some(newR) if newR.newIndex > r.newIndex => r = newR
-            |      case _ =>
-            |    }
+            |  val r = MBox(Result(ParseTree.Leaf("", "", u32"-2", T, None()), -1))
+            |  ${(for (lexname <- lexNames) yield st"""updateToken(r, $lexname(i))""", "\n")}
+            |  return if (r.value.newIndex > i) Some(r.value) else None()
+            |}
+            |
+            |def updateToken(r: MBox[Result], rOpt: Option[Result]): Unit = {
+            |  rOpt match {
+            |    case Some(newR) if newR.newIndex > r.value.newIndex => r.value = newR
+            |    case _ =>
             |  }
-            |  ${(for (lexname <- lexNames) yield st"""update($lexname(i))""", "\n")}
-            |  return if (r.newIndex > i) Some(r) else None()
             |}""" +: lexerDefs
     }
 
@@ -189,14 +195,26 @@ import org.sireum.parser.{GrammarAst => AST}
 
     def genParser(): Unit = {
 
+      var condDefs = HashSSet.empty[String]
+
       for (p <- parserDfaMap.entries) {
+        val numOfStates = p._2._1.g.nodes.size
+        if (numOfStates > maxNumOfStates) {
+          maxNumOfStates = numOfStates
+        }
         val valueST = st"""u32"0x${valCode(p._1)}""""
         objectVals = objectVals :+ st"""val T_${p._1}: U32 = $valueST"""
-        parserDefs = parserDefs :+ (
+        val (parserST, cds): (ST, ISZ[String]) =
           if (predict && !backtracking) genPredictiveParserDfa(k, memoize, backtracking, parseName(p._1), p._1,
             st"$valueST /* ${p._1} */", p._2._1, p._2._2)
           else genBacktrackingParserDfa(memoize, predict, parseName(p._1), p._1,
-            st"$valueST /* ${p._1} */", p._2._1, p._2._2))
+            st"$valueST /* ${p._1} */", p._2._1, p._2._2)
+        parserDefs = parserDefs :+ parserST
+        condDefs = condDefs ++ cds
+      }
+
+      for (cd <- condDefs.elements) {
+        parserDefs = parserDefs :+ condDefST(cd)
       }
 
       if (predict) {
@@ -205,9 +223,8 @@ import org.sireum.parser.{GrammarAst => AST}
           val sts = genTries(k, trie)
           parserDefs = parserDefs :+
             st"""${if (memoize) "@memoize" else "@pure"} def ${predictName(p._1)}(j: Z): Z = {
-                |  var num: Z = 0
                 |  ${(sts, "\n")}
-                |  return num
+                |  return 0
                 |}"""
         }
       }
@@ -252,9 +269,75 @@ import org.sireum.parser.{GrammarAst => AST}
           |import org.sireum.U64._
           |import org.sireum.conversions.U32.toC
           |
+          |@range(min = 0, max = 16) class State
+          |
+          |import State._
+          |
           |object ${name}Parser {
           |
           |  @datatype class Result(val tree: ParseTree, val newIndex: Z)
+          |
+          |  @record class Context(val ruleName: String,
+          |                        val ruleType: U32,
+          |                        val accepting: IS[State, B],
+          |                        var state: State,
+          |                        var resOpt: Option[Result],
+          |                        var j: Z,
+          |                        var max: Z,
+          |                        var initial: B,
+          |                        var trees: ISZ[ParseTree],
+          |                        var found: B,
+          |                        var failIndex: Z) {
+          |
+          |    def update(newState: State): Unit = {
+          |      initial = F
+          |      state = newState
+          |      if (accepting(state)) {
+          |        resOpt = Some(Result(ParseTree.Node(trees, ruleName, ruleType), j))
+          |      }
+          |    }
+          |  }
+          |
+          |  object Context {
+          |    @pure def create(ruleName: String, ruleType: U32, accepts: ISZ[State], i: Z): Context = {
+          |      val accepting = MS.create[State, B]($maxNumOfStates, F)
+          |      for (accept <- accepts) {
+          |        accepting(accept) = T
+          |      }
+          |      return Context(
+          |        ruleName = ruleName,
+          |        ruleType = ruleType,
+          |        accepting = accepting.toIS,
+          |        state = state"0",
+          |        resOpt = None(),
+          |        trees = ISZ[ParseTree](),
+          |        j = i,
+          |        max = i,
+          |        initial = T,
+          |        found = F,
+          |        failIndex = 0
+          |      )
+          |    }
+          |  }
+          |
+          |  @record class LContext(val accepting: IS[State, B], var state: State, var j: Z, var afterAcceptIndex: Z) {
+          |    def update(newState: State): Unit = {
+          |      state = newState
+          |      if (accepting(state)) {
+          |        afterAcceptIndex = j + 1
+          |      }
+          |    }
+          |  }
+          |
+          |  object LContext {
+          |    @pure def create(accepts: ISZ[State], i: Z): LContext = {
+          |      val accepting = MS.create[State, B](17, F)
+          |      for (accept <- accepts) {
+          |        accepting(accept) = T
+          |      }
+          |      return LContext(accepting = accepting.toIS, state = state"0", j = i, afterAcceptIndex = -1)
+          |    }
+          |  }
           |
           |  val kind: String = "${name}Parser"
           |
@@ -270,17 +353,9 @@ import org.sireum.parser.{GrammarAst => AST}
           |    return ${name}Lexer(input, docInfo).tokenizeAll(skipHidden, stopAtError, reporter)
           |  }
           |
-          |  @pure def posOpts(docInfo: message.DocInfo,
-          |                    posOpt1: Option[message.Position],
-          |                    posOpt2: Option[message.Position]): Option[message.Position] = {
-          |    val pos1 = posOpt1.get
-          |    val pos2 = posOpt2.get
-          |    return Some(message.PosInfo(docInfo, offsetLength(pos1.offset,
-          |      pos2.offset + pos2.length - pos1.offset)))
-          |  }
-          |
           |  @strictpure def offsetLength(offset: Z, length: Z): U64 =
           |    (conversions.Z.toU64(offset) << u64"32") | (conversions.Z.toU64(length) & u64"0xFFFFFFFF")
+          |
           |}
           |
           |import ${name}Parser._
@@ -296,6 +371,16 @@ import org.sireum.parser.{GrammarAst => AST}
           |        return if (noBacktrack) Either.Right(if (!initial) -n else n) else Either.Right(n)
           |    }
           |  }
+          |
+          |  @pure def posOpts(docInfo: message.DocInfo,
+          |                    posOpt1: Option[message.Position],
+          |                    posOpt2: Option[message.Position]): Option[message.Position] = {
+          |    val pos1 = posOpt1.get
+          |    val pos2 = posOpt2.get
+          |    return Some(message.PosInfo(docInfo, offsetLength(pos1.offset,
+          |      pos2.offset + pos2.length - pos1.offset)))
+          |  }
+          |
           |}
           |
           |@datatype class ${name}Lexer(input: String, docInfo: message.DocInfo) {
@@ -338,10 +423,10 @@ import org.sireum.parser.{GrammarAst => AST}
   }
 
   def genPredictiveParserDfa(k: Z, memoize: B, backtracking: B, name: ST, ruleName: String, valueST: ST, dfa: Dfa,
-                             atoms: ISZ[AST.Element]): ST = {
+                             atoms: ISZ[AST.Element]): (ST, ISZ[String]) = {
     val noBacktrack: B = !backtracking || ops.StringOps(ruleName).endsWith("_cut")
     var transitions = ISZ[ST]()
-    var condDefs = HashSMap.empty[String, ST]
+    var condDefs = HashSSet.empty[String]
     for (node <- dfa.g.nodesInverse) {
       var refNameDests = HashSSet.empty[(String, Z)]
       var cases = ISZ[ST]()
@@ -351,14 +436,12 @@ import org.sireum.parser.{GrammarAst => AST}
           atoms(i) match {
             case e: AST.Element.Ref if !e.isTerminal =>
               refNameDests = refNameDests + ((e.name, dest))
-              if (!condDefs.contains(e.name)) {
-                condDefs = condDefs + e.name ~> condDefST(e.name)
-              }
+              condDefs = condDefs + e.name
             case _ =>
           }
         }
       }
-      var notFoundOpt: Option[ST] = if (refNameDests.isEmpty) None() else Some(st" if !found")
+      var notFoundOpt: Option[ST] = if (refNameDests.isEmpty) None() else Some(st" if !ctx.found")
       for (t <- edgesOf(dfa, node)) {
         val (dest, lo, hi) = t
         for (i <- lo to hi) {
@@ -372,16 +455,16 @@ import org.sireum.parser.{GrammarAst => AST}
             case _ =>
           }
           if (notFoundOpt.isEmpty) {
-            notFoundOpt = Some(st" if !found")
+            notFoundOpt = Some(st" if !ctx.found")
           }
         }
       }
       if (cases.isEmpty && refNameDests.isEmpty) {
         transitions = transitions :+
-          st"""case u32"$node" => return retVal(max, resOpt, initial, ${if (noBacktrack) "T" else "F"})"""
+          st"""case state"$node" => return retVal(ctx.max, ctx.resOpt, ctx.initial, ${if (noBacktrack) "T" else "F"})"""
       } else {
         val matchOpt: Option[ST] = if (cases.isEmpty) None() else Some(
-          st"""tokens(j).tipe match {
+          st"""tokens(ctx.j).tipe match {
               |  ${(cases, "\n")}
               |  case _ =>
               |}"""
@@ -390,15 +473,15 @@ import org.sireum.parser.{GrammarAst => AST}
         var checkRefs = ISZ[ST]()
         var nfo: Option[ST] = None()
         for (p <- refNameDests.elements) {
-          refs = refs :+ st"""val n_${p._1} = ${predictName(p._1)}(j)"""
+          refs = refs :+ st"""val n_${p._1} = ${predictName(p._1)}(ctx.j)"""
           if (refNameDests.size > 1) {
             checkRefs = checkRefs :+
-              st"""if (${nfo}n_${p._1} == n && ${parseName(p._1)}H(u32"${p._2}")) {
-                  |  return Either.Right(failIndex)
+              st"""if (${nfo}n_${p._1} == n && ${parseName(p._1)}H(ctx, state"${p._2}")) {
+                  |  return Either.Right(ctx.failIndex)
                   |}"""
           }
           if (nfo.isEmpty) {
-            nfo = Some(st"!found && ")
+            nfo = Some(st"!ctx.found && ")
           }
         }
         val checkRefsOpt: Option[ST] = if (refNameDests.isEmpty) {
@@ -407,37 +490,36 @@ import org.sireum.parser.{GrammarAst => AST}
           if (refNameDests.size == 1) {
             val p = refNameDests.elements(0)
             Some(
-              st"""if (n_${p._1} > 0 && ${parseName(p._1)}H(u32"${p._2}")) {
-                  |  return Either.Right(failIndex)
+              st"""if (n_${p._1} > 0 && ${parseName(p._1)}H(ctx, state"${p._2}")) {
+                  |  return Either.Right(ctx.failIndex)
                   |}"""
             )
           } else {
             Some(
-              st"""for (n <- $k to 1 by -1 if !found) {
+              st"""for (n <- $k to 1 by -1 if !ctx.found) {
                   |  ${(checkRefs, "\n")}
                   |}"""
             )
           }
         }
         transitions = transitions :+
-          st"""case u32"$node" =>
-              |  found = F
+          st"""case state"$node" =>
+              |  ctx.found = F
               |  ${(refs, "\n")}
               |  $checkRefsOpt
               |  $matchOpt
-              |  if (!found) {
-              |    return retVal(max, resOpt, initial, ${if (noBacktrack) "T" else "F"})
+              |  if (!ctx.found) {
+              |    return retVal(ctx.max, ctx.resOpt, ctx.initial, ${if (noBacktrack) "T" else "F"})
               |  }"""
       }
     }
-    return parserDfaST(memoize, name, ruleName, valueST, dfa, condDefs.values, transitions, noBacktrack)
+    return (parserDfaST(memoize, name, ruleName, valueST, dfa, transitions, noBacktrack), condDefs.elements)
   }
 
   def genBacktrackingParserDfa(memoize: B, predict: B, name: ST, ruleName: String, valueST: ST, dfa: Dfa,
-                               atoms: ISZ[AST.Element]): ST = {
-    val noBacktrack: B = F
+                               atoms: ISZ[AST.Element]): (ST, ISZ[String]) = {
     var transitions = ISZ[ST]()
-    var condDefs = HashSMap.empty[String, ST]
+    var condDefs = HashSSet.empty[String]
     for (node <- dfa.g.nodesInverse) {
       var cases = ISZ[ST]()
       var notFoundOpt: Option[ST] = None()
@@ -455,107 +537,85 @@ import org.sireum.parser.{GrammarAst => AST}
                 cases = cases :+ terminalST(e.name, dest, T, notFoundOpt)
               } else {
                 if (notFoundOpt.isEmpty) {
-                  notFoundOpt = Some(st" if !found")
+                  notFoundOpt = Some(st" if !ctx.found")
                 }
-                val predictOpt: Option[ST] = if (predict) Some(st"${predictName(e.name)}(j) > 0 && ") else None()
+                val predictOpt: Option[ST] = if (predict) Some(st"${predictName(e.name)}(ctx.j) > 0 && ") else None()
                 val parsename = parseName(e.name)
-                if (!condDefs.contains(e.name)) {
-                  condDefs = condDefs + e.name ~> condDefST(e.name)
-                }
+                condDefs = condDefs + e.name
                 cases = cases :+
-                  st"""case _ if $notFoundRefOpt$predictOpt${parsename}H(u32"$dest") => return Either.Right(failIndex)"""
+                  st"""case _ if $notFoundRefOpt$predictOpt${parsename}H(ctx, state"$dest") => return Either.Right(ctx.failIndex)"""
               }
             case e => halt(s"Infeasible: $e")
           }
           if (notFoundRefOpt.isEmpty) {
-            notFoundRefOpt = Some(st"!found && ")
+            notFoundRefOpt = Some(st"!ctx.found && ")
           }
         }
       }
       if (cases.isEmpty) {
-        transitions = transitions :+ st"""case u32"$node" => return retVal(max, resOpt, initial, F)"""
+        transitions = transitions :+ st"""case state"$node" => return retVal(ctx.max, ctx.resOpt, ctx.initial, F)"""
       } else {
         val matchOpt: Option[ST] = if (cases.isEmpty) None() else Some(
-          st"""tokens(j).tipe match {
+          st"""tokens(ctx.j).tipe match {
               |  ${(cases, "\n")}
               |  case _ =>
               |}"""
         )
         transitions = transitions :+
-          st"""case u32"$node" =>
-              |  found = F
+          st"""case state"$node" =>
+              |  ctx.found = F
               |  $matchOpt
-              |  if (!found) {
-              |    return retVal(max, resOpt, initial, ${if (noBacktrack) "T" else "F"})
+              |  if (!ctx.found) {
+              |    return retVal(ctx.max, ctx.resOpt, ctx.initial, F)
               |  }"""
       }
     }
-    return parserDfaST(memoize, name, ruleName, valueST, dfa, condDefs.values, transitions, noBacktrack)
+    return (parserDfaST(memoize, name, ruleName, valueST, dfa, transitions, F), condDefs.elements)
   }
 
   @strictpure def condDefST(name: String): ST =
-    st"""def ${parseName(name)}H(nextState: U32): B = {
-        |  ${parseName(name)}(j) match {
+    st"""def ${parseName(name)}H(ctx: Context, nextState: State): B = {
+        |  ${parseName(name)}(ctx.j) match {
         |    case Either.Left(r) =>
-        |      trees = trees :+ r.tree
-        |      j = r.newIndex
-        |      update(nextState)
-        |      found = T
-        |      return F
+        |      ctx.trees = ctx.trees :+ r.tree
+        |      ctx.j = r.newIndex
+        |      ctx.update(nextState)
+        |      ctx.found = T
         |    case Either.Right(r) =>
         |      if (r < 0) {
-        |        failIndex = r
+        |        ctx.failIndex = r
         |        return T
-        |      } else if (max < r) {
-        |        max = r
+        |      } else if (ctx.max < r) {
+        |        ctx.max = r
         |      }
-        |      return F
         |  }
+        |  return F
         |}"""
 
-  @strictpure def parserDfaST(memoize: B, name: ST, ruleName: String, valueST: ST, dfa: Dfa, condDefs: ISZ[ST],
+  @strictpure def parserDfaST(memoize: B, name: ST, ruleName: String, valueST: ST, dfa: Dfa,
                               transitions: ISZ[ST], noBacktrack: B): ST =
     st"""${if (memoize) "@memoize" else "@pure"} def $name(i: Z): Either[Result, Z] = {
-        |  var state = u32"0"
-        |  var resOpt: Option[Result] = None()
-        |  var trees = ISZ[ParseTree]()
-        |  var j = i
-        |  var max = i
-        |  var initial = T
-        |  var found = F
-        |  var failIndex: Z = 0
+        |  val ctx = Context.create("$ruleName", $valueST, ISZ(${(for (s <- dfa.accepting.elements) yield st"""state"$s"""", ", ")}), i)
         |
-        |  def update(newState: U32): Unit = {
-        |    initial = F
-        |    state = newState
-        |    state match {
-        |      ${(for (s <- dfa.accepting.elements) yield st"""case u32"$s" => """, "\n")}
-        |      case _ => return
-        |    }
-        |    resOpt = Some(Result(ParseTree.Node(trees, $tqs$ruleName$tqs, $valueST, None()), j))
-        |  }
-        |
-        |  ${(condDefs, "\n\n")}
-        |
-        |  while (j < tokens.size) {
-        |    state match {
+        |  while (ctx.j < tokens.size) {
+        |    ctx.state match {
         |      ${(transitions, "\n")}
         |      case _ => halt("Infeasible")
         |    }
-        |    if (max < j) {
-        |      max = j
+        |    if (ctx.max < ctx.j) {
+        |      ctx.max = ctx.j
         |    }
         |  }
         |
-        |  return retVal(j, resOpt, initial, ${if (noBacktrack) "T" else "F"})
+        |  return retVal(ctx.j, ctx.resOpt, ctx.initial, ${if (noBacktrack) "T" else "F"})
         |}"""
 
   @strictpure def terminalST(text: String, dest: Z, plain: B, notFoundOpt: Option[ST]): ST =
     st"""case u32"0x${(valCode(text), "")}" /* ${if (plain) text else st"\"${escape(text)}\"" } */$notFoundOpt =>
-        |  trees = trees :+ tokens(j)
-        |  j = j + 1
-        |  update(u32"$dest")
-        |  found = T"""
+        |  ctx.trees = ctx.trees :+ tokens(ctx.j)
+        |  ctx.j = ctx.j + 1
+        |  ctx.update(state"$dest")
+        |  ctx.found = T"""
 
   def genTries(k: Z, ruleTrie: LookAhead.Trie): ISZ[ST] = {
     var r = ISZ[ST]()
@@ -568,15 +628,13 @@ import org.sireum.parser.{GrammarAst => AST}
         if (depth >= k) ISZ()
         else for (sub <- trie.subs.values) yield rec(depth + 1, sub)
       val subsST: ST = if (subs.isEmpty) {
-        st"num = $depth"
+        st"return $depth"
       } else {
         offs = offs + depth
         val idx = st"j$depth"
         val size = st"off$depth"
         val acceptOpt: Option[ST] = if (trie.accept) Some(
-          st"""if (num == 0) {
-              |  num = $depth
-              |}"""
+          st"return $depth"
         ) else None()
         if (depth == 0) {
           st"""tokens($idx).tipe match {
@@ -649,13 +707,13 @@ import org.sireum.parser.{GrammarAst => AST}
             case Some(nf) =>
               conds = conds :+
                 st"""if ($nf(${(cs, " || ")})) {
-                    |  update(u32"$dest")
+                    |  ctx.update(state"$dest")
                     |  found = T
                     |}"""
             case _ =>
               conds = conds :+
                 st"""if (${(cs, " || ")}) {
-                    |  update(u32"$dest")
+                    |  ctx.update(state"$dest")
                     |  found = T
                     |}"""
           }
@@ -666,41 +724,30 @@ import org.sireum.parser.{GrammarAst => AST}
       }
       if (conds.isEmpty) {
         transitions = transitions :+
-          st"""case u32"$node" => return afterAcceptIndex"""
+          st"""case state"$node" => return ctx.afterAcceptIndex"""
       } else {
         transitions = transitions :+
-          st"""case u32"$node" =>
-              |  val c = cis(j)
+          st"""case state"$node" =>
+              |  val c = cis(ctx.j)
               |  var found = F
               |  ${(conds, "\n")}
               |  if (!found) {
-              |    return afterAcceptIndex
+              |    return ctx.afterAcceptIndex
               |  }"""
       }
     }
     val r =
       st"""@pure def $name(i: Z): Z = {
-          |  var state = u32"0"
-          |  var afterAcceptIndex: Z = -1
-          |  var j = i
+          |  val ctx = LContext.create(ISZ(${(for (s <- dfa.accepting.elements) yield st"""state"$s"""", ", ")}), i)
           |
-          |  def update(newState: U32): Unit = {
-          |     state = newState
-          |     state match {
-          |       ${(for (s <- dfa.accepting.elements) yield st"""case u32"$s" => """, "\n")}
-          |       case _ => return
-          |     }
-          |     afterAcceptIndex = j + 1
-          |  }
-          |
-          |  while (j < cis.size) {
-          |    state match {
+          |  while (ctx.j < cis.size) {
+          |    ctx.state match {
           |      ${(transitions, "\n")}
           |      case _ => halt("Infeasible")
           |    }
-          |    j = j + 1
+          |    ctx.j = ctx.j + 1
           |  }
-          |  return afterAcceptIndex
+          |  return ctx.afterAcceptIndex
           |}"""
     return r
   }

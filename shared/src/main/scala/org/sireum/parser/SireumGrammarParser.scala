@@ -34,9 +34,75 @@ import org.sireum.U32._
 import org.sireum.U64._
 import org.sireum.conversions.U32.toC
 
+@range(min = 0, max = 16) class State
+
+import State._
+
 object SireumGrammarParser {
 
   @datatype class Result(val tree: ParseTree, val newIndex: Z)
+
+  @record class Context(val ruleName: String,
+                        val ruleType: U32,
+                        val accepting: IS[State, B],
+                        var state: State,
+                        var resOpt: Option[Result],
+                        var j: Z,
+                        var max: Z,
+                        var initial: B,
+                        var trees: ISZ[ParseTree],
+                        var found: B,
+                        var failIndex: Z) {
+
+    def update(newState: State): Unit = {
+      initial = F
+      state = newState
+      if (accepting(state)) {
+        resOpt = Some(Result(ParseTree.Node(trees, ruleName, ruleType), j))
+      }
+    }
+  }
+
+  object Context {
+    @pure def create(ruleName: String, ruleType: U32, accepts: ISZ[State], i: Z): Context = {
+      val accepting = MS.create[State, B](17, F)
+      for (accept <- accepts) {
+        accepting(accept) = T
+      }
+      return Context(
+        ruleName = ruleName,
+        ruleType = ruleType,
+        accepting = accepting.toIS,
+        state = state"0",
+        resOpt = None(),
+        trees = ISZ[ParseTree](),
+        j = i,
+        max = i,
+        initial = T,
+        found = F,
+        failIndex = 0
+      )
+    }
+  }
+
+  @record class LContext(val accepting: IS[State, B], var state: State, var j: Z, var afterAcceptIndex: Z) {
+    def update(newState: State): Unit = {
+      state = newState
+      if (accepting(state)) {
+        afterAcceptIndex = j + 1
+      }
+    }
+  }
+
+  object LContext {
+    @pure def create(accepts: ISZ[State], i: Z): LContext = {
+      val accepting = MS.create[State, B](17, F)
+      for (accept <- accepts) {
+        accepting(accept) = T
+      }
+      return LContext(accepting = accepting.toIS, state = state"0", j = i, afterAcceptIndex = -1)
+    }
+  }
 
   val kind: String = "SireumGrammarParser"
 
@@ -110,17 +176,9 @@ object SireumGrammarParser {
     return SireumGrammarLexer(input, docInfo).tokenizeAll(skipHidden, stopAtError, reporter)
   }
 
-  @pure def posOpts(docInfo: message.DocInfo,
-                    posOpt1: Option[message.Position],
-                    posOpt2: Option[message.Position]): Option[message.Position] = {
-    val pos1 = posOpt1.get
-    val pos2 = posOpt2.get
-    return Some(message.PosInfo(docInfo, offsetLength(pos1.offset,
-      pos2.offset + pos2.length - pos1.offset)))
-  }
-
   @strictpure def offsetLength(offset: Z, length: Z): U64 =
     (conversions.Z.toU64(offset) << u64"32") | (conversions.Z.toU64(length) & u64"0xFFFFFFFF")
+
 }
 
 import SireumGrammarParser._
@@ -128,1839 +186,1456 @@ import SireumGrammarParser._
 @datatype class SireumGrammarParser(tokens: ISZ[ParseTree.Leaf]) {
 
   @pure def parseGrammarDef(i: Z): Either[Result, Z] = {
-    var state = u32"0"
-    var resOpt: Option[Result] = None()
-    var trees = ISZ[ParseTree]()
-    var j = i
-    var max = i
-    var initial = T
-    var found = F
-    var failIndex: Z = 0
+    val ctx = Context.create("grammarDef", u32"0x49D573EC" /* grammarDef */, ISZ(state"8"), i)
 
-    def update(newState: U32): Unit = {
-      initial = F
-      state = newState
-      state match {
-        case u32"8" => 
-        case _ => return
-      }
-      resOpt = Some(Result(ParseTree.Node(trees, """grammarDef""", u32"0x49D573EC" /* grammarDef */, None()), j))
-    }
-
-    def parseIdH(nextState: U32): B = {
-      parseId(j) match {
-        case Either.Left(r) =>
-          trees = trees :+ r.tree
-          j = r.newIndex
-          update(nextState)
-          found = T
-          return F
-        case Either.Right(r) =>
-          if (r < 0) {
-            failIndex = r
-            return T
-          } else if (max < r) {
-            max = r
-          }
-          return F
-      }
-    }
-
-    def parseOptionsSpecH(nextState: U32): B = {
-      parseOptionsSpec(j) match {
-        case Either.Left(r) =>
-          trees = trees :+ r.tree
-          j = r.newIndex
-          update(nextState)
-          found = T
-          return F
-        case Either.Right(r) =>
-          if (r < 0) {
-            failIndex = r
-            return T
-          } else if (max < r) {
-            max = r
-          }
-          return F
-      }
-    }
-
-    def parseParserRuleH(nextState: U32): B = {
-      parseParserRule(j) match {
-        case Either.Left(r) =>
-          trees = trees :+ r.tree
-          j = r.newIndex
-          update(nextState)
-          found = T
-          return F
-        case Either.Right(r) =>
-          if (r < 0) {
-            failIndex = r
-            return T
-          } else if (max < r) {
-            max = r
-          }
-          return F
-      }
-    }
-
-    def parseLexerRuleH(nextState: U32): B = {
-      parseLexerRule(j) match {
-        case Either.Left(r) =>
-          trees = trees :+ r.tree
-          j = r.newIndex
-          update(nextState)
-          found = T
-          return F
-        case Either.Right(r) =>
-          if (r < 0) {
-            failIndex = r
-            return T
-          } else if (max < r) {
-            max = r
-          }
-          return F
-      }
-    }
-
-    while (j < tokens.size) {
-      state match {
-        case u32"0" =>
-          found = F
-          tokens(j).tipe match {
+    while (ctx.j < tokens.size) {
+      ctx.state match {
+        case state"0" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0xAEB64436" /* "grammar" */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"1")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"1")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"1" =>
-          found = F
-          val n_id = predictId(j)
-          if (n_id > 0 && parseIdH(u32"2")) {
-            return Either.Right(failIndex)
+        case state"1" =>
+          ctx.found = F
+          val n_id = predictId(ctx.j)
+          if (n_id > 0 && parseIdH(ctx, state"2")) {
+            return Either.Right(ctx.failIndex)
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"2" =>
-          found = F
-          tokens(j).tipe match {
+        case state"2" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0x36F2899D" /* ";" */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"3")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"3")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"3" =>
-          found = F
-          val n_optionsSpec = predictOptionsSpec(j)
-          val n_parserRule = predictParserRule(j)
-          val n_lexerRule = predictLexerRule(j)
-          for (n <- 2 to 1 by -1 if !found) {
-            if (n_optionsSpec == n && parseOptionsSpecH(u32"4")) {
-              return Either.Right(failIndex)
+        case state"3" =>
+          ctx.found = F
+          val n_optionsSpec = predictOptionsSpec(ctx.j)
+          val n_parserRule = predictParserRule(ctx.j)
+          val n_lexerRule = predictLexerRule(ctx.j)
+          for (n <- 2 to 1 by -1 if !ctx.found) {
+            if (n_optionsSpec == n && parseOptionsSpecH(ctx, state"4")) {
+              return Either.Right(ctx.failIndex)
             }
-            if (!found && n_parserRule == n && parseParserRuleH(u32"6")) {
-              return Either.Right(failIndex)
+            if (!ctx.found && n_parserRule == n && parseParserRuleH(ctx, state"6")) {
+              return Either.Right(ctx.failIndex)
             }
-            if (!found && n_lexerRule == n && parseLexerRuleH(u32"7")) {
-              return Either.Right(failIndex)
+            if (!ctx.found && n_lexerRule == n && parseLexerRuleH(ctx, state"7")) {
+              return Either.Right(ctx.failIndex)
             }
           }
-          tokens(j).tipe match {
-            case u32"0xEDD2348C" /* PHEADER */ if !found =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"5")
-              found = T
-            case u32"0x2322FC01" /* LHEADER */ if !found =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"6")
-              found = T
-            case u32"0xFC5CB374" /* EOF */ if !found =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"8")
-              found = T
+          tokens(ctx.j).tipe match {
+            case u32"0xEDD2348C" /* PHEADER */ if !ctx.found =>
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"5")
+              ctx.found = T
+            case u32"0x2322FC01" /* LHEADER */ if !ctx.found =>
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"6")
+              ctx.found = T
+            case u32"0xFC5CB374" /* EOF */ if !ctx.found =>
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"8")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"4" =>
-          found = F
-          val n_parserRule = predictParserRule(j)
-          val n_lexerRule = predictLexerRule(j)
-          for (n <- 2 to 1 by -1 if !found) {
-            if (n_parserRule == n && parseParserRuleH(u32"6")) {
-              return Either.Right(failIndex)
+        case state"4" =>
+          ctx.found = F
+          val n_parserRule = predictParserRule(ctx.j)
+          val n_lexerRule = predictLexerRule(ctx.j)
+          for (n <- 2 to 1 by -1 if !ctx.found) {
+            if (n_parserRule == n && parseParserRuleH(ctx, state"6")) {
+              return Either.Right(ctx.failIndex)
             }
-            if (!found && n_lexerRule == n && parseLexerRuleH(u32"7")) {
-              return Either.Right(failIndex)
+            if (!ctx.found && n_lexerRule == n && parseLexerRuleH(ctx, state"7")) {
+              return Either.Right(ctx.failIndex)
             }
           }
-          tokens(j).tipe match {
-            case u32"0xEDD2348C" /* PHEADER */ if !found =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"5")
-              found = T
-            case u32"0x2322FC01" /* LHEADER */ if !found =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"6")
-              found = T
-            case u32"0xFC5CB374" /* EOF */ if !found =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"8")
-              found = T
+          tokens(ctx.j).tipe match {
+            case u32"0xEDD2348C" /* PHEADER */ if !ctx.found =>
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"5")
+              ctx.found = T
+            case u32"0x2322FC01" /* LHEADER */ if !ctx.found =>
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"6")
+              ctx.found = T
+            case u32"0xFC5CB374" /* EOF */ if !ctx.found =>
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"8")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"5" =>
-          found = F
-          val n_parserRule = predictParserRule(j)
-          val n_lexerRule = predictLexerRule(j)
-          for (n <- 2 to 1 by -1 if !found) {
-            if (n_parserRule == n && parseParserRuleH(u32"6")) {
-              return Either.Right(failIndex)
+        case state"5" =>
+          ctx.found = F
+          val n_parserRule = predictParserRule(ctx.j)
+          val n_lexerRule = predictLexerRule(ctx.j)
+          for (n <- 2 to 1 by -1 if !ctx.found) {
+            if (n_parserRule == n && parseParserRuleH(ctx, state"6")) {
+              return Either.Right(ctx.failIndex)
             }
-            if (!found && n_lexerRule == n && parseLexerRuleH(u32"7")) {
-              return Either.Right(failIndex)
+            if (!ctx.found && n_lexerRule == n && parseLexerRuleH(ctx, state"7")) {
+              return Either.Right(ctx.failIndex)
             }
           }
-          tokens(j).tipe match {
-            case u32"0x2322FC01" /* LHEADER */ if !found =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"6")
-              found = T
-            case u32"0xFC5CB374" /* EOF */ if !found =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"8")
-              found = T
+          tokens(ctx.j).tipe match {
+            case u32"0x2322FC01" /* LHEADER */ if !ctx.found =>
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"6")
+              ctx.found = T
+            case u32"0xFC5CB374" /* EOF */ if !ctx.found =>
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"8")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"6" =>
-          found = F
-          val n_parserRule = predictParserRule(j)
-          val n_lexerRule = predictLexerRule(j)
-          for (n <- 2 to 1 by -1 if !found) {
-            if (n_parserRule == n && parseParserRuleH(u32"6")) {
-              return Either.Right(failIndex)
+        case state"6" =>
+          ctx.found = F
+          val n_parserRule = predictParserRule(ctx.j)
+          val n_lexerRule = predictLexerRule(ctx.j)
+          for (n <- 2 to 1 by -1 if !ctx.found) {
+            if (n_parserRule == n && parseParserRuleH(ctx, state"6")) {
+              return Either.Right(ctx.failIndex)
             }
-            if (!found && n_lexerRule == n && parseLexerRuleH(u32"7")) {
-              return Either.Right(failIndex)
+            if (!ctx.found && n_lexerRule == n && parseLexerRuleH(ctx, state"7")) {
+              return Either.Right(ctx.failIndex)
             }
           }
-          tokens(j).tipe match {
-            case u32"0xFC5CB374" /* EOF */ if !found =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"8")
-              found = T
+          tokens(ctx.j).tipe match {
+            case u32"0xFC5CB374" /* EOF */ if !ctx.found =>
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"8")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"7" =>
-          found = F
-          val n_lexerRule = predictLexerRule(j)
-          if (n_lexerRule > 0 && parseLexerRuleH(u32"7")) {
-            return Either.Right(failIndex)
+        case state"7" =>
+          ctx.found = F
+          val n_lexerRule = predictLexerRule(ctx.j)
+          if (n_lexerRule > 0 && parseLexerRuleH(ctx, state"7")) {
+            return Either.Right(ctx.failIndex)
           }
-          tokens(j).tipe match {
-            case u32"0xFC5CB374" /* EOF */ if !found =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"8")
-              found = T
+          tokens(ctx.j).tipe match {
+            case u32"0xFC5CB374" /* EOF */ if !ctx.found =>
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"8")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"8" => return retVal(max, resOpt, initial, T)
+        case state"8" => return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
         case _ => halt("Infeasible")
       }
-      if (max < j) {
-        max = j
+      if (ctx.max < ctx.j) {
+        ctx.max = ctx.j
       }
     }
 
-    return retVal(j, resOpt, initial, T)
+    return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
   }
 
   @pure def parseOptionsSpec(i: Z): Either[Result, Z] = {
-    var state = u32"0"
-    var resOpt: Option[Result] = None()
-    var trees = ISZ[ParseTree]()
-    var j = i
-    var max = i
-    var initial = T
-    var found = F
-    var failIndex: Z = 0
+    val ctx = Context.create("optionsSpec", u32"0x5A3A1CB5" /* optionsSpec */, ISZ(state"4"), i)
 
-    def update(newState: U32): Unit = {
-      initial = F
-      state = newState
-      state match {
-        case u32"4" => 
-        case _ => return
-      }
-      resOpt = Some(Result(ParseTree.Node(trees, """optionsSpec""", u32"0x5A3A1CB5" /* optionsSpec */, None()), j))
-    }
-
-    def parseOptionH(nextState: U32): B = {
-      parseOption(j) match {
-        case Either.Left(r) =>
-          trees = trees :+ r.tree
-          j = r.newIndex
-          update(nextState)
-          found = T
-          return F
-        case Either.Right(r) =>
-          if (r < 0) {
-            failIndex = r
-            return T
-          } else if (max < r) {
-            max = r
-          }
-          return F
-      }
-    }
-
-    while (j < tokens.size) {
-      state match {
-        case u32"0" =>
-          found = F
-          tokens(j).tipe match {
+    while (ctx.j < tokens.size) {
+      ctx.state match {
+        case state"0" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0xED16D169" /* "options" */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"1")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"1")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"1" =>
-          found = F
-          tokens(j).tipe match {
+        case state"1" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0xFDCE65E5" /* "{" */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"2")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"2")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"2" =>
-          found = F
-          val n_option = predictOption(j)
-          if (n_option > 0 && parseOptionH(u32"3")) {
-            return Either.Right(failIndex)
+        case state"2" =>
+          ctx.found = F
+          val n_option = predictOption(ctx.j)
+          if (n_option > 0 && parseOptionH(ctx, state"3")) {
+            return Either.Right(ctx.failIndex)
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"3" =>
-          found = F
-          val n_option = predictOption(j)
-          if (n_option > 0 && parseOptionH(u32"3")) {
-            return Either.Right(failIndex)
+        case state"3" =>
+          ctx.found = F
+          val n_option = predictOption(ctx.j)
+          if (n_option > 0 && parseOptionH(ctx, state"3")) {
+            return Either.Right(ctx.failIndex)
           }
-          tokens(j).tipe match {
-            case u32"0x5BF60471" /* "}" */ if !found =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"4")
-              found = T
+          tokens(ctx.j).tipe match {
+            case u32"0x5BF60471" /* "}" */ if !ctx.found =>
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"4")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"4" => return retVal(max, resOpt, initial, T)
+        case state"4" => return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
         case _ => halt("Infeasible")
       }
-      if (max < j) {
-        max = j
+      if (ctx.max < ctx.j) {
+        ctx.max = ctx.j
       }
     }
 
-    return retVal(j, resOpt, initial, T)
+    return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
   }
 
   @pure def parseOption(i: Z): Either[Result, Z] = {
-    var state = u32"0"
-    var resOpt: Option[Result] = None()
-    var trees = ISZ[ParseTree]()
-    var j = i
-    var max = i
-    var initial = T
-    var found = F
-    var failIndex: Z = 0
+    val ctx = Context.create("option", u32"0x47F1F331" /* option */, ISZ(state"4"), i)
 
-    def update(newState: U32): Unit = {
-      initial = F
-      state = newState
-      state match {
-        case u32"4" => 
-        case _ => return
-      }
-      resOpt = Some(Result(ParseTree.Node(trees, """option""", u32"0x47F1F331" /* option */, None()), j))
-    }
-
-    def parseIdH(nextState: U32): B = {
-      parseId(j) match {
-        case Either.Left(r) =>
-          trees = trees :+ r.tree
-          j = r.newIndex
-          update(nextState)
-          found = T
-          return F
-        case Either.Right(r) =>
-          if (r < 0) {
-            failIndex = r
-            return T
-          } else if (max < r) {
-            max = r
+    while (ctx.j < tokens.size) {
+      ctx.state match {
+        case state"0" =>
+          ctx.found = F
+          val n_id = predictId(ctx.j)
+          if (n_id > 0 && parseIdH(ctx, state"1")) {
+            return Either.Right(ctx.failIndex)
           }
-          return F
-      }
-    }
-
-    def parseOptionValueH(nextState: U32): B = {
-      parseOptionValue(j) match {
-        case Either.Left(r) =>
-          trees = trees :+ r.tree
-          j = r.newIndex
-          update(nextState)
-          found = T
-          return F
-        case Either.Right(r) =>
-          if (r < 0) {
-            failIndex = r
-            return T
-          } else if (max < r) {
-            max = r
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-          return F
-      }
-    }
-
-    while (j < tokens.size) {
-      state match {
-        case u32"0" =>
-          found = F
-          val n_id = predictId(j)
-          if (n_id > 0 && parseIdH(u32"1")) {
-            return Either.Right(failIndex)
-          }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
-          }
-        case u32"1" =>
-          found = F
-          tokens(j).tipe match {
+        case state"1" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0xEF954474" /* "=" */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"2")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"2")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"2" =>
-          found = F
-          val n_optionValue = predictOptionValue(j)
-          if (n_optionValue > 0 && parseOptionValueH(u32"3")) {
-            return Either.Right(failIndex)
+        case state"2" =>
+          ctx.found = F
+          val n_optionValue = predictOptionValue(ctx.j)
+          if (n_optionValue > 0 && parseOptionValueH(ctx, state"3")) {
+            return Either.Right(ctx.failIndex)
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"3" =>
-          found = F
-          tokens(j).tipe match {
+        case state"3" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0x36F2899D" /* ";" */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"4")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"4")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"4" => return retVal(max, resOpt, initial, T)
+        case state"4" => return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
         case _ => halt("Infeasible")
       }
-      if (max < j) {
-        max = j
+      if (ctx.max < ctx.j) {
+        ctx.max = ctx.j
       }
     }
 
-    return retVal(j, resOpt, initial, T)
+    return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
   }
 
   @pure def parseOptionValue(i: Z): Either[Result, Z] = {
-    var state = u32"0"
-    var resOpt: Option[Result] = None()
-    var trees = ISZ[ParseTree]()
-    var j = i
-    var max = i
-    var initial = T
-    var found = F
-    var failIndex: Z = 0
+    val ctx = Context.create("optionValue", u32"0xED8E0DA8" /* optionValue */, ISZ(state"1"), i)
 
-    def update(newState: U32): Unit = {
-      initial = F
-      state = newState
-      state match {
-        case u32"1" => 
-        case _ => return
-      }
-      resOpt = Some(Result(ParseTree.Node(trees, """optionValue""", u32"0xED8E0DA8" /* optionValue */, None()), j))
-    }
-
-    def parseIdH(nextState: U32): B = {
-      parseId(j) match {
-        case Either.Left(r) =>
-          trees = trees :+ r.tree
-          j = r.newIndex
-          update(nextState)
-          found = T
-          return F
-        case Either.Right(r) =>
-          if (r < 0) {
-            failIndex = r
-            return T
-          } else if (max < r) {
-            max = r
+    while (ctx.j < tokens.size) {
+      ctx.state match {
+        case state"0" =>
+          ctx.found = F
+          val n_id = predictId(ctx.j)
+          if (n_id > 0 && parseIdH(ctx, state"1")) {
+            return Either.Right(ctx.failIndex)
           }
-          return F
-      }
-    }
-
-    while (j < tokens.size) {
-      state match {
-        case u32"0" =>
-          found = F
-          val n_id = predictId(j)
-          if (n_id > 0 && parseIdH(u32"1")) {
-            return Either.Right(failIndex)
-          }
-          tokens(j).tipe match {
-            case u32"0x589C233C" /* INT */ if !found =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"1")
-              found = T
+          tokens(ctx.j).tipe match {
+            case u32"0x589C233C" /* INT */ if !ctx.found =>
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"1")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"1" => return retVal(max, resOpt, initial, T)
+        case state"1" => return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
         case _ => halt("Infeasible")
       }
-      if (max < j) {
-        max = j
+      if (ctx.max < ctx.j) {
+        ctx.max = ctx.j
       }
     }
 
-    return retVal(j, resOpt, initial, T)
+    return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
   }
 
   @pure def parseParserRule(i: Z): Either[Result, Z] = {
-    var state = u32"0"
-    var resOpt: Option[Result] = None()
-    var trees = ISZ[ParseTree]()
-    var j = i
-    var max = i
-    var initial = T
-    var found = F
-    var failIndex: Z = 0
+    val ctx = Context.create("parserRule", u32"0x4AF0B412" /* parserRule */, ISZ(state"5"), i)
 
-    def update(newState: U32): Unit = {
-      initial = F
-      state = newState
-      state match {
-        case u32"5" => 
-        case _ => return
-      }
-      resOpt = Some(Result(ParseTree.Node(trees, """parserRule""", u32"0x4AF0B412" /* parserRule */, None()), j))
-    }
-
-    def parseAltH(nextState: U32): B = {
-      parseAlt(j) match {
-        case Either.Left(r) =>
-          trees = trees :+ r.tree
-          j = r.newIndex
-          update(nextState)
-          found = T
-          return F
-        case Either.Right(r) =>
-          if (r < 0) {
-            failIndex = r
-            return T
-          } else if (max < r) {
-            max = r
-          }
-          return F
-      }
-    }
-
-    while (j < tokens.size) {
-      state match {
-        case u32"0" =>
-          found = F
-          tokens(j).tipe match {
+    while (ctx.j < tokens.size) {
+      ctx.state match {
+        case state"0" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0xD2EDBEA1" /* PID */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"1")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"1")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"1" =>
-          found = F
-          tokens(j).tipe match {
+        case state"1" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0x763C38BE" /* ":" */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"2")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"2")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"2" =>
-          found = F
-          val n_alt = predictAlt(j)
-          if (n_alt > 0 && parseAltH(u32"3")) {
-            return Either.Right(failIndex)
+        case state"2" =>
+          ctx.found = F
+          val n_alt = predictAlt(ctx.j)
+          if (n_alt > 0 && parseAltH(ctx, state"3")) {
+            return Either.Right(ctx.failIndex)
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"3" =>
-          found = F
-          tokens(j).tipe match {
+        case state"3" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0x687111E8" /* "|" */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"4")
-              found = T
-            case u32"0x36F2899D" /* ";" */ if !found =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"5")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"4")
+              ctx.found = T
+            case u32"0x36F2899D" /* ";" */ if !ctx.found =>
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"5")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"4" =>
-          found = F
-          val n_alt = predictAlt(j)
-          if (n_alt > 0 && parseAltH(u32"3")) {
-            return Either.Right(failIndex)
+        case state"4" =>
+          ctx.found = F
+          val n_alt = predictAlt(ctx.j)
+          if (n_alt > 0 && parseAltH(ctx, state"3")) {
+            return Either.Right(ctx.failIndex)
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"5" => return retVal(max, resOpt, initial, T)
+        case state"5" => return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
         case _ => halt("Infeasible")
       }
-      if (max < j) {
-        max = j
+      if (ctx.max < ctx.j) {
+        ctx.max = ctx.j
       }
     }
 
-    return retVal(j, resOpt, initial, T)
+    return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
   }
 
   @pure def parseLexerRule(i: Z): Either[Result, Z] = {
-    var state = u32"0"
-    var resOpt: Option[Result] = None()
-    var trees = ISZ[ParseTree]()
-    var j = i
-    var max = i
-    var initial = T
-    var found = F
-    var failIndex: Z = 0
+    val ctx = Context.create("lexerRule", u32"0x9E30C465" /* lexerRule */, ISZ(state"7"), i)
 
-    def update(newState: U32): Unit = {
-      initial = F
-      state = newState
-      state match {
-        case u32"7" => 
-        case _ => return
-      }
-      resOpt = Some(Result(ParseTree.Node(trees, """lexerRule""", u32"0x9E30C465" /* lexerRule */, None()), j))
-    }
-
-    def parseAltH(nextState: U32): B = {
-      parseAlt(j) match {
-        case Either.Left(r) =>
-          trees = trees :+ r.tree
-          j = r.newIndex
-          update(nextState)
-          found = T
-          return F
-        case Either.Right(r) =>
-          if (r < 0) {
-            failIndex = r
-            return T
-          } else if (max < r) {
-            max = r
-          }
-          return F
-      }
-    }
-
-    def parseChannelH(nextState: U32): B = {
-      parseChannel(j) match {
-        case Either.Left(r) =>
-          trees = trees :+ r.tree
-          j = r.newIndex
-          update(nextState)
-          found = T
-          return F
-        case Either.Right(r) =>
-          if (r < 0) {
-            failIndex = r
-            return T
-          } else if (max < r) {
-            max = r
-          }
-          return F
-      }
-    }
-
-    while (j < tokens.size) {
-      state match {
-        case u32"0" =>
-          found = F
-          tokens(j).tipe match {
+    while (ctx.j < tokens.size) {
+      ctx.state match {
+        case state"0" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0x072BDD2B" /* "fragment" */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"1")
-              found = T
-            case u32"0x8E18F45B" /* LID */ if !found =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"2")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"1")
+              ctx.found = T
+            case u32"0x8E18F45B" /* LID */ if !ctx.found =>
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"2")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"1" =>
-          found = F
-          tokens(j).tipe match {
+        case state"1" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0x8E18F45B" /* LID */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"2")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"2")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"2" =>
-          found = F
-          tokens(j).tipe match {
+        case state"2" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0x763C38BE" /* ":" */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"3")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"3")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"3" =>
-          found = F
-          val n_alt = predictAlt(j)
-          if (n_alt > 0 && parseAltH(u32"4")) {
-            return Either.Right(failIndex)
+        case state"3" =>
+          ctx.found = F
+          val n_alt = predictAlt(ctx.j)
+          if (n_alt > 0 && parseAltH(ctx, state"4")) {
+            return Either.Right(ctx.failIndex)
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"4" =>
-          found = F
-          val n_channel = predictChannel(j)
-          if (n_channel > 0 && parseChannelH(u32"8")) {
-            return Either.Right(failIndex)
+        case state"4" =>
+          ctx.found = F
+          val n_channel = predictChannel(ctx.j)
+          if (n_channel > 0 && parseChannelH(ctx, state"8")) {
+            return Either.Right(ctx.failIndex)
           }
-          tokens(j).tipe match {
-            case u32"0x687111E8" /* "|" */ if !found =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"5")
-              found = T
-            case u32"0x36F2899D" /* ";" */ if !found =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"7")
-              found = T
+          tokens(ctx.j).tipe match {
+            case u32"0x687111E8" /* "|" */ if !ctx.found =>
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"5")
+              ctx.found = T
+            case u32"0x36F2899D" /* ";" */ if !ctx.found =>
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"7")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"5" =>
-          found = F
-          val n_alt = predictAlt(j)
-          if (n_alt > 0 && parseAltH(u32"6")) {
-            return Either.Right(failIndex)
+        case state"5" =>
+          ctx.found = F
+          val n_alt = predictAlt(ctx.j)
+          if (n_alt > 0 && parseAltH(ctx, state"6")) {
+            return Either.Right(ctx.failIndex)
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"6" =>
-          found = F
-          tokens(j).tipe match {
+        case state"6" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0x687111E8" /* "|" */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"5")
-              found = T
-            case u32"0x36F2899D" /* ";" */ if !found =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"7")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"5")
+              ctx.found = T
+            case u32"0x36F2899D" /* ";" */ if !ctx.found =>
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"7")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"7" => return retVal(max, resOpt, initial, T)
-        case u32"8" =>
-          found = F
-          tokens(j).tipe match {
+        case state"7" => return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
+        case state"8" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0x687111E8" /* "|" */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"9")
-              found = T
-            case u32"0x36F2899D" /* ";" */ if !found =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"7")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"9")
+              ctx.found = T
+            case u32"0x36F2899D" /* ";" */ if !ctx.found =>
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"7")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"9" =>
-          found = F
-          val n_alt = predictAlt(j)
-          if (n_alt > 0 && parseAltH(u32"10")) {
-            return Either.Right(failIndex)
+        case state"9" =>
+          ctx.found = F
+          val n_alt = predictAlt(ctx.j)
+          if (n_alt > 0 && parseAltH(ctx, state"10")) {
+            return Either.Right(ctx.failIndex)
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"10" =>
-          found = F
-          val n_channel = predictChannel(j)
-          if (n_channel > 0 && parseChannelH(u32"8")) {
-            return Either.Right(failIndex)
+        case state"10" =>
+          ctx.found = F
+          val n_channel = predictChannel(ctx.j)
+          if (n_channel > 0 && parseChannelH(ctx, state"8")) {
+            return Either.Right(ctx.failIndex)
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
         case _ => halt("Infeasible")
       }
-      if (max < j) {
-        max = j
+      if (ctx.max < ctx.j) {
+        ctx.max = ctx.j
       }
     }
 
-    return retVal(j, resOpt, initial, T)
+    return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
   }
 
   @pure def parseBlock(i: Z): Either[Result, Z] = {
-    var state = u32"0"
-    var resOpt: Option[Result] = None()
-    var trees = ISZ[ParseTree]()
-    var j = i
-    var max = i
-    var initial = T
-    var found = F
-    var failIndex: Z = 0
+    val ctx = Context.create("block", u32"0xAA25218B" /* block */, ISZ(state"4"), i)
 
-    def update(newState: U32): Unit = {
-      initial = F
-      state = newState
-      state match {
-        case u32"4" => 
-        case _ => return
-      }
-      resOpt = Some(Result(ParseTree.Node(trees, """block""", u32"0xAA25218B" /* block */, None()), j))
-    }
-
-    def parseAltH(nextState: U32): B = {
-      parseAlt(j) match {
-        case Either.Left(r) =>
-          trees = trees :+ r.tree
-          j = r.newIndex
-          update(nextState)
-          found = T
-          return F
-        case Either.Right(r) =>
-          if (r < 0) {
-            failIndex = r
-            return T
-          } else if (max < r) {
-            max = r
-          }
-          return F
-      }
-    }
-
-    while (j < tokens.size) {
-      state match {
-        case u32"0" =>
-          found = F
-          tokens(j).tipe match {
+    while (ctx.j < tokens.size) {
+      ctx.state match {
+        case state"0" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0x71F6371D" /* "(" */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"1")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"1")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"1" =>
-          found = F
-          val n_alt = predictAlt(j)
-          if (n_alt > 0 && parseAltH(u32"2")) {
-            return Either.Right(failIndex)
+        case state"1" =>
+          ctx.found = F
+          val n_alt = predictAlt(ctx.j)
+          if (n_alt > 0 && parseAltH(ctx, state"2")) {
+            return Either.Right(ctx.failIndex)
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"2" =>
-          found = F
-          tokens(j).tipe match {
+        case state"2" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0x687111E8" /* "|" */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"3")
-              found = T
-            case u32"0xB9401340" /* ")" */ if !found =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"4")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"3")
+              ctx.found = T
+            case u32"0xB9401340" /* ")" */ if !ctx.found =>
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"4")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"3" =>
-          found = F
-          val n_alt = predictAlt(j)
-          if (n_alt > 0 && parseAltH(u32"2")) {
-            return Either.Right(failIndex)
+        case state"3" =>
+          ctx.found = F
+          val n_alt = predictAlt(ctx.j)
+          if (n_alt > 0 && parseAltH(ctx, state"2")) {
+            return Either.Right(ctx.failIndex)
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"4" => return retVal(max, resOpt, initial, T)
+        case state"4" => return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
         case _ => halt("Infeasible")
       }
-      if (max < j) {
-        max = j
+      if (ctx.max < ctx.j) {
+        ctx.max = ctx.j
       }
     }
 
-    return retVal(j, resOpt, initial, T)
+    return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
   }
 
   @pure def parseAlt(i: Z): Either[Result, Z] = {
-    var state = u32"0"
-    var resOpt: Option[Result] = None()
-    var trees = ISZ[ParseTree]()
-    var j = i
-    var max = i
-    var initial = T
-    var found = F
-    var failIndex: Z = 0
+    val ctx = Context.create("alt", u32"0xB817E927" /* alt */, ISZ(state"1"), i)
 
-    def update(newState: U32): Unit = {
-      initial = F
-      state = newState
-      state match {
-        case u32"1" => 
-        case _ => return
-      }
-      resOpt = Some(Result(ParseTree.Node(trees, """alt""", u32"0xB817E927" /* alt */, None()), j))
-    }
-
-    def parseElementH(nextState: U32): B = {
-      parseElement(j) match {
-        case Either.Left(r) =>
-          trees = trees :+ r.tree
-          j = r.newIndex
-          update(nextState)
-          found = T
-          return F
-        case Either.Right(r) =>
-          if (r < 0) {
-            failIndex = r
-            return T
-          } else if (max < r) {
-            max = r
+    while (ctx.j < tokens.size) {
+      ctx.state match {
+        case state"0" =>
+          ctx.found = F
+          val n_element = predictElement(ctx.j)
+          if (n_element > 0 && parseElementH(ctx, state"1")) {
+            return Either.Right(ctx.failIndex)
           }
-          return F
-      }
-    }
-
-    while (j < tokens.size) {
-      state match {
-        case u32"0" =>
-          found = F
-          val n_element = predictElement(j)
-          if (n_element > 0 && parseElementH(u32"1")) {
-            return Either.Right(failIndex)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+        case state"1" =>
+          ctx.found = F
+          val n_element = predictElement(ctx.j)
+          if (n_element > 0 && parseElementH(ctx, state"1")) {
+            return Either.Right(ctx.failIndex)
           }
-        case u32"1" =>
-          found = F
-          val n_element = predictElement(j)
-          if (n_element > 0 && parseElementH(u32"1")) {
-            return Either.Right(failIndex)
-          }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
         case _ => halt("Infeasible")
       }
-      if (max < j) {
-        max = j
+      if (ctx.max < ctx.j) {
+        ctx.max = ctx.j
       }
     }
 
-    return retVal(j, resOpt, initial, T)
+    return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
   }
 
   @pure def parseElement(i: Z): Either[Result, Z] = {
-    var state = u32"0"
-    var resOpt: Option[Result] = None()
-    var trees = ISZ[ParseTree]()
-    var j = i
-    var max = i
-    var initial = T
-    var found = F
-    var failIndex: Z = 0
+    val ctx = Context.create("element", u32"0x022B2C72" /* element */, ISZ(state"1", state"2"), i)
 
-    def update(newState: U32): Unit = {
-      initial = F
-      state = newState
-      state match {
-        case u32"1" => 
-        case u32"2" => 
-        case _ => return
-      }
-      resOpt = Some(Result(ParseTree.Node(trees, """element""", u32"0x022B2C72" /* element */, None()), j))
-    }
-
-    def parseAtomH(nextState: U32): B = {
-      parseAtom(j) match {
-        case Either.Left(r) =>
-          trees = trees :+ r.tree
-          j = r.newIndex
-          update(nextState)
-          found = T
-          return F
-        case Either.Right(r) =>
-          if (r < 0) {
-            failIndex = r
-            return T
-          } else if (max < r) {
-            max = r
-          }
-          return F
-      }
-    }
-
-    def parseBlockH(nextState: U32): B = {
-      parseBlock(j) match {
-        case Either.Left(r) =>
-          trees = trees :+ r.tree
-          j = r.newIndex
-          update(nextState)
-          found = T
-          return F
-        case Either.Right(r) =>
-          if (r < 0) {
-            failIndex = r
-            return T
-          } else if (max < r) {
-            max = r
-          }
-          return F
-      }
-    }
-
-    while (j < tokens.size) {
-      state match {
-        case u32"0" =>
-          found = F
-          val n_atom = predictAtom(j)
-          val n_block = predictBlock(j)
-          for (n <- 2 to 1 by -1 if !found) {
-            if (n_atom == n && parseAtomH(u32"1")) {
-              return Either.Right(failIndex)
+    while (ctx.j < tokens.size) {
+      ctx.state match {
+        case state"0" =>
+          ctx.found = F
+          val n_atom = predictAtom(ctx.j)
+          val n_block = predictBlock(ctx.j)
+          for (n <- 2 to 1 by -1 if !ctx.found) {
+            if (n_atom == n && parseAtomH(ctx, state"1")) {
+              return Either.Right(ctx.failIndex)
             }
-            if (!found && n_block == n && parseBlockH(u32"1")) {
-              return Either.Right(failIndex)
+            if (!ctx.found && n_block == n && parseBlockH(ctx, state"1")) {
+              return Either.Right(ctx.failIndex)
             }
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"1" =>
-          found = F
-          tokens(j).tipe match {
+        case state"1" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0xD827FEB7" /* "?" */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"2")
-              found = T
-            case u32"0x82283B4B" /* "*" */ if !found =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"2")
-              found = T
-            case u32"0x797D7BC8" /* "+" */ if !found =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"2")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"2")
+              ctx.found = T
+            case u32"0x82283B4B" /* "*" */ if !ctx.found =>
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"2")
+              ctx.found = T
+            case u32"0x797D7BC8" /* "+" */ if !ctx.found =>
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"2")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"2" => return retVal(max, resOpt, initial, T)
+        case state"2" => return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
         case _ => halt("Infeasible")
       }
-      if (max < j) {
-        max = j
+      if (ctx.max < ctx.j) {
+        ctx.max = ctx.j
       }
     }
 
-    return retVal(j, resOpt, initial, T)
+    return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
   }
 
   @pure def parseAtom(i: Z): Either[Result, Z] = {
-    var state = u32"0"
-    var resOpt: Option[Result] = None()
-    var trees = ISZ[ParseTree]()
-    var j = i
-    var max = i
-    var initial = T
-    var found = F
-    var failIndex: Z = 0
+    val ctx = Context.create("atom", u32"0xBF749739" /* atom */, ISZ(state"1"), i)
 
-    def update(newState: U32): Unit = {
-      initial = F
-      state = newState
-      state match {
-        case u32"1" => 
-        case _ => return
-      }
-      resOpt = Some(Result(ParseTree.Node(trees, """atom""", u32"0xBF749739" /* atom */, None()), j))
-    }
-
-    def parseRangeH(nextState: U32): B = {
-      parseRange(j) match {
-        case Either.Left(r) =>
-          trees = trees :+ r.tree
-          j = r.newIndex
-          update(nextState)
-          found = T
-          return F
-        case Either.Right(r) =>
-          if (r < 0) {
-            failIndex = r
-            return T
-          } else if (max < r) {
-            max = r
-          }
-          return F
-      }
-    }
-
-    def parseTerminalH(nextState: U32): B = {
-      parseTerminal(j) match {
-        case Either.Left(r) =>
-          trees = trees :+ r.tree
-          j = r.newIndex
-          update(nextState)
-          found = T
-          return F
-        case Either.Right(r) =>
-          if (r < 0) {
-            failIndex = r
-            return T
-          } else if (max < r) {
-            max = r
-          }
-          return F
-      }
-    }
-
-    def parseNotH(nextState: U32): B = {
-      parseNot(j) match {
-        case Either.Left(r) =>
-          trees = trees :+ r.tree
-          j = r.newIndex
-          update(nextState)
-          found = T
-          return F
-        case Either.Right(r) =>
-          if (r < 0) {
-            failIndex = r
-            return T
-          } else if (max < r) {
-            max = r
-          }
-          return F
-      }
-    }
-
-    while (j < tokens.size) {
-      state match {
-        case u32"0" =>
-          found = F
-          val n_range = predictRange(j)
-          val n_terminal = predictTerminal(j)
-          val n_not = predictNot(j)
-          for (n <- 2 to 1 by -1 if !found) {
-            if (n_range == n && parseRangeH(u32"1")) {
-              return Either.Right(failIndex)
+    while (ctx.j < tokens.size) {
+      ctx.state match {
+        case state"0" =>
+          ctx.found = F
+          val n_range = predictRange(ctx.j)
+          val n_terminal = predictTerminal(ctx.j)
+          val n_not = predictNot(ctx.j)
+          for (n <- 2 to 1 by -1 if !ctx.found) {
+            if (n_range == n && parseRangeH(ctx, state"1")) {
+              return Either.Right(ctx.failIndex)
             }
-            if (!found && n_terminal == n && parseTerminalH(u32"1")) {
-              return Either.Right(failIndex)
+            if (!ctx.found && n_terminal == n && parseTerminalH(ctx, state"1")) {
+              return Either.Right(ctx.failIndex)
             }
-            if (!found && n_not == n && parseNotH(u32"1")) {
-              return Either.Right(failIndex)
+            if (!ctx.found && n_not == n && parseNotH(ctx, state"1")) {
+              return Either.Right(ctx.failIndex)
             }
           }
-          tokens(j).tipe match {
-            case u32"0xD2EDBEA1" /* PID */ if !found =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"1")
-              found = T
+          tokens(ctx.j).tipe match {
+            case u32"0xD2EDBEA1" /* PID */ if !ctx.found =>
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"1")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"1" => return retVal(max, resOpt, initial, T)
+        case state"1" => return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
         case _ => halt("Infeasible")
       }
-      if (max < j) {
-        max = j
+      if (ctx.max < ctx.j) {
+        ctx.max = ctx.j
       }
     }
 
-    return retVal(j, resOpt, initial, T)
+    return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
   }
 
   @pure def parseNot(i: Z): Either[Result, Z] = {
-    var state = u32"0"
-    var resOpt: Option[Result] = None()
-    var trees = ISZ[ParseTree]()
-    var j = i
-    var max = i
-    var initial = T
-    var found = F
-    var failIndex: Z = 0
+    val ctx = Context.create("not", u32"0x94BF4010" /* not */, ISZ(state"2"), i)
 
-    def update(newState: U32): Unit = {
-      initial = F
-      state = newState
-      state match {
-        case u32"2" => 
-        case _ => return
-      }
-      resOpt = Some(Result(ParseTree.Node(trees, """not""", u32"0x94BF4010" /* not */, None()), j))
-    }
-
-    def parseBlockH(nextState: U32): B = {
-      parseBlock(j) match {
-        case Either.Left(r) =>
-          trees = trees :+ r.tree
-          j = r.newIndex
-          update(nextState)
-          found = T
-          return F
-        case Either.Right(r) =>
-          if (r < 0) {
-            failIndex = r
-            return T
-          } else if (max < r) {
-            max = r
-          }
-          return F
-      }
-    }
-
-    while (j < tokens.size) {
-      state match {
-        case u32"0" =>
-          found = F
-          tokens(j).tipe match {
+    while (ctx.j < tokens.size) {
+      ctx.state match {
+        case state"0" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0xAAB7E55C" /* "~" */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"1")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"1")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"1" =>
-          found = F
-          val n_block = predictBlock(j)
-          if (n_block > 0 && parseBlockH(u32"2")) {
-            return Either.Right(failIndex)
+        case state"1" =>
+          ctx.found = F
+          val n_block = predictBlock(ctx.j)
+          if (n_block > 0 && parseBlockH(ctx, state"2")) {
+            return Either.Right(ctx.failIndex)
           }
-          tokens(j).tipe match {
-            case u32"0xE95F063A" /* CHAR */ if !found =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"2")
-              found = T
-            case u32"0xA7CF0FE0" /* STRING */ if !found =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"2")
-              found = T
+          tokens(ctx.j).tipe match {
+            case u32"0xE95F063A" /* CHAR */ if !ctx.found =>
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"2")
+              ctx.found = T
+            case u32"0xA7CF0FE0" /* STRING */ if !ctx.found =>
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"2")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"2" => return retVal(max, resOpt, initial, T)
+        case state"2" => return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
         case _ => halt("Infeasible")
       }
-      if (max < j) {
-        max = j
+      if (ctx.max < ctx.j) {
+        ctx.max = ctx.j
       }
     }
 
-    return retVal(j, resOpt, initial, T)
+    return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
   }
 
   @pure def parseRange(i: Z): Either[Result, Z] = {
-    var state = u32"0"
-    var resOpt: Option[Result] = None()
-    var trees = ISZ[ParseTree]()
-    var j = i
-    var max = i
-    var initial = T
-    var found = F
-    var failIndex: Z = 0
+    val ctx = Context.create("range", u32"0x821FF55C" /* range */, ISZ(state"3"), i)
 
-    def update(newState: U32): Unit = {
-      initial = F
-      state = newState
-      state match {
-        case u32"3" => 
-        case _ => return
-      }
-      resOpt = Some(Result(ParseTree.Node(trees, """range""", u32"0x821FF55C" /* range */, None()), j))
-    }
-
-
-    while (j < tokens.size) {
-      state match {
-        case u32"0" =>
-          found = F
-          tokens(j).tipe match {
+    while (ctx.j < tokens.size) {
+      ctx.state match {
+        case state"0" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0xE95F063A" /* CHAR */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"1")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"1")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"1" =>
-          found = F
-          tokens(j).tipe match {
+        case state"1" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0x3A15194D" /* ".." */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"2")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"2")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"2" =>
-          found = F
-          tokens(j).tipe match {
+        case state"2" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0xE95F063A" /* CHAR */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"3")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"3")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"3" => return retVal(max, resOpt, initial, T)
+        case state"3" => return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
         case _ => halt("Infeasible")
       }
-      if (max < j) {
-        max = j
+      if (ctx.max < ctx.j) {
+        ctx.max = ctx.j
       }
     }
 
-    return retVal(j, resOpt, initial, T)
+    return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
   }
 
   @pure def parseTerminal(i: Z): Either[Result, Z] = {
-    var state = u32"0"
-    var resOpt: Option[Result] = None()
-    var trees = ISZ[ParseTree]()
-    var j = i
-    var max = i
-    var initial = T
-    var found = F
-    var failIndex: Z = 0
+    val ctx = Context.create("terminal", u32"0xC926557D" /* terminal */, ISZ(state"1"), i)
 
-    def update(newState: U32): Unit = {
-      initial = F
-      state = newState
-      state match {
-        case u32"1" => 
-        case _ => return
-      }
-      resOpt = Some(Result(ParseTree.Node(trees, """terminal""", u32"0xC926557D" /* terminal */, None()), j))
-    }
-
-
-    while (j < tokens.size) {
-      state match {
-        case u32"0" =>
-          found = F
-          tokens(j).tipe match {
+    while (ctx.j < tokens.size) {
+      ctx.state match {
+        case state"0" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0x8E18F45B" /* LID */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"1")
-              found = T
-            case u32"0xE95F063A" /* CHAR */ if !found =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"1")
-              found = T
-            case u32"0xA7CF0FE0" /* STRING */ if !found =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"1")
-              found = T
-            case u32"0x6890427A" /* "." */ if !found =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"1")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"1")
+              ctx.found = T
+            case u32"0xE95F063A" /* CHAR */ if !ctx.found =>
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"1")
+              ctx.found = T
+            case u32"0xA7CF0FE0" /* STRING */ if !ctx.found =>
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"1")
+              ctx.found = T
+            case u32"0x6890427A" /* "." */ if !ctx.found =>
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"1")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"1" => return retVal(max, resOpt, initial, T)
+        case state"1" => return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
         case _ => halt("Infeasible")
       }
-      if (max < j) {
-        max = j
+      if (ctx.max < ctx.j) {
+        ctx.max = ctx.j
       }
     }
 
-    return retVal(j, resOpt, initial, T)
+    return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
   }
 
   @pure def parseId(i: Z): Either[Result, Z] = {
-    var state = u32"0"
-    var resOpt: Option[Result] = None()
-    var trees = ISZ[ParseTree]()
-    var j = i
-    var max = i
-    var initial = T
-    var found = F
-    var failIndex: Z = 0
+    val ctx = Context.create("id", u32"0x92391AB1" /* id */, ISZ(state"1"), i)
 
-    def update(newState: U32): Unit = {
-      initial = F
-      state = newState
-      state match {
-        case u32"1" => 
-        case _ => return
-      }
-      resOpt = Some(Result(ParseTree.Node(trees, """id""", u32"0x92391AB1" /* id */, None()), j))
-    }
-
-
-    while (j < tokens.size) {
-      state match {
-        case u32"0" =>
-          found = F
-          tokens(j).tipe match {
+    while (ctx.j < tokens.size) {
+      ctx.state match {
+        case state"0" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0x8E18F45B" /* LID */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"1")
-              found = T
-            case u32"0xD2EDBEA1" /* PID */ if !found =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"1")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"1")
+              ctx.found = T
+            case u32"0xD2EDBEA1" /* PID */ if !ctx.found =>
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"1")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"1" => return retVal(max, resOpt, initial, T)
+        case state"1" => return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
         case _ => halt("Infeasible")
       }
-      if (max < j) {
-        max = j
+      if (ctx.max < ctx.j) {
+        ctx.max = ctx.j
       }
     }
 
-    return retVal(j, resOpt, initial, T)
+    return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
   }
 
   @pure def parseChannel(i: Z): Either[Result, Z] = {
-    var state = u32"0"
-    var resOpt: Option[Result] = None()
-    var trees = ISZ[ParseTree]()
-    var j = i
-    var max = i
-    var initial = T
-    var found = F
-    var failIndex: Z = 0
+    val ctx = Context.create("channel", u32"0x239B7220" /* channel */, ISZ(state"6"), i)
 
-    def update(newState: U32): Unit = {
-      initial = F
-      state = newState
-      state match {
-        case u32"6" => 
-        case _ => return
-      }
-      resOpt = Some(Result(ParseTree.Node(trees, """channel""", u32"0x239B7220" /* channel */, None()), j))
-    }
-
-
-    while (j < tokens.size) {
-      state match {
-        case u32"0" =>
-          found = F
-          tokens(j).tipe match {
+    while (ctx.j < tokens.size) {
+      ctx.state match {
+        case state"0" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0xFDCE65E5" /* "{" */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"1")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"1")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"1" =>
-          found = F
-          tokens(j).tipe match {
+        case state"1" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0x46562B21" /* "$channel" */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"2")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"2")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"2" =>
-          found = F
-          tokens(j).tipe match {
+        case state"2" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0xEF954474" /* "=" */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"3")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"3")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"3" =>
-          found = F
-          tokens(j).tipe match {
+        case state"3" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0x8E18F45B" /* LID */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"4")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"4")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"4" =>
-          found = F
-          tokens(j).tipe match {
+        case state"4" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0x36F2899D" /* ";" */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"5")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"5")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"5" =>
-          found = F
-          tokens(j).tipe match {
+        case state"5" =>
+          ctx.found = F
+          tokens(ctx.j).tipe match {
             case u32"0x5BF60471" /* "}" */ =>
-              trees = trees :+ tokens(j)
-              j = j + 1
-              update(u32"6")
-              found = T
+              ctx.trees = ctx.trees :+ tokens(ctx.j)
+              ctx.j = ctx.j + 1
+              ctx.update(state"6")
+              ctx.found = T
             case _ =>
           }
-          if (!found) {
-            return retVal(max, resOpt, initial, T)
+          if (!ctx.found) {
+            return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
           }
-        case u32"6" => return retVal(max, resOpt, initial, T)
+        case state"6" => return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
         case _ => halt("Infeasible")
       }
-      if (max < j) {
-        max = j
+      if (ctx.max < ctx.j) {
+        ctx.max = ctx.j
       }
     }
 
-    return retVal(j, resOpt, initial, T)
+    return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
+  }
+
+  def parseIdH(ctx: Context, nextState: State): B = {
+    parseId(ctx.j) match {
+      case Either.Left(r) =>
+        ctx.trees = ctx.trees :+ r.tree
+        ctx.j = r.newIndex
+        ctx.update(nextState)
+        ctx.found = T
+      case Either.Right(r) =>
+        if (r < 0) {
+          ctx.failIndex = r
+          return T
+        } else if (ctx.max < r) {
+          ctx.max = r
+        }
+    }
+    return F
+  }
+
+  def parseOptionsSpecH(ctx: Context, nextState: State): B = {
+    parseOptionsSpec(ctx.j) match {
+      case Either.Left(r) =>
+        ctx.trees = ctx.trees :+ r.tree
+        ctx.j = r.newIndex
+        ctx.update(nextState)
+        ctx.found = T
+      case Either.Right(r) =>
+        if (r < 0) {
+          ctx.failIndex = r
+          return T
+        } else if (ctx.max < r) {
+          ctx.max = r
+        }
+    }
+    return F
+  }
+
+  def parseParserRuleH(ctx: Context, nextState: State): B = {
+    parseParserRule(ctx.j) match {
+      case Either.Left(r) =>
+        ctx.trees = ctx.trees :+ r.tree
+        ctx.j = r.newIndex
+        ctx.update(nextState)
+        ctx.found = T
+      case Either.Right(r) =>
+        if (r < 0) {
+          ctx.failIndex = r
+          return T
+        } else if (ctx.max < r) {
+          ctx.max = r
+        }
+    }
+    return F
+  }
+
+  def parseLexerRuleH(ctx: Context, nextState: State): B = {
+    parseLexerRule(ctx.j) match {
+      case Either.Left(r) =>
+        ctx.trees = ctx.trees :+ r.tree
+        ctx.j = r.newIndex
+        ctx.update(nextState)
+        ctx.found = T
+      case Either.Right(r) =>
+        if (r < 0) {
+          ctx.failIndex = r
+          return T
+        } else if (ctx.max < r) {
+          ctx.max = r
+        }
+    }
+    return F
+  }
+
+  def parseOptionH(ctx: Context, nextState: State): B = {
+    parseOption(ctx.j) match {
+      case Either.Left(r) =>
+        ctx.trees = ctx.trees :+ r.tree
+        ctx.j = r.newIndex
+        ctx.update(nextState)
+        ctx.found = T
+      case Either.Right(r) =>
+        if (r < 0) {
+          ctx.failIndex = r
+          return T
+        } else if (ctx.max < r) {
+          ctx.max = r
+        }
+    }
+    return F
+  }
+
+  def parseOptionValueH(ctx: Context, nextState: State): B = {
+    parseOptionValue(ctx.j) match {
+      case Either.Left(r) =>
+        ctx.trees = ctx.trees :+ r.tree
+        ctx.j = r.newIndex
+        ctx.update(nextState)
+        ctx.found = T
+      case Either.Right(r) =>
+        if (r < 0) {
+          ctx.failIndex = r
+          return T
+        } else if (ctx.max < r) {
+          ctx.max = r
+        }
+    }
+    return F
+  }
+
+  def parseAltH(ctx: Context, nextState: State): B = {
+    parseAlt(ctx.j) match {
+      case Either.Left(r) =>
+        ctx.trees = ctx.trees :+ r.tree
+        ctx.j = r.newIndex
+        ctx.update(nextState)
+        ctx.found = T
+      case Either.Right(r) =>
+        if (r < 0) {
+          ctx.failIndex = r
+          return T
+        } else if (ctx.max < r) {
+          ctx.max = r
+        }
+    }
+    return F
+  }
+
+  def parseChannelH(ctx: Context, nextState: State): B = {
+    parseChannel(ctx.j) match {
+      case Either.Left(r) =>
+        ctx.trees = ctx.trees :+ r.tree
+        ctx.j = r.newIndex
+        ctx.update(nextState)
+        ctx.found = T
+      case Either.Right(r) =>
+        if (r < 0) {
+          ctx.failIndex = r
+          return T
+        } else if (ctx.max < r) {
+          ctx.max = r
+        }
+    }
+    return F
+  }
+
+  def parseElementH(ctx: Context, nextState: State): B = {
+    parseElement(ctx.j) match {
+      case Either.Left(r) =>
+        ctx.trees = ctx.trees :+ r.tree
+        ctx.j = r.newIndex
+        ctx.update(nextState)
+        ctx.found = T
+      case Either.Right(r) =>
+        if (r < 0) {
+          ctx.failIndex = r
+          return T
+        } else if (ctx.max < r) {
+          ctx.max = r
+        }
+    }
+    return F
+  }
+
+  def parseAtomH(ctx: Context, nextState: State): B = {
+    parseAtom(ctx.j) match {
+      case Either.Left(r) =>
+        ctx.trees = ctx.trees :+ r.tree
+        ctx.j = r.newIndex
+        ctx.update(nextState)
+        ctx.found = T
+      case Either.Right(r) =>
+        if (r < 0) {
+          ctx.failIndex = r
+          return T
+        } else if (ctx.max < r) {
+          ctx.max = r
+        }
+    }
+    return F
+  }
+
+  def parseBlockH(ctx: Context, nextState: State): B = {
+    parseBlock(ctx.j) match {
+      case Either.Left(r) =>
+        ctx.trees = ctx.trees :+ r.tree
+        ctx.j = r.newIndex
+        ctx.update(nextState)
+        ctx.found = T
+      case Either.Right(r) =>
+        if (r < 0) {
+          ctx.failIndex = r
+          return T
+        } else if (ctx.max < r) {
+          ctx.max = r
+        }
+    }
+    return F
+  }
+
+  def parseRangeH(ctx: Context, nextState: State): B = {
+    parseRange(ctx.j) match {
+      case Either.Left(r) =>
+        ctx.trees = ctx.trees :+ r.tree
+        ctx.j = r.newIndex
+        ctx.update(nextState)
+        ctx.found = T
+      case Either.Right(r) =>
+        if (r < 0) {
+          ctx.failIndex = r
+          return T
+        } else if (ctx.max < r) {
+          ctx.max = r
+        }
+    }
+    return F
+  }
+
+  def parseTerminalH(ctx: Context, nextState: State): B = {
+    parseTerminal(ctx.j) match {
+      case Either.Left(r) =>
+        ctx.trees = ctx.trees :+ r.tree
+        ctx.j = r.newIndex
+        ctx.update(nextState)
+        ctx.found = T
+      case Either.Right(r) =>
+        if (r < 0) {
+          ctx.failIndex = r
+          return T
+        } else if (ctx.max < r) {
+          ctx.max = r
+        }
+    }
+    return F
+  }
+
+  def parseNotH(ctx: Context, nextState: State): B = {
+    parseNot(ctx.j) match {
+      case Either.Left(r) =>
+        ctx.trees = ctx.trees :+ r.tree
+        ctx.j = r.newIndex
+        ctx.update(nextState)
+        ctx.found = T
+      case Either.Right(r) =>
+        if (r < 0) {
+          ctx.failIndex = r
+          return T
+        } else if (ctx.max < r) {
+          ctx.max = r
+        }
+    }
+    return F
   }
 
   @pure def predictParserRule(j: Z): Z = {
-    var num: Z = 0
     val j1 = j + 1
     val off1 = j1 < tokens.size
     tokens(j).tipe match {
       case u32"0xD2EDBEA1" /* PID */ =>
         if (off1) {
           tokens(j1).tipe match {
-            case u32"0x763C38BE" /* ":" */ => num = 2
+            case u32"0x763C38BE" /* ":" */ => return 2
             case _ =>
           }
         }
 
       case _ =>
     }
-    return num
+    return 0
   }
 
   @pure def predictAtom(j: Z): Z = {
-    var num: Z = 0
     val j1 = j + 1
     val off1 = j1 < tokens.size
     tokens(j).tipe match {
       case u32"0xE95F063A" /* CHAR */ =>
         if (off1) {
           tokens(j1).tipe match {
-            case u32"0x3A15194D" /* ".." */ => num = 2
+            case u32"0x3A15194D" /* ".." */ => return 2
             case _ =>
           }
         }
-        if (num == 0) {
-          num = 1
-        }
-      case u32"0x8E18F45B" /* LID */ => num = 1
-      case u32"0xA7CF0FE0" /* STRING */ => num = 1
-      case u32"0x6890427A" /* "." */ => num = 1
+        return 1
+      case u32"0x8E18F45B" /* LID */ => return 1
+      case u32"0xA7CF0FE0" /* STRING */ => return 1
+      case u32"0x6890427A" /* "." */ => return 1
       case u32"0xAAB7E55C" /* "~" */ =>
         if (off1) {
           tokens(j1).tipe match {
-            case u32"0xE95F063A" /* CHAR */ => num = 2
-            case u32"0xA7CF0FE0" /* STRING */ => num = 2
-            case u32"0x71F6371D" /* "(" */ => num = 2
+            case u32"0xE95F063A" /* CHAR */ => return 2
+            case u32"0xA7CF0FE0" /* STRING */ => return 2
+            case u32"0x71F6371D" /* "(" */ => return 2
             case _ =>
           }
         }
 
-      case u32"0xD2EDBEA1" /* PID */ => num = 1
+      case u32"0xD2EDBEA1" /* PID */ => return 1
       case _ =>
     }
-    return num
+    return 0
   }
 
   @pure def predictOptionsSpec(j: Z): Z = {
-    var num: Z = 0
     val j1 = j + 1
     val off1 = j1 < tokens.size
     tokens(j).tipe match {
       case u32"0xED16D169" /* "options" */ =>
         if (off1) {
           tokens(j1).tipe match {
-            case u32"0xFDCE65E5" /* "{" */ => num = 2
+            case u32"0xFDCE65E5" /* "{" */ => return 2
             case _ =>
           }
         }
 
       case _ =>
     }
-    return num
+    return 0
   }
 
   @pure def predictAlt(j: Z): Z = {
-    var num: Z = 0
     val j1 = j + 1
     val off1 = j1 < tokens.size
     tokens(j).tipe match {
       case u32"0xE95F063A" /* CHAR */ =>
         if (off1) {
           tokens(j1).tipe match {
-            case u32"0x3A15194D" /* ".." */ => num = 2
-            case u32"0xE95F063A" /* CHAR */ => num = 2
-            case u32"0x8E18F45B" /* LID */ => num = 2
-            case u32"0xA7CF0FE0" /* STRING */ => num = 2
-            case u32"0x6890427A" /* "." */ => num = 2
-            case u32"0xAAB7E55C" /* "~" */ => num = 2
-            case u32"0xD2EDBEA1" /* PID */ => num = 2
-            case u32"0x71F6371D" /* "(" */ => num = 2
-            case u32"0xD827FEB7" /* "?" */ => num = 2
-            case u32"0x82283B4B" /* "*" */ => num = 2
-            case u32"0x797D7BC8" /* "+" */ => num = 2
+            case u32"0x3A15194D" /* ".." */ => return 2
+            case u32"0xE95F063A" /* CHAR */ => return 2
+            case u32"0x8E18F45B" /* LID */ => return 2
+            case u32"0xA7CF0FE0" /* STRING */ => return 2
+            case u32"0x6890427A" /* "." */ => return 2
+            case u32"0xAAB7E55C" /* "~" */ => return 2
+            case u32"0xD2EDBEA1" /* PID */ => return 2
+            case u32"0x71F6371D" /* "(" */ => return 2
+            case u32"0xD827FEB7" /* "?" */ => return 2
+            case u32"0x82283B4B" /* "*" */ => return 2
+            case u32"0x797D7BC8" /* "+" */ => return 2
             case _ =>
           }
         }
-        if (num == 0) {
-          num = 1
-        }
+        return 1
       case u32"0x8E18F45B" /* LID */ =>
         if (off1) {
           tokens(j1).tipe match {
-            case u32"0xE95F063A" /* CHAR */ => num = 2
-            case u32"0x8E18F45B" /* LID */ => num = 2
-            case u32"0xA7CF0FE0" /* STRING */ => num = 2
-            case u32"0x6890427A" /* "." */ => num = 2
-            case u32"0xAAB7E55C" /* "~" */ => num = 2
-            case u32"0xD2EDBEA1" /* PID */ => num = 2
-            case u32"0x71F6371D" /* "(" */ => num = 2
-            case u32"0xD827FEB7" /* "?" */ => num = 2
-            case u32"0x82283B4B" /* "*" */ => num = 2
-            case u32"0x797D7BC8" /* "+" */ => num = 2
+            case u32"0xE95F063A" /* CHAR */ => return 2
+            case u32"0x8E18F45B" /* LID */ => return 2
+            case u32"0xA7CF0FE0" /* STRING */ => return 2
+            case u32"0x6890427A" /* "." */ => return 2
+            case u32"0xAAB7E55C" /* "~" */ => return 2
+            case u32"0xD2EDBEA1" /* PID */ => return 2
+            case u32"0x71F6371D" /* "(" */ => return 2
+            case u32"0xD827FEB7" /* "?" */ => return 2
+            case u32"0x82283B4B" /* "*" */ => return 2
+            case u32"0x797D7BC8" /* "+" */ => return 2
             case _ =>
           }
         }
-        if (num == 0) {
-          num = 1
-        }
+        return 1
       case u32"0xA7CF0FE0" /* STRING */ =>
         if (off1) {
           tokens(j1).tipe match {
-            case u32"0xE95F063A" /* CHAR */ => num = 2
-            case u32"0x8E18F45B" /* LID */ => num = 2
-            case u32"0xA7CF0FE0" /* STRING */ => num = 2
-            case u32"0x6890427A" /* "." */ => num = 2
-            case u32"0xAAB7E55C" /* "~" */ => num = 2
-            case u32"0xD2EDBEA1" /* PID */ => num = 2
-            case u32"0x71F6371D" /* "(" */ => num = 2
-            case u32"0xD827FEB7" /* "?" */ => num = 2
-            case u32"0x82283B4B" /* "*" */ => num = 2
-            case u32"0x797D7BC8" /* "+" */ => num = 2
+            case u32"0xE95F063A" /* CHAR */ => return 2
+            case u32"0x8E18F45B" /* LID */ => return 2
+            case u32"0xA7CF0FE0" /* STRING */ => return 2
+            case u32"0x6890427A" /* "." */ => return 2
+            case u32"0xAAB7E55C" /* "~" */ => return 2
+            case u32"0xD2EDBEA1" /* PID */ => return 2
+            case u32"0x71F6371D" /* "(" */ => return 2
+            case u32"0xD827FEB7" /* "?" */ => return 2
+            case u32"0x82283B4B" /* "*" */ => return 2
+            case u32"0x797D7BC8" /* "+" */ => return 2
             case _ =>
           }
         }
-        if (num == 0) {
-          num = 1
-        }
+        return 1
       case u32"0x6890427A" /* "." */ =>
         if (off1) {
           tokens(j1).tipe match {
-            case u32"0xE95F063A" /* CHAR */ => num = 2
-            case u32"0x8E18F45B" /* LID */ => num = 2
-            case u32"0xA7CF0FE0" /* STRING */ => num = 2
-            case u32"0x6890427A" /* "." */ => num = 2
-            case u32"0xAAB7E55C" /* "~" */ => num = 2
-            case u32"0xD2EDBEA1" /* PID */ => num = 2
-            case u32"0x71F6371D" /* "(" */ => num = 2
-            case u32"0xD827FEB7" /* "?" */ => num = 2
-            case u32"0x82283B4B" /* "*" */ => num = 2
-            case u32"0x797D7BC8" /* "+" */ => num = 2
+            case u32"0xE95F063A" /* CHAR */ => return 2
+            case u32"0x8E18F45B" /* LID */ => return 2
+            case u32"0xA7CF0FE0" /* STRING */ => return 2
+            case u32"0x6890427A" /* "." */ => return 2
+            case u32"0xAAB7E55C" /* "~" */ => return 2
+            case u32"0xD2EDBEA1" /* PID */ => return 2
+            case u32"0x71F6371D" /* "(" */ => return 2
+            case u32"0xD827FEB7" /* "?" */ => return 2
+            case u32"0x82283B4B" /* "*" */ => return 2
+            case u32"0x797D7BC8" /* "+" */ => return 2
             case _ =>
           }
         }
-        if (num == 0) {
-          num = 1
-        }
+        return 1
       case u32"0xAAB7E55C" /* "~" */ =>
         if (off1) {
           tokens(j1).tipe match {
-            case u32"0xE95F063A" /* CHAR */ => num = 2
-            case u32"0xA7CF0FE0" /* STRING */ => num = 2
-            case u32"0x71F6371D" /* "(" */ => num = 2
+            case u32"0xE95F063A" /* CHAR */ => return 2
+            case u32"0xA7CF0FE0" /* STRING */ => return 2
+            case u32"0x71F6371D" /* "(" */ => return 2
             case _ =>
           }
         }
@@ -1968,62 +1643,58 @@ import SireumGrammarParser._
       case u32"0xD2EDBEA1" /* PID */ =>
         if (off1) {
           tokens(j1).tipe match {
-            case u32"0xE95F063A" /* CHAR */ => num = 2
-            case u32"0x8E18F45B" /* LID */ => num = 2
-            case u32"0xA7CF0FE0" /* STRING */ => num = 2
-            case u32"0x6890427A" /* "." */ => num = 2
-            case u32"0xAAB7E55C" /* "~" */ => num = 2
-            case u32"0xD2EDBEA1" /* PID */ => num = 2
-            case u32"0x71F6371D" /* "(" */ => num = 2
-            case u32"0xD827FEB7" /* "?" */ => num = 2
-            case u32"0x82283B4B" /* "*" */ => num = 2
-            case u32"0x797D7BC8" /* "+" */ => num = 2
+            case u32"0xE95F063A" /* CHAR */ => return 2
+            case u32"0x8E18F45B" /* LID */ => return 2
+            case u32"0xA7CF0FE0" /* STRING */ => return 2
+            case u32"0x6890427A" /* "." */ => return 2
+            case u32"0xAAB7E55C" /* "~" */ => return 2
+            case u32"0xD2EDBEA1" /* PID */ => return 2
+            case u32"0x71F6371D" /* "(" */ => return 2
+            case u32"0xD827FEB7" /* "?" */ => return 2
+            case u32"0x82283B4B" /* "*" */ => return 2
+            case u32"0x797D7BC8" /* "+" */ => return 2
             case _ =>
           }
         }
-        if (num == 0) {
-          num = 1
-        }
+        return 1
       case u32"0x71F6371D" /* "(" */ =>
         if (off1) {
           tokens(j1).tipe match {
-            case u32"0xE95F063A" /* CHAR */ => num = 2
-            case u32"0x8E18F45B" /* LID */ => num = 2
-            case u32"0xA7CF0FE0" /* STRING */ => num = 2
-            case u32"0x6890427A" /* "." */ => num = 2
-            case u32"0xAAB7E55C" /* "~" */ => num = 2
-            case u32"0xD2EDBEA1" /* PID */ => num = 2
-            case u32"0x71F6371D" /* "(" */ => num = 2
+            case u32"0xE95F063A" /* CHAR */ => return 2
+            case u32"0x8E18F45B" /* LID */ => return 2
+            case u32"0xA7CF0FE0" /* STRING */ => return 2
+            case u32"0x6890427A" /* "." */ => return 2
+            case u32"0xAAB7E55C" /* "~" */ => return 2
+            case u32"0xD2EDBEA1" /* PID */ => return 2
+            case u32"0x71F6371D" /* "(" */ => return 2
             case _ =>
           }
         }
 
       case _ =>
     }
-    return num
+    return 0
   }
 
   @pure def predictTerminal(j: Z): Z = {
-    var num: Z = 0
     tokens(j).tipe match {
-      case u32"0x8E18F45B" /* LID */ => num = 1
-      case u32"0xE95F063A" /* CHAR */ => num = 1
-      case u32"0xA7CF0FE0" /* STRING */ => num = 1
-      case u32"0x6890427A" /* "." */ => num = 1
+      case u32"0x8E18F45B" /* LID */ => return 1
+      case u32"0xE95F063A" /* CHAR */ => return 1
+      case u32"0xA7CF0FE0" /* STRING */ => return 1
+      case u32"0x6890427A" /* "." */ => return 1
       case _ =>
     }
-    return num
+    return 0
   }
 
   @pure def predictLexerRule(j: Z): Z = {
-    var num: Z = 0
     val j1 = j + 1
     val off1 = j1 < tokens.size
     tokens(j).tipe match {
       case u32"0x072BDD2B" /* "fragment" */ =>
         if (off1) {
           tokens(j1).tipe match {
-            case u32"0x8E18F45B" /* LID */ => num = 2
+            case u32"0x8E18F45B" /* LID */ => return 2
             case _ =>
           }
         }
@@ -2031,76 +1702,67 @@ import SireumGrammarParser._
       case u32"0x8E18F45B" /* LID */ =>
         if (off1) {
           tokens(j1).tipe match {
-            case u32"0x763C38BE" /* ":" */ => num = 2
+            case u32"0x763C38BE" /* ":" */ => return 2
             case _ =>
           }
         }
 
       case _ =>
     }
-    return num
+    return 0
   }
 
   @pure def predictElement(j: Z): Z = {
-    var num: Z = 0
     val j1 = j + 1
     val off1 = j1 < tokens.size
     tokens(j).tipe match {
       case u32"0xE95F063A" /* CHAR */ =>
         if (off1) {
           tokens(j1).tipe match {
-            case u32"0x3A15194D" /* ".." */ => num = 2
-            case u32"0xD827FEB7" /* "?" */ => num = 2
-            case u32"0x82283B4B" /* "*" */ => num = 2
-            case u32"0x797D7BC8" /* "+" */ => num = 2
+            case u32"0x3A15194D" /* ".." */ => return 2
+            case u32"0xD827FEB7" /* "?" */ => return 2
+            case u32"0x82283B4B" /* "*" */ => return 2
+            case u32"0x797D7BC8" /* "+" */ => return 2
             case _ =>
           }
         }
-        if (num == 0) {
-          num = 1
-        }
+        return 1
       case u32"0x8E18F45B" /* LID */ =>
         if (off1) {
           tokens(j1).tipe match {
-            case u32"0xD827FEB7" /* "?" */ => num = 2
-            case u32"0x82283B4B" /* "*" */ => num = 2
-            case u32"0x797D7BC8" /* "+" */ => num = 2
+            case u32"0xD827FEB7" /* "?" */ => return 2
+            case u32"0x82283B4B" /* "*" */ => return 2
+            case u32"0x797D7BC8" /* "+" */ => return 2
             case _ =>
           }
         }
-        if (num == 0) {
-          num = 1
-        }
+        return 1
       case u32"0xA7CF0FE0" /* STRING */ =>
         if (off1) {
           tokens(j1).tipe match {
-            case u32"0xD827FEB7" /* "?" */ => num = 2
-            case u32"0x82283B4B" /* "*" */ => num = 2
-            case u32"0x797D7BC8" /* "+" */ => num = 2
+            case u32"0xD827FEB7" /* "?" */ => return 2
+            case u32"0x82283B4B" /* "*" */ => return 2
+            case u32"0x797D7BC8" /* "+" */ => return 2
             case _ =>
           }
         }
-        if (num == 0) {
-          num = 1
-        }
+        return 1
       case u32"0x6890427A" /* "." */ =>
         if (off1) {
           tokens(j1).tipe match {
-            case u32"0xD827FEB7" /* "?" */ => num = 2
-            case u32"0x82283B4B" /* "*" */ => num = 2
-            case u32"0x797D7BC8" /* "+" */ => num = 2
+            case u32"0xD827FEB7" /* "?" */ => return 2
+            case u32"0x82283B4B" /* "*" */ => return 2
+            case u32"0x797D7BC8" /* "+" */ => return 2
             case _ =>
           }
         }
-        if (num == 0) {
-          num = 1
-        }
+        return 1
       case u32"0xAAB7E55C" /* "~" */ =>
         if (off1) {
           tokens(j1).tipe match {
-            case u32"0xE95F063A" /* CHAR */ => num = 2
-            case u32"0xA7CF0FE0" /* STRING */ => num = 2
-            case u32"0x71F6371D" /* "(" */ => num = 2
+            case u32"0xE95F063A" /* CHAR */ => return 2
+            case u32"0xA7CF0FE0" /* STRING */ => return 2
+            case u32"0x71F6371D" /* "(" */ => return 2
             case _ =>
           }
         }
@@ -2108,61 +1770,57 @@ import SireumGrammarParser._
       case u32"0xD2EDBEA1" /* PID */ =>
         if (off1) {
           tokens(j1).tipe match {
-            case u32"0xD827FEB7" /* "?" */ => num = 2
-            case u32"0x82283B4B" /* "*" */ => num = 2
-            case u32"0x797D7BC8" /* "+" */ => num = 2
+            case u32"0xD827FEB7" /* "?" */ => return 2
+            case u32"0x82283B4B" /* "*" */ => return 2
+            case u32"0x797D7BC8" /* "+" */ => return 2
             case _ =>
           }
         }
-        if (num == 0) {
-          num = 1
-        }
+        return 1
       case u32"0x71F6371D" /* "(" */ =>
         if (off1) {
           tokens(j1).tipe match {
-            case u32"0xE95F063A" /* CHAR */ => num = 2
-            case u32"0x8E18F45B" /* LID */ => num = 2
-            case u32"0xA7CF0FE0" /* STRING */ => num = 2
-            case u32"0x6890427A" /* "." */ => num = 2
-            case u32"0xAAB7E55C" /* "~" */ => num = 2
-            case u32"0xD2EDBEA1" /* PID */ => num = 2
-            case u32"0x71F6371D" /* "(" */ => num = 2
+            case u32"0xE95F063A" /* CHAR */ => return 2
+            case u32"0x8E18F45B" /* LID */ => return 2
+            case u32"0xA7CF0FE0" /* STRING */ => return 2
+            case u32"0x6890427A" /* "." */ => return 2
+            case u32"0xAAB7E55C" /* "~" */ => return 2
+            case u32"0xD2EDBEA1" /* PID */ => return 2
+            case u32"0x71F6371D" /* "(" */ => return 2
             case _ =>
           }
         }
 
       case _ =>
     }
-    return num
+    return 0
   }
 
   @pure def predictChannel(j: Z): Z = {
-    var num: Z = 0
     val j1 = j + 1
     val off1 = j1 < tokens.size
     tokens(j).tipe match {
       case u32"0xFDCE65E5" /* "{" */ =>
         if (off1) {
           tokens(j1).tipe match {
-            case u32"0x46562B21" /* "$channel" */ => num = 2
+            case u32"0x46562B21" /* "$channel" */ => return 2
             case _ =>
           }
         }
 
       case _ =>
     }
-    return num
+    return 0
   }
 
   @pure def predictOption(j: Z): Z = {
-    var num: Z = 0
     val j1 = j + 1
     val off1 = j1 < tokens.size
     tokens(j).tipe match {
       case u32"0x8E18F45B" /* LID */ =>
         if (off1) {
           tokens(j1).tipe match {
-            case u32"0xEF954474" /* "=" */ => num = 2
+            case u32"0xEF954474" /* "=" */ => return 2
             case _ =>
           }
         }
@@ -2170,116 +1828,110 @@ import SireumGrammarParser._
       case u32"0xD2EDBEA1" /* PID */ =>
         if (off1) {
           tokens(j1).tipe match {
-            case u32"0xEF954474" /* "=" */ => num = 2
+            case u32"0xEF954474" /* "=" */ => return 2
             case _ =>
           }
         }
 
       case _ =>
     }
-    return num
+    return 0
   }
 
   @pure def predictOptionValue(j: Z): Z = {
-    var num: Z = 0
     tokens(j).tipe match {
-      case u32"0x8E18F45B" /* LID */ => num = 1
-      case u32"0xD2EDBEA1" /* PID */ => num = 1
-      case u32"0x589C233C" /* INT */ => num = 1
+      case u32"0x8E18F45B" /* LID */ => return 1
+      case u32"0xD2EDBEA1" /* PID */ => return 1
+      case u32"0x589C233C" /* INT */ => return 1
       case _ =>
     }
-    return num
+    return 0
   }
 
   @pure def predictBlock(j: Z): Z = {
-    var num: Z = 0
     val j1 = j + 1
     val off1 = j1 < tokens.size
     tokens(j).tipe match {
       case u32"0x71F6371D" /* "(" */ =>
         if (off1) {
           tokens(j1).tipe match {
-            case u32"0xE95F063A" /* CHAR */ => num = 2
-            case u32"0x8E18F45B" /* LID */ => num = 2
-            case u32"0xA7CF0FE0" /* STRING */ => num = 2
-            case u32"0x6890427A" /* "." */ => num = 2
-            case u32"0xAAB7E55C" /* "~" */ => num = 2
-            case u32"0xD2EDBEA1" /* PID */ => num = 2
-            case u32"0x71F6371D" /* "(" */ => num = 2
+            case u32"0xE95F063A" /* CHAR */ => return 2
+            case u32"0x8E18F45B" /* LID */ => return 2
+            case u32"0xA7CF0FE0" /* STRING */ => return 2
+            case u32"0x6890427A" /* "." */ => return 2
+            case u32"0xAAB7E55C" /* "~" */ => return 2
+            case u32"0xD2EDBEA1" /* PID */ => return 2
+            case u32"0x71F6371D" /* "(" */ => return 2
             case _ =>
           }
         }
 
       case _ =>
     }
-    return num
+    return 0
   }
 
   @pure def predictGrammarDef(j: Z): Z = {
-    var num: Z = 0
     val j1 = j + 1
     val off1 = j1 < tokens.size
     tokens(j).tipe match {
       case u32"0xAEB64436" /* "grammar" */ =>
         if (off1) {
           tokens(j1).tipe match {
-            case u32"0x8E18F45B" /* LID */ => num = 2
-            case u32"0xD2EDBEA1" /* PID */ => num = 2
+            case u32"0x8E18F45B" /* LID */ => return 2
+            case u32"0xD2EDBEA1" /* PID */ => return 2
             case _ =>
           }
         }
 
       case _ =>
     }
-    return num
+    return 0
   }
 
   @pure def predictRange(j: Z): Z = {
-    var num: Z = 0
     val j1 = j + 1
     val off1 = j1 < tokens.size
     tokens(j).tipe match {
       case u32"0xE95F063A" /* CHAR */ =>
         if (off1) {
           tokens(j1).tipe match {
-            case u32"0x3A15194D" /* ".." */ => num = 2
+            case u32"0x3A15194D" /* ".." */ => return 2
             case _ =>
           }
         }
 
       case _ =>
     }
-    return num
+    return 0
   }
 
   @pure def predictId(j: Z): Z = {
-    var num: Z = 0
     tokens(j).tipe match {
-      case u32"0x8E18F45B" /* LID */ => num = 1
-      case u32"0xD2EDBEA1" /* PID */ => num = 1
+      case u32"0x8E18F45B" /* LID */ => return 1
+      case u32"0xD2EDBEA1" /* PID */ => return 1
       case _ =>
     }
-    return num
+    return 0
   }
 
   @pure def predictNot(j: Z): Z = {
-    var num: Z = 0
     val j1 = j + 1
     val off1 = j1 < tokens.size
     tokens(j).tipe match {
       case u32"0xAAB7E55C" /* "~" */ =>
         if (off1) {
           tokens(j1).tipe match {
-            case u32"0xE95F063A" /* CHAR */ => num = 2
-            case u32"0xA7CF0FE0" /* STRING */ => num = 2
-            case u32"0x71F6371D" /* "(" */ => num = 2
+            case u32"0xE95F063A" /* CHAR */ => return 2
+            case u32"0xA7CF0FE0" /* STRING */ => return 2
+            case u32"0x71F6371D" /* "(" */ => return 2
             case _ =>
           }
         }
 
       case _ =>
     }
-    return num
+    return 0
   }
 
   def retVal(n: Z, resOpt: Option[Result], initial: B, noBacktrack: B): Either[Result, Z] = {
@@ -2289,6 +1941,16 @@ import SireumGrammarParser._
         return if (noBacktrack) Either.Right(if (!initial) -n else n) else Either.Right(n)
     }
   }
+
+  @pure def posOpts(docInfo: message.DocInfo,
+                    posOpt1: Option[message.Position],
+                    posOpt2: Option[message.Position]): Option[message.Position] = {
+    val pos1 = posOpt1.get
+    val pos2 = posOpt2.get
+    return Some(message.PosInfo(docInfo, offsetLength(pos1.offset,
+      pos2.offset + pos2.length - pos1.offset)))
+  }
+
 }
 
 @datatype class SireumGrammarLexer(input: String, docInfo: message.DocInfo) {
@@ -2312,7 +1974,7 @@ import SireumGrammarParser._
           if (stopAtError) {
             return r
           }
-          r = r :+ ParseTree.Leaf(conversions.String.fromCis(ISZ(cis(i))), "<ERROR>",u32"0xE3CDEDDA", F, posOpt)
+          r = r :+ ParseTree.Leaf(conversions.String.fromCis(ISZ(cis(i))), "<ERROR>", u32"0xE3CDEDDA", F, posOpt)
           i = i + 1
       }
     }
@@ -2321,41 +1983,42 @@ import SireumGrammarParser._
   }
 
   @pure def tokenize(i: Z): Option[Result] = {
-    var r = Result(ParseTree.Leaf("", "", u32"-2", T, None()), -1)
-    def update(rOpt: Option[Result]): Unit = {
-      rOpt match {
-        case Some(newR) if newR.newIndex > r.newIndex => r = newR
-        case _ =>
-      }
+    val r = MBox(Result(ParseTree.Leaf("", "", u32"-2", T, None()), -1))
+    updateToken(r, lex_grammar(i))
+    updateToken(r, lex_u003B(i))
+    updateToken(r, lex_options(i))
+    updateToken(r, lex_u007B(i))
+    updateToken(r, lex_u007D(i))
+    updateToken(r, lex_u003D(i))
+    updateToken(r, lex_u003A(i))
+    updateToken(r, lex_u007C(i))
+    updateToken(r, lex_fragment(i))
+    updateToken(r, lex_u0028(i))
+    updateToken(r, lex_u0029(i))
+    updateToken(r, lex_u003F(i))
+    updateToken(r, lex_u002A(i))
+    updateToken(r, lex_u002B(i))
+    updateToken(r, lex_u007E(i))
+    updateToken(r, lex_u002Eu002E(i))
+    updateToken(r, lex_u002E(i))
+    updateToken(r, lex__channel(i))
+    updateToken(r, lex_CHAR(i))
+    updateToken(r, lex_STRING(i))
+    updateToken(r, lex_INT(i))
+    updateToken(r, lex_LID(i))
+    updateToken(r, lex_PID(i))
+    updateToken(r, lex_PHEADER(i))
+    updateToken(r, lex_LHEADER(i))
+    updateToken(r, lex_COMMENT(i))
+    updateToken(r, lex_WS(i))
+    return if (r.value.newIndex > i) Some(r.value) else None()
+  }
+
+  def updateToken(r: MBox[Result], rOpt: Option[Result]): Unit = {
+    rOpt match {
+      case Some(newR) if newR.newIndex > r.value.newIndex => r.value = newR
+      case _ =>
     }
-    update(lex_grammar(i))
-    update(lex_u003B(i))
-    update(lex_options(i))
-    update(lex_u007B(i))
-    update(lex_u007D(i))
-    update(lex_u003D(i))
-    update(lex_u003A(i))
-    update(lex_u007C(i))
-    update(lex_fragment(i))
-    update(lex_u0028(i))
-    update(lex_u0029(i))
-    update(lex_u003F(i))
-    update(lex_u002A(i))
-    update(lex_u002B(i))
-    update(lex_u007E(i))
-    update(lex_u002Eu002E(i))
-    update(lex_u002E(i))
-    update(lex__channel(i))
-    update(lex_CHAR(i))
-    update(lex_STRING(i))
-    update(lex_INT(i))
-    update(lex_LID(i))
-    update(lex_PID(i))
-    update(lex_PHEADER(i))
-    update(lex_LHEADER(i))
-    update(lex_COMMENT(i))
-    update(lex_WS(i))
-    return if (r.newIndex > i) Some(r) else None()
   }
 
   @pure def lit_grammar(i: Z): Z = {
@@ -2554,974 +2217,874 @@ import SireumGrammarParser._
      lexH(index, lit__channel(index), """'$channel'""", u32"0x46562B21" /* "$channel" */, F)
 
   @pure def dfa_CHAR(i: Z): Z = {
-    var state = u32"0"
-    var afterAcceptIndex: Z = -1
-    var j = i
+    val ctx = LContext.create(ISZ(state"3"), i)
 
-    def update(newState: U32): Unit = {
-       state = newState
-       state match {
-         case u32"3" => 
-         case _ => return
-       }
-       afterAcceptIndex = j + 1
-    }
-
-    while (j < cis.size) {
-      state match {
-        case u32"0" =>
-          val c = cis(j)
+    while (ctx.j < cis.size) {
+      ctx.state match {
+        case state"0" =>
+          val c = cis(ctx.j)
           var found = F
           if (c === '\'') {
-            update(u32"1")
+            ctx.update(state"1")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"1" =>
-          val c = cis(j)
+        case state"1" =>
+          val c = cis(ctx.j)
           var found = F
           if (minChar <= c && c <= '&' || '(' <= c && c <= '[' || ']' <= c && c <= maxChar) {
-            update(u32"2")
+            ctx.update(state"2")
             found = T
           }
           if (!found && (c === '\\')) {
-            update(u32"4")
+            ctx.update(state"4")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"2" =>
-          val c = cis(j)
+        case state"2" =>
+          val c = cis(ctx.j)
           var found = F
           if (c === '\'') {
-            update(u32"3")
+            ctx.update(state"3")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"3" => return afterAcceptIndex
-        case u32"4" =>
-          val c = cis(j)
+        case state"3" => return ctx.afterAcceptIndex
+        case state"4" =>
+          val c = cis(ctx.j)
           var found = F
           if (c === '"' || c === '\'' || c === '\\' || c === 'b' || c === 'f' || c === 'n' || c === 'r' || c === 't') {
-            update(u32"2")
+            ctx.update(state"2")
             found = T
           }
           if (!found && (c === 'u')) {
-            update(u32"5")
+            ctx.update(state"5")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"5" =>
-          val c = cis(j)
+        case state"5" =>
+          val c = cis(ctx.j)
           var found = F
           if ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f') {
-            update(u32"6")
+            ctx.update(state"6")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"6" =>
-          val c = cis(j)
+        case state"6" =>
+          val c = cis(ctx.j)
           var found = F
           if ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f') {
-            update(u32"7")
+            ctx.update(state"7")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"7" =>
-          val c = cis(j)
+        case state"7" =>
+          val c = cis(ctx.j)
           var found = F
           if ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f') {
-            update(u32"8")
+            ctx.update(state"8")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"8" =>
-          val c = cis(j)
+        case state"8" =>
+          val c = cis(ctx.j)
           var found = F
           if ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f') {
-            update(u32"2")
+            ctx.update(state"2")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
         case _ => halt("Infeasible")
       }
-      j = j + 1
+      ctx.j = ctx.j + 1
     }
-    return afterAcceptIndex
+    return ctx.afterAcceptIndex
   }
 
   @strictpure def lex_CHAR(index: Z): Option[Result] =
      lexH(index, dfa_CHAR(index), """CHAR""", u32"0xE95F063A", F)
 
   @pure def dfa_STRING(i: Z): Z = {
-    var state = u32"0"
-    var afterAcceptIndex: Z = -1
-    var j = i
+    val ctx = LContext.create(ISZ(state"4"), i)
 
-    def update(newState: U32): Unit = {
-       state = newState
-       state match {
-         case u32"4" => 
-         case _ => return
-       }
-       afterAcceptIndex = j + 1
-    }
-
-    while (j < cis.size) {
-      state match {
-        case u32"0" =>
-          val c = cis(j)
+    while (ctx.j < cis.size) {
+      ctx.state match {
+        case state"0" =>
+          val c = cis(ctx.j)
           var found = F
           if (c === '\'') {
-            update(u32"1")
+            ctx.update(state"1")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"1" =>
-          val c = cis(j)
+        case state"1" =>
+          val c = cis(ctx.j)
           var found = F
           if (minChar <= c && c <= '&' || '(' <= c && c <= '[' || ']' <= c && c <= maxChar) {
-            update(u32"2")
+            ctx.update(state"2")
             found = T
           }
           if (!found && (c === '\\')) {
-            update(u32"10")
+            ctx.update(state"10")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"2" =>
-          val c = cis(j)
+        case state"2" =>
+          val c = cis(ctx.j)
           var found = F
           if (minChar <= c && c <= '&' || '(' <= c && c <= '[' || ']' <= c && c <= maxChar) {
-            update(u32"3")
+            ctx.update(state"3")
             found = T
           }
           if (!found && (c === '\\')) {
-            update(u32"5")
+            ctx.update(state"5")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"3" =>
-          val c = cis(j)
+        case state"3" =>
+          val c = cis(ctx.j)
           var found = F
           if (minChar <= c && c <= '&' || '(' <= c && c <= '[' || ']' <= c && c <= maxChar) {
-            update(u32"3")
+            ctx.update(state"3")
             found = T
           }
           if (!found && (c === '\'')) {
-            update(u32"4")
+            ctx.update(state"4")
             found = T
           }
           if (!found && (c === '\\')) {
-            update(u32"5")
+            ctx.update(state"5")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"4" => return afterAcceptIndex
-        case u32"5" =>
-          val c = cis(j)
+        case state"4" => return ctx.afterAcceptIndex
+        case state"5" =>
+          val c = cis(ctx.j)
           var found = F
           if (c === '"' || c === '\'' || c === '\\' || c === 'b' || c === 'f' || c === 'n' || c === 'r' || c === 't') {
-            update(u32"3")
+            ctx.update(state"3")
             found = T
           }
           if (!found && (c === 'u')) {
-            update(u32"6")
+            ctx.update(state"6")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"6" =>
-          val c = cis(j)
+        case state"6" =>
+          val c = cis(ctx.j)
           var found = F
           if ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f') {
-            update(u32"7")
+            ctx.update(state"7")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"7" =>
-          val c = cis(j)
+        case state"7" =>
+          val c = cis(ctx.j)
           var found = F
           if ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f') {
-            update(u32"8")
+            ctx.update(state"8")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"8" =>
-          val c = cis(j)
+        case state"8" =>
+          val c = cis(ctx.j)
           var found = F
           if ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f') {
-            update(u32"9")
+            ctx.update(state"9")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"9" =>
-          val c = cis(j)
+        case state"9" =>
+          val c = cis(ctx.j)
           var found = F
           if ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f') {
-            update(u32"3")
+            ctx.update(state"3")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"10" =>
-          val c = cis(j)
+        case state"10" =>
+          val c = cis(ctx.j)
           var found = F
           if (c === '"' || c === '\'' || c === '\\' || c === 'b' || c === 'f' || c === 'n' || c === 'r' || c === 't') {
-            update(u32"2")
+            ctx.update(state"2")
             found = T
           }
           if (!found && (c === 'u')) {
-            update(u32"11")
+            ctx.update(state"11")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"11" =>
-          val c = cis(j)
+        case state"11" =>
+          val c = cis(ctx.j)
           var found = F
           if ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f') {
-            update(u32"12")
+            ctx.update(state"12")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"12" =>
-          val c = cis(j)
+        case state"12" =>
+          val c = cis(ctx.j)
           var found = F
           if ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f') {
-            update(u32"13")
+            ctx.update(state"13")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"13" =>
-          val c = cis(j)
+        case state"13" =>
+          val c = cis(ctx.j)
           var found = F
           if ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f') {
-            update(u32"14")
+            ctx.update(state"14")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"14" =>
-          val c = cis(j)
+        case state"14" =>
+          val c = cis(ctx.j)
           var found = F
           if ('0' <= c && c <= '9' || 'A' <= c && c <= 'F' || 'a' <= c && c <= 'f') {
-            update(u32"2")
+            ctx.update(state"2")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
         case _ => halt("Infeasible")
       }
-      j = j + 1
+      ctx.j = ctx.j + 1
     }
-    return afterAcceptIndex
+    return ctx.afterAcceptIndex
   }
 
   @strictpure def lex_STRING(index: Z): Option[Result] =
      lexH(index, dfa_STRING(index), """STRING""", u32"0xA7CF0FE0", F)
 
   @pure def dfa_INT(i: Z): Z = {
-    var state = u32"0"
-    var afterAcceptIndex: Z = -1
-    var j = i
+    val ctx = LContext.create(ISZ(state"1"), i)
 
-    def update(newState: U32): Unit = {
-       state = newState
-       state match {
-         case u32"1" => 
-         case _ => return
-       }
-       afterAcceptIndex = j + 1
-    }
-
-    while (j < cis.size) {
-      state match {
-        case u32"0" =>
-          val c = cis(j)
+    while (ctx.j < cis.size) {
+      ctx.state match {
+        case state"0" =>
+          val c = cis(ctx.j)
           var found = F
           if ('1' <= c && c <= '9') {
-            update(u32"1")
+            ctx.update(state"1")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"1" =>
-          val c = cis(j)
+        case state"1" =>
+          val c = cis(ctx.j)
           var found = F
           if ('0' <= c && c <= '9') {
-            update(u32"1")
+            ctx.update(state"1")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
         case _ => halt("Infeasible")
       }
-      j = j + 1
+      ctx.j = ctx.j + 1
     }
-    return afterAcceptIndex
+    return ctx.afterAcceptIndex
   }
 
   @strictpure def lex_INT(index: Z): Option[Result] =
      lexH(index, dfa_INT(index), """INT""", u32"0x589C233C", F)
 
   @pure def dfa_LID(i: Z): Z = {
-    var state = u32"0"
-    var afterAcceptIndex: Z = -1
-    var j = i
+    val ctx = LContext.create(ISZ(state"1"), i)
 
-    def update(newState: U32): Unit = {
-       state = newState
-       state match {
-         case u32"1" => 
-         case _ => return
-       }
-       afterAcceptIndex = j + 1
-    }
-
-    while (j < cis.size) {
-      state match {
-        case u32"0" =>
-          val c = cis(j)
+    while (ctx.j < cis.size) {
+      ctx.state match {
+        case state"0" =>
+          val c = cis(ctx.j)
           var found = F
           if ('A' <= c && c <= 'Z') {
-            update(u32"1")
+            ctx.update(state"1")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"1" =>
-          val c = cis(j)
+        case state"1" =>
+          val c = cis(ctx.j)
           var found = F
           if ('0' <= c && c <= '9' || 'A' <= c && c <= 'Z' || c === '_' || 'a' <= c && c <= 'z') {
-            update(u32"1")
+            ctx.update(state"1")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
         case _ => halt("Infeasible")
       }
-      j = j + 1
+      ctx.j = ctx.j + 1
     }
-    return afterAcceptIndex
+    return ctx.afterAcceptIndex
   }
 
   @strictpure def lex_LID(index: Z): Option[Result] =
      lexH(index, dfa_LID(index), """LID""", u32"0x8E18F45B", F)
 
   @pure def dfa_PID(i: Z): Z = {
-    var state = u32"0"
-    var afterAcceptIndex: Z = -1
-    var j = i
+    val ctx = LContext.create(ISZ(state"1"), i)
 
-    def update(newState: U32): Unit = {
-       state = newState
-       state match {
-         case u32"1" => 
-         case _ => return
-       }
-       afterAcceptIndex = j + 1
-    }
-
-    while (j < cis.size) {
-      state match {
-        case u32"0" =>
-          val c = cis(j)
+    while (ctx.j < cis.size) {
+      ctx.state match {
+        case state"0" =>
+          val c = cis(ctx.j)
           var found = F
           if ('a' <= c && c <= 'z') {
-            update(u32"1")
+            ctx.update(state"1")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"1" =>
-          val c = cis(j)
+        case state"1" =>
+          val c = cis(ctx.j)
           var found = F
           if ('0' <= c && c <= '9' || 'A' <= c && c <= 'Z' || c === '_' || 'a' <= c && c <= 'z') {
-            update(u32"1")
+            ctx.update(state"1")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
         case _ => halt("Infeasible")
       }
-      j = j + 1
+      ctx.j = ctx.j + 1
     }
-    return afterAcceptIndex
+    return ctx.afterAcceptIndex
   }
 
   @strictpure def lex_PID(index: Z): Option[Result] =
      lexH(index, dfa_PID(index), """PID""", u32"0xD2EDBEA1", F)
 
   @pure def dfa_PHEADER(i: Z): Z = {
-    var state = u32"0"
-    var afterAcceptIndex: Z = -1
-    var j = i
+    val ctx = LContext.create(ISZ(state"9"), i)
 
-    def update(newState: U32): Unit = {
-       state = newState
-       state match {
-         case u32"9" => 
-         case _ => return
-       }
-       afterAcceptIndex = j + 1
-    }
-
-    while (j < cis.size) {
-      state match {
-        case u32"0" =>
-          val c = cis(j)
+    while (ctx.j < cis.size) {
+      ctx.state match {
+        case state"0" =>
+          val c = cis(ctx.j)
           var found = F
           if (c === '@') {
-            update(u32"1")
+            ctx.update(state"1")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"1" =>
-          val c = cis(j)
+        case state"1" =>
+          val c = cis(ctx.j)
           var found = F
           if ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ') {
-            update(u32"1")
+            ctx.update(state"1")
             found = T
           }
           if (!found && (c === 'h')) {
-            update(u32"2")
+            ctx.update(state"2")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"2" =>
-          val c = cis(j)
+        case state"2" =>
+          val c = cis(ctx.j)
           var found = F
           if (c === 'e') {
-            update(u32"3")
+            ctx.update(state"3")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"3" =>
-          val c = cis(j)
+        case state"3" =>
+          val c = cis(ctx.j)
           var found = F
           if (c === 'a') {
-            update(u32"4")
+            ctx.update(state"4")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"4" =>
-          val c = cis(j)
+        case state"4" =>
+          val c = cis(ctx.j)
           var found = F
           if (c === 'd') {
-            update(u32"5")
+            ctx.update(state"5")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"5" =>
-          val c = cis(j)
+        case state"5" =>
+          val c = cis(ctx.j)
           var found = F
           if (c === 'e') {
-            update(u32"6")
+            ctx.update(state"6")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"6" =>
-          val c = cis(j)
+        case state"6" =>
+          val c = cis(ctx.j)
           var found = F
           if (c === 'r') {
-            update(u32"7")
+            ctx.update(state"7")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"7" =>
-          val c = cis(j)
+        case state"7" =>
+          val c = cis(ctx.j)
           var found = F
           if ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ') {
-            update(u32"7")
+            ctx.update(state"7")
             found = T
           }
           if (!found && (c === '{')) {
-            update(u32"8")
+            ctx.update(state"8")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"8" =>
-          val c = cis(j)
+        case state"8" =>
+          val c = cis(ctx.j)
           var found = F
           if (minChar <= c && c <= '|' || '~' <= c && c <= maxChar) {
-            update(u32"8")
+            ctx.update(state"8")
             found = T
           }
           if (!found && (c === '}')) {
-            update(u32"9")
+            ctx.update(state"9")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"9" => return afterAcceptIndex
+        case state"9" => return ctx.afterAcceptIndex
         case _ => halt("Infeasible")
       }
-      j = j + 1
+      ctx.j = ctx.j + 1
     }
-    return afterAcceptIndex
+    return ctx.afterAcceptIndex
   }
 
   @strictpure def lex_PHEADER(index: Z): Option[Result] =
      lexH(index, dfa_PHEADER(index), """PHEADER""", u32"0xEDD2348C", F)
 
   @pure def dfa_LHEADER(i: Z): Z = {
-    var state = u32"0"
-    var afterAcceptIndex: Z = -1
-    var j = i
+    val ctx = LContext.create(ISZ(state"16"), i)
 
-    def update(newState: U32): Unit = {
-       state = newState
-       state match {
-         case u32"16" => 
-         case _ => return
-       }
-       afterAcceptIndex = j + 1
-    }
-
-    while (j < cis.size) {
-      state match {
-        case u32"0" =>
-          val c = cis(j)
+    while (ctx.j < cis.size) {
+      ctx.state match {
+        case state"0" =>
+          val c = cis(ctx.j)
           var found = F
           if (c === '@') {
-            update(u32"1")
+            ctx.update(state"1")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"1" =>
-          val c = cis(j)
+        case state"1" =>
+          val c = cis(ctx.j)
           var found = F
           if ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ') {
-            update(u32"1")
+            ctx.update(state"1")
             found = T
           }
           if (!found && (c === 'l')) {
-            update(u32"2")
+            ctx.update(state"2")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"2" =>
-          val c = cis(j)
+        case state"2" =>
+          val c = cis(ctx.j)
           var found = F
           if (c === 'e') {
-            update(u32"3")
+            ctx.update(state"3")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"3" =>
-          val c = cis(j)
+        case state"3" =>
+          val c = cis(ctx.j)
           var found = F
           if (c === 'x') {
-            update(u32"4")
+            ctx.update(state"4")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"4" =>
-          val c = cis(j)
+        case state"4" =>
+          val c = cis(ctx.j)
           var found = F
           if (c === 'e') {
-            update(u32"5")
+            ctx.update(state"5")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"5" =>
-          val c = cis(j)
+        case state"5" =>
+          val c = cis(ctx.j)
           var found = F
           if (c === 'r') {
-            update(u32"6")
+            ctx.update(state"6")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"6" =>
-          val c = cis(j)
+        case state"6" =>
+          val c = cis(ctx.j)
           var found = F
           if ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ') {
-            update(u32"6")
+            ctx.update(state"6")
             found = T
           }
           if (!found && (c === ':')) {
-            update(u32"7")
+            ctx.update(state"7")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"7" =>
-          val c = cis(j)
+        case state"7" =>
+          val c = cis(ctx.j)
           var found = F
           if ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ') {
-            update(u32"7")
+            ctx.update(state"7")
             found = T
           }
           if (!found && (c === ':')) {
-            update(u32"8")
+            ctx.update(state"8")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"8" =>
-          val c = cis(j)
+        case state"8" =>
+          val c = cis(ctx.j)
           var found = F
           if ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ') {
-            update(u32"8")
+            ctx.update(state"8")
             found = T
           }
           if (!found && (c === 'h')) {
-            update(u32"9")
+            ctx.update(state"9")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"9" =>
-          val c = cis(j)
+        case state"9" =>
+          val c = cis(ctx.j)
           var found = F
           if (c === 'e') {
-            update(u32"10")
+            ctx.update(state"10")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"10" =>
-          val c = cis(j)
+        case state"10" =>
+          val c = cis(ctx.j)
           var found = F
           if (c === 'a') {
-            update(u32"11")
+            ctx.update(state"11")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"11" =>
-          val c = cis(j)
+        case state"11" =>
+          val c = cis(ctx.j)
           var found = F
           if (c === 'd') {
-            update(u32"12")
+            ctx.update(state"12")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"12" =>
-          val c = cis(j)
+        case state"12" =>
+          val c = cis(ctx.j)
           var found = F
           if (c === 'e') {
-            update(u32"13")
+            ctx.update(state"13")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"13" =>
-          val c = cis(j)
+        case state"13" =>
+          val c = cis(ctx.j)
           var found = F
           if (c === 'r') {
-            update(u32"14")
+            ctx.update(state"14")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"14" =>
-          val c = cis(j)
+        case state"14" =>
+          val c = cis(ctx.j)
           var found = F
           if ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ') {
-            update(u32"14")
+            ctx.update(state"14")
             found = T
           }
           if (!found && (c === '{')) {
-            update(u32"15")
+            ctx.update(state"15")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"15" =>
-          val c = cis(j)
+        case state"15" =>
+          val c = cis(ctx.j)
           var found = F
           if (minChar <= c && c <= '|' || '~' <= c && c <= maxChar) {
-            update(u32"15")
+            ctx.update(state"15")
             found = T
           }
           if (!found && (c === '}')) {
-            update(u32"16")
+            ctx.update(state"16")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"16" => return afterAcceptIndex
+        case state"16" => return ctx.afterAcceptIndex
         case _ => halt("Infeasible")
       }
-      j = j + 1
+      ctx.j = ctx.j + 1
     }
-    return afterAcceptIndex
+    return ctx.afterAcceptIndex
   }
 
   @strictpure def lex_LHEADER(index: Z): Option[Result] =
      lexH(index, dfa_LHEADER(index), """LHEADER""", u32"0x2322FC01", F)
 
   @pure def dfa_COMMENT(i: Z): Z = {
-    var state = u32"0"
-    var afterAcceptIndex: Z = -1
-    var j = i
+    val ctx = LContext.create(ISZ(state"5", state"6"), i)
 
-    def update(newState: U32): Unit = {
-       state = newState
-       state match {
-         case u32"5" => 
-         case u32"6" => 
-         case _ => return
-       }
-       afterAcceptIndex = j + 1
-    }
-
-    while (j < cis.size) {
-      state match {
-        case u32"0" =>
-          val c = cis(j)
+    while (ctx.j < cis.size) {
+      ctx.state match {
+        case state"0" =>
+          val c = cis(ctx.j)
           var found = F
           if (c === '/') {
-            update(u32"1")
+            ctx.update(state"1")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"1" =>
-          val c = cis(j)
+        case state"1" =>
+          val c = cis(ctx.j)
           var found = F
           if (c === '*') {
-            update(u32"2")
+            ctx.update(state"2")
             found = T
           }
           if (!found && (c === '/')) {
-            update(u32"7")
+            ctx.update(state"7")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"2" =>
-          val c = cis(j)
+        case state"2" =>
+          val c = cis(ctx.j)
           var found = F
           if (minChar <= c && c <= ')' || '+' <= c && c <= maxChar) {
-            update(u32"2")
+            ctx.update(state"2")
             found = T
           }
           if (!found && (c === '*')) {
-            update(u32"3")
+            ctx.update(state"3")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"3" =>
-          val c = cis(j)
+        case state"3" =>
+          val c = cis(ctx.j)
           var found = F
           if (minChar <= c && c <= ')' || '+' <= c && c <= '.' || '0' <= c && c <= maxChar) {
-            update(u32"2")
+            ctx.update(state"2")
             found = T
           }
           if (!found && (c === '*')) {
-            update(u32"4")
+            ctx.update(state"4")
             found = T
           }
           if (!found && (c === '/')) {
-            update(u32"6")
+            ctx.update(state"6")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"4" =>
-          val c = cis(j)
+        case state"4" =>
+          val c = cis(ctx.j)
           var found = F
           if (minChar <= c && c <= ')' || '+' <= c && c <= '.' || '0' <= c && c <= maxChar) {
-            update(u32"2")
+            ctx.update(state"2")
             found = T
           }
           if (!found && (c === '*')) {
-            update(u32"3")
+            ctx.update(state"3")
             found = T
           }
           if (!found && (c === '/')) {
-            update(u32"5")
+            ctx.update(state"5")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"5" =>
-          val c = cis(j)
+        case state"5" =>
+          val c = cis(ctx.j)
           var found = F
           if (minChar <= c && c <= ')' || '+' <= c && c <= maxChar) {
-            update(u32"2")
+            ctx.update(state"2")
             found = T
           }
           if (!found && (c === '*')) {
-            update(u32"3")
+            ctx.update(state"3")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"6" => return afterAcceptIndex
-        case u32"7" =>
-          val c = cis(j)
+        case state"6" => return ctx.afterAcceptIndex
+        case state"7" =>
+          val c = cis(ctx.j)
           var found = F
           if (minChar <= c && c <= '\u0009' || '\u000B' <= c && c <= '\u000C' || '\u000E' <= c && c <= maxChar) {
-            update(u32"7")
+            ctx.update(state"7")
             found = T
           }
           if (!found && (c === '\u000A')) {
-            update(u32"6")
+            ctx.update(state"6")
             found = T
           }
           if (!found && (c === '\u000D')) {
-            update(u32"8")
+            ctx.update(state"8")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"8" =>
-          val c = cis(j)
+        case state"8" =>
+          val c = cis(ctx.j)
           var found = F
           if (c === '\u000A') {
-            update(u32"6")
+            ctx.update(state"6")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
         case _ => halt("Infeasible")
       }
-      j = j + 1
+      ctx.j = ctx.j + 1
     }
-    return afterAcceptIndex
+    return ctx.afterAcceptIndex
   }
 
   @strictpure def lex_COMMENT(index: Z): Option[Result] =
      lexH(index, dfa_COMMENT(index), """COMMENT""", u32"0x486B464F", T)
 
   @pure def dfa_WS(i: Z): Z = {
-    var state = u32"0"
-    var afterAcceptIndex: Z = -1
-    var j = i
+    val ctx = LContext.create(ISZ(state"1"), i)
 
-    def update(newState: U32): Unit = {
-       state = newState
-       state match {
-         case u32"1" => 
-         case _ => return
-       }
-       afterAcceptIndex = j + 1
-    }
-
-    while (j < cis.size) {
-      state match {
-        case u32"0" =>
-          val c = cis(j)
+    while (ctx.j < cis.size) {
+      ctx.state match {
+        case state"0" =>
+          val c = cis(ctx.j)
           var found = F
           if ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ') {
-            update(u32"1")
+            ctx.update(state"1")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
-        case u32"1" =>
-          val c = cis(j)
+        case state"1" =>
+          val c = cis(ctx.j)
           var found = F
           if ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ') {
-            update(u32"1")
+            ctx.update(state"1")
             found = T
           }
           if (!found) {
-            return afterAcceptIndex
+            return ctx.afterAcceptIndex
           }
         case _ => halt("Infeasible")
       }
-      j = j + 1
+      ctx.j = ctx.j + 1
     }
-    return afterAcceptIndex
+    return ctx.afterAcceptIndex
   }
 
   @strictpure def lex_WS(index: Z): Option[Result] =
