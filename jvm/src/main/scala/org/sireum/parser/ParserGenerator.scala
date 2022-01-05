@@ -598,10 +598,10 @@ import org.sireum.parser.{GrammarAst => AST}
         case v: LookAhead.Case.Value.Str => st"""case u32"0x${valCode(v.value)}" /* "${escape(v.value)}" */"""
         case v: LookAhead.Case.Value.Terminal => st"""case u32"0x${(valCode(v.name), "")}" /* ${v.name} */"""
       }
-      val r: ST = if (subs.isEmpty) st"$cond => $subsST" else
+      val rf: ST = if (subs.isEmpty) st"$cond => $subsST" else
         st"""$cond =>
             |  $subsST"""
-      return r
+      return rf
     }
 
     if (ruleTrie.accept || ruleTrie.subs.isEmpty) {
