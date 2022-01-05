@@ -269,7 +269,7 @@ import org.sireum.parser.{GrammarAst => AST}
           |import org.sireum.U64._
           |import org.sireum.conversions.U32.toC
           |
-          |@range(min = 0, max = 16) class State
+          |@range(min = 0, max = ${maxNumOfStates - 1}) class State
           |
           |import State._
           |
