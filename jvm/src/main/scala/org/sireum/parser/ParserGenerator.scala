@@ -279,9 +279,12 @@ import org.sireum.parser.{GrammarAst => AST}
           |import org.sireum.conversions.U32.toC
           |$imptOpt
           |
-          |@range(min = 0, max = ${maxNumOfStates - 1}) class State
+          |object $name {
+          |  @range(min = 0, max = ${maxNumOfStates - 1}) class State
+          |}
           |
-          |import State._
+          |import $name.State
+          |import $name.State._
           |
           |object ${name}Parser {
           |
