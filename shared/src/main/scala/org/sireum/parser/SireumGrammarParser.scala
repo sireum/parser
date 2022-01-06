@@ -40,7 +40,27 @@ import State._
 
 object SireumGrammarParser {
 
-  @datatype class Result(val tree: ParseTree, val newIndex: Z)
+  @datatype class Result(val kind: Result.Kind.Type, val tree: ParseTree, val newIndex: Z) {
+    def leaf: ParseTree.Leaf = {
+      return tree.asInstanceOf[ParseTree.Leaf]
+    }
+  }
+
+  object Result {
+
+    @enum object Kind {
+      'Normal
+      'LexicalError
+      'GrammaticalError
+    }
+
+    @strictpure def create(tree: ParseTree, newIndex: Z): Result =
+      Result(Result.Kind.Normal, tree, newIndex)
+
+    @strictpure def error(isLexical: B, index: Z): Result =
+      Result(if (isLexical) Result.Kind.LexicalError else Result.Kind.GrammaticalError, errorLeaf, index)
+
+  }
 
   @record class Context(val ruleName: String,
                         val ruleType: U32,
@@ -52,13 +72,14 @@ object SireumGrammarParser {
                         var initial: B,
                         var trees: ISZ[ParseTree],
                         var found: B,
-                        var failIndex: Z) {
+                        var failIndex: Z,
+                        var isLexical: B) {
 
     def update(newState: State): Unit = {
       initial = F
       state = newState
       if (accepting(state)) {
-        resOpt = Some(Result(ParseTree.Node(trees, ruleName, ruleType), j))
+        resOpt = Some(Result.create(ParseTree.Node(trees, ruleName, ruleType), j))
       }
     }
   }
@@ -80,7 +101,8 @@ object SireumGrammarParser {
         max = i,
         initial = T,
         found = F,
-        failIndex = 0
+        failIndex = 0,
+        isLexical = F
       )
     }
   }
@@ -152,18 +174,25 @@ object SireumGrammarParser {
   val T_id: U32 = u32"0x92391AB1"
   val T_channel: U32 = u32"0x239B7220"
 
+  val errorLeaf: ParseTree.Leaf = ParseTree.Leaf("", "<ERROR>", u32"0xE3CDEDDA", F, None())
+  val eofLeaf: ParseTree.Leaf = ParseTree.Leaf("", "EOF", u32"0xFC5CB374", F, None())
+
   def parse(uriOpt: Option[String], input: String, reporter: message.Reporter): Option[ParseTree.Result] = {
     val docInfo = message.DocInfo.create(uriOpt, input)
     val tokens = lex(input, docInfo, T, T, reporter)
     if (reporter.hasError) {
       return None()
     }
-    SireumGrammarParser(tokens).parseGrammarDef(0) match {
-      case Either.Left(r) => return Some(ParseTree.Result(r.tree, docInfo))
-      case Either.Right(r) =>
-        val idx: Z = if (r < 0) -r else r
+    val r = SireumGrammarParser(tokens).parseGrammarDef(0)
+    r.kind match {
+      case Result.Kind.Normal => return Some(ParseTree.Result(r.tree, docInfo))
+      case Result.Kind.LexicalError =>
+        reporter.error(Some(message.PosInfo(docInfo, offsetLength(r.newIndex, 1))), kind, s"Could not recognize token")
+        return None()
+      case Result.Kind.GrammaticalError =>
+        val idx: Z = if (r.newIndex < 0) -r.newIndex else r.newIndex
         if (idx < tokens.size) {
-          reporter.error(tokens(idx - 1).posOpt, kind, s"Could not parse token: ${tokens(idx).text}")
+          reporter.error(tokens(idx).posOpt, kind, s"Could not parse token: ${tokens(idx).text}")
         } else {
           reporter.error(tokens(idx - 1).posOpt, kind, "Expecting more input but reached the end")
         }
@@ -185,7 +214,7 @@ import SireumGrammarParser._
 
 @datatype class SireumGrammarParser(tokens: ISZ[ParseTree.Leaf]) {
 
-  @pure def parseGrammarDef(i: Z): Either[Result, Z] = {
+  @pure def parseGrammarDef(i: Z): Result = {
     val ctx = Context.create("grammarDef", u32"0x49D573EC" /* grammarDef */, ISZ(state"8"), i)
 
     while (ctx.j < tokens.size) {
@@ -207,7 +236,7 @@ import SireumGrammarParser._
           ctx.found = F
           val n_id = predictId(ctx.j)
           if (n_id > 0 && parseIdH(ctx, state"2")) {
-            return Either.Right(ctx.failIndex)
+            return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
             return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
@@ -232,13 +261,13 @@ import SireumGrammarParser._
           val n_lexerRule = predictLexerRule(ctx.j)
           for (n <- 2 to 1 by -1 if !ctx.found) {
             if (n_optionsSpec == n && parseOptionsSpecH(ctx, state"4")) {
-              return Either.Right(ctx.failIndex)
+              return Result.error(ctx.isLexical, ctx.failIndex)
             }
             if (!ctx.found && n_parserRule == n && parseParserRuleH(ctx, state"6")) {
-              return Either.Right(ctx.failIndex)
+              return Result.error(ctx.isLexical, ctx.failIndex)
             }
             if (!ctx.found && n_lexerRule == n && parseLexerRuleH(ctx, state"7")) {
-              return Either.Right(ctx.failIndex)
+              return Result.error(ctx.isLexical, ctx.failIndex)
             }
           }
           tokens(ctx.j).tipe match {
@@ -268,10 +297,10 @@ import SireumGrammarParser._
           val n_lexerRule = predictLexerRule(ctx.j)
           for (n <- 2 to 1 by -1 if !ctx.found) {
             if (n_parserRule == n && parseParserRuleH(ctx, state"6")) {
-              return Either.Right(ctx.failIndex)
+              return Result.error(ctx.isLexical, ctx.failIndex)
             }
             if (!ctx.found && n_lexerRule == n && parseLexerRuleH(ctx, state"7")) {
-              return Either.Right(ctx.failIndex)
+              return Result.error(ctx.isLexical, ctx.failIndex)
             }
           }
           tokens(ctx.j).tipe match {
@@ -301,10 +330,10 @@ import SireumGrammarParser._
           val n_lexerRule = predictLexerRule(ctx.j)
           for (n <- 2 to 1 by -1 if !ctx.found) {
             if (n_parserRule == n && parseParserRuleH(ctx, state"6")) {
-              return Either.Right(ctx.failIndex)
+              return Result.error(ctx.isLexical, ctx.failIndex)
             }
             if (!ctx.found && n_lexerRule == n && parseLexerRuleH(ctx, state"7")) {
-              return Either.Right(ctx.failIndex)
+              return Result.error(ctx.isLexical, ctx.failIndex)
             }
           }
           tokens(ctx.j).tipe match {
@@ -329,10 +358,10 @@ import SireumGrammarParser._
           val n_lexerRule = predictLexerRule(ctx.j)
           for (n <- 2 to 1 by -1 if !ctx.found) {
             if (n_parserRule == n && parseParserRuleH(ctx, state"6")) {
-              return Either.Right(ctx.failIndex)
+              return Result.error(ctx.isLexical, ctx.failIndex)
             }
             if (!ctx.found && n_lexerRule == n && parseLexerRuleH(ctx, state"7")) {
-              return Either.Right(ctx.failIndex)
+              return Result.error(ctx.isLexical, ctx.failIndex)
             }
           }
           tokens(ctx.j).tipe match {
@@ -350,7 +379,7 @@ import SireumGrammarParser._
           ctx.found = F
           val n_lexerRule = predictLexerRule(ctx.j)
           if (n_lexerRule > 0 && parseLexerRuleH(ctx, state"7")) {
-            return Either.Right(ctx.failIndex)
+            return Result.error(ctx.isLexical, ctx.failIndex)
           }
           tokens(ctx.j).tipe match {
             case u32"0xFC5CB374" /* EOF */ if !ctx.found =>
@@ -374,7 +403,7 @@ import SireumGrammarParser._
     return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
   }
 
-  @pure def parseOptionsSpec(i: Z): Either[Result, Z] = {
+  @pure def parseOptionsSpec(i: Z): Result = {
     val ctx = Context.create("optionsSpec", u32"0x5A3A1CB5" /* optionsSpec */, ISZ(state"4"), i)
 
     while (ctx.j < tokens.size) {
@@ -409,7 +438,7 @@ import SireumGrammarParser._
           ctx.found = F
           val n_option = predictOption(ctx.j)
           if (n_option > 0 && parseOptionH(ctx, state"3")) {
-            return Either.Right(ctx.failIndex)
+            return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
             return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
@@ -418,7 +447,7 @@ import SireumGrammarParser._
           ctx.found = F
           val n_option = predictOption(ctx.j)
           if (n_option > 0 && parseOptionH(ctx, state"3")) {
-            return Either.Right(ctx.failIndex)
+            return Result.error(ctx.isLexical, ctx.failIndex)
           }
           tokens(ctx.j).tipe match {
             case u32"0x5BF60471" /* "}" */ if !ctx.found =>
@@ -442,7 +471,7 @@ import SireumGrammarParser._
     return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
   }
 
-  @pure def parseOption(i: Z): Either[Result, Z] = {
+  @pure def parseOption(i: Z): Result = {
     val ctx = Context.create("option", u32"0x47F1F331" /* option */, ISZ(state"4"), i)
 
     while (ctx.j < tokens.size) {
@@ -451,7 +480,7 @@ import SireumGrammarParser._
           ctx.found = F
           val n_id = predictId(ctx.j)
           if (n_id > 0 && parseIdH(ctx, state"1")) {
-            return Either.Right(ctx.failIndex)
+            return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
             return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
@@ -473,7 +502,7 @@ import SireumGrammarParser._
           ctx.found = F
           val n_optionValue = predictOptionValue(ctx.j)
           if (n_optionValue > 0 && parseOptionValueH(ctx, state"3")) {
-            return Either.Right(ctx.failIndex)
+            return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
             return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
@@ -502,7 +531,7 @@ import SireumGrammarParser._
     return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
   }
 
-  @pure def parseOptionValue(i: Z): Either[Result, Z] = {
+  @pure def parseOptionValue(i: Z): Result = {
     val ctx = Context.create("optionValue", u32"0xED8E0DA8" /* optionValue */, ISZ(state"1"), i)
 
     while (ctx.j < tokens.size) {
@@ -511,7 +540,7 @@ import SireumGrammarParser._
           ctx.found = F
           val n_id = predictId(ctx.j)
           if (n_id > 0 && parseIdH(ctx, state"1")) {
-            return Either.Right(ctx.failIndex)
+            return Result.error(ctx.isLexical, ctx.failIndex)
           }
           tokens(ctx.j).tipe match {
             case u32"0x589C233C" /* INT */ if !ctx.found =>
@@ -535,7 +564,7 @@ import SireumGrammarParser._
     return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
   }
 
-  @pure def parseParserRule(i: Z): Either[Result, Z] = {
+  @pure def parseParserRule(i: Z): Result = {
     val ctx = Context.create("parserRule", u32"0x4AF0B412" /* parserRule */, ISZ(state"5"), i)
 
     while (ctx.j < tokens.size) {
@@ -570,7 +599,7 @@ import SireumGrammarParser._
           ctx.found = F
           val n_alt = predictAlt(ctx.j)
           if (n_alt > 0 && parseAltH(ctx, state"3")) {
-            return Either.Right(ctx.failIndex)
+            return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
             return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
@@ -597,7 +626,7 @@ import SireumGrammarParser._
           ctx.found = F
           val n_alt = predictAlt(ctx.j)
           if (n_alt > 0 && parseAltH(ctx, state"3")) {
-            return Either.Right(ctx.failIndex)
+            return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
             return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
@@ -613,7 +642,7 @@ import SireumGrammarParser._
     return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
   }
 
-  @pure def parseLexerRule(i: Z): Either[Result, Z] = {
+  @pure def parseLexerRule(i: Z): Result = {
     val ctx = Context.create("lexerRule", u32"0x9E30C465" /* lexerRule */, ISZ(state"7"), i)
 
     while (ctx.j < tokens.size) {
@@ -666,7 +695,7 @@ import SireumGrammarParser._
           ctx.found = F
           val n_alt = predictAlt(ctx.j)
           if (n_alt > 0 && parseAltH(ctx, state"4")) {
-            return Either.Right(ctx.failIndex)
+            return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
             return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
@@ -675,7 +704,7 @@ import SireumGrammarParser._
           ctx.found = F
           val n_channel = predictChannel(ctx.j)
           if (n_channel > 0 && parseChannelH(ctx, state"8")) {
-            return Either.Right(ctx.failIndex)
+            return Result.error(ctx.isLexical, ctx.failIndex)
           }
           tokens(ctx.j).tipe match {
             case u32"0x687111E8" /* "|" */ if !ctx.found =>
@@ -697,7 +726,7 @@ import SireumGrammarParser._
           ctx.found = F
           val n_alt = predictAlt(ctx.j)
           if (n_alt > 0 && parseAltH(ctx, state"6")) {
-            return Either.Right(ctx.failIndex)
+            return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
             return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
@@ -743,7 +772,7 @@ import SireumGrammarParser._
           ctx.found = F
           val n_alt = predictAlt(ctx.j)
           if (n_alt > 0 && parseAltH(ctx, state"10")) {
-            return Either.Right(ctx.failIndex)
+            return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
             return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
@@ -752,7 +781,7 @@ import SireumGrammarParser._
           ctx.found = F
           val n_channel = predictChannel(ctx.j)
           if (n_channel > 0 && parseChannelH(ctx, state"8")) {
-            return Either.Right(ctx.failIndex)
+            return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
             return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
@@ -767,7 +796,7 @@ import SireumGrammarParser._
     return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
   }
 
-  @pure def parseBlock(i: Z): Either[Result, Z] = {
+  @pure def parseBlock(i: Z): Result = {
     val ctx = Context.create("block", u32"0xAA25218B" /* block */, ISZ(state"4"), i)
 
     while (ctx.j < tokens.size) {
@@ -789,7 +818,7 @@ import SireumGrammarParser._
           ctx.found = F
           val n_alt = predictAlt(ctx.j)
           if (n_alt > 0 && parseAltH(ctx, state"2")) {
-            return Either.Right(ctx.failIndex)
+            return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
             return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
@@ -816,7 +845,7 @@ import SireumGrammarParser._
           ctx.found = F
           val n_alt = predictAlt(ctx.j)
           if (n_alt > 0 && parseAltH(ctx, state"2")) {
-            return Either.Right(ctx.failIndex)
+            return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
             return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
@@ -832,7 +861,7 @@ import SireumGrammarParser._
     return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
   }
 
-  @pure def parseAlt(i: Z): Either[Result, Z] = {
+  @pure def parseAlt(i: Z): Result = {
     val ctx = Context.create("alt", u32"0xB817E927" /* alt */, ISZ(state"1"), i)
 
     while (ctx.j < tokens.size) {
@@ -841,7 +870,7 @@ import SireumGrammarParser._
           ctx.found = F
           val n_element = predictElement(ctx.j)
           if (n_element > 0 && parseElementH(ctx, state"1")) {
-            return Either.Right(ctx.failIndex)
+            return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
             return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
@@ -850,7 +879,7 @@ import SireumGrammarParser._
           ctx.found = F
           val n_element = predictElement(ctx.j)
           if (n_element > 0 && parseElementH(ctx, state"1")) {
-            return Either.Right(ctx.failIndex)
+            return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
             return retVal(ctx.max, ctx.resOpt, ctx.initial, T)
@@ -865,7 +894,7 @@ import SireumGrammarParser._
     return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
   }
 
-  @pure def parseElement(i: Z): Either[Result, Z] = {
+  @pure def parseElement(i: Z): Result = {
     val ctx = Context.create("element", u32"0x022B2C72" /* element */, ISZ(state"1", state"2"), i)
 
     while (ctx.j < tokens.size) {
@@ -876,10 +905,10 @@ import SireumGrammarParser._
           val n_block = predictBlock(ctx.j)
           for (n <- 2 to 1 by -1 if !ctx.found) {
             if (n_atom == n && parseAtomH(ctx, state"1")) {
-              return Either.Right(ctx.failIndex)
+              return Result.error(ctx.isLexical, ctx.failIndex)
             }
             if (!ctx.found && n_block == n && parseBlockH(ctx, state"1")) {
-              return Either.Right(ctx.failIndex)
+              return Result.error(ctx.isLexical, ctx.failIndex)
             }
           }
           if (!ctx.found) {
@@ -919,7 +948,7 @@ import SireumGrammarParser._
     return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
   }
 
-  @pure def parseAtom(i: Z): Either[Result, Z] = {
+  @pure def parseAtom(i: Z): Result = {
     val ctx = Context.create("atom", u32"0xBF749739" /* atom */, ISZ(state"1"), i)
 
     while (ctx.j < tokens.size) {
@@ -931,13 +960,13 @@ import SireumGrammarParser._
           val n_not = predictNot(ctx.j)
           for (n <- 2 to 1 by -1 if !ctx.found) {
             if (n_range == n && parseRangeH(ctx, state"1")) {
-              return Either.Right(ctx.failIndex)
+              return Result.error(ctx.isLexical, ctx.failIndex)
             }
             if (!ctx.found && n_terminal == n && parseTerminalH(ctx, state"1")) {
-              return Either.Right(ctx.failIndex)
+              return Result.error(ctx.isLexical, ctx.failIndex)
             }
             if (!ctx.found && n_not == n && parseNotH(ctx, state"1")) {
-              return Either.Right(ctx.failIndex)
+              return Result.error(ctx.isLexical, ctx.failIndex)
             }
           }
           tokens(ctx.j).tipe match {
@@ -962,7 +991,7 @@ import SireumGrammarParser._
     return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
   }
 
-  @pure def parseNot(i: Z): Either[Result, Z] = {
+  @pure def parseNot(i: Z): Result = {
     val ctx = Context.create("not", u32"0x94BF4010" /* not */, ISZ(state"2"), i)
 
     while (ctx.j < tokens.size) {
@@ -984,7 +1013,7 @@ import SireumGrammarParser._
           ctx.found = F
           val n_block = predictBlock(ctx.j)
           if (n_block > 0 && parseBlockH(ctx, state"2")) {
-            return Either.Right(ctx.failIndex)
+            return Result.error(ctx.isLexical, ctx.failIndex)
           }
           tokens(ctx.j).tipe match {
             case u32"0xE95F063A" /* CHAR */ if !ctx.found =>
@@ -1013,7 +1042,7 @@ import SireumGrammarParser._
     return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
   }
 
-  @pure def parseRange(i: Z): Either[Result, Z] = {
+  @pure def parseRange(i: Z): Result = {
     val ctx = Context.create("range", u32"0x821FF55C" /* range */, ISZ(state"3"), i)
 
     while (ctx.j < tokens.size) {
@@ -1068,7 +1097,7 @@ import SireumGrammarParser._
     return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
   }
 
-  @pure def parseTerminal(i: Z): Either[Result, Z] = {
+  @pure def parseTerminal(i: Z): Result = {
     val ctx = Context.create("terminal", u32"0xC926557D" /* terminal */, ISZ(state"1"), i)
 
     while (ctx.j < tokens.size) {
@@ -1112,7 +1141,7 @@ import SireumGrammarParser._
     return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
   }
 
-  @pure def parseId(i: Z): Either[Result, Z] = {
+  @pure def parseId(i: Z): Result = {
     val ctx = Context.create("id", u32"0x92391AB1" /* id */, ISZ(state"1"), i)
 
     while (ctx.j < tokens.size) {
@@ -1146,7 +1175,7 @@ import SireumGrammarParser._
     return retVal(ctx.j, ctx.resOpt, ctx.initial, T)
   }
 
-  @pure def parseChannel(i: Z): Either[Result, Z] = {
+  @pure def parseChannel(i: Z): Result = {
     val ctx = Context.create("channel", u32"0x239B7220" /* channel */, ISZ(state"6"), i)
 
     while (ctx.j < tokens.size) {
@@ -1241,252 +1270,336 @@ import SireumGrammarParser._
   }
 
   def parseIdH(ctx: Context, nextState: State): B = {
-    parseId(ctx.j) match {
-      case Either.Left(r) =>
+    val r = parseId(ctx.j)
+    r.kind match {
+      case Result.Kind.Normal =>
         ctx.trees = ctx.trees :+ r.tree
         ctx.j = r.newIndex
         ctx.update(nextState)
         ctx.found = T
-      case Either.Right(r) =>
-        if (r < 0) {
-          ctx.failIndex = r
+      case Result.Kind.LexicalError =>
+        ctx.failIndex = r.newIndex
+        ctx.isLexical = T
+        return T
+      case Result.Kind.GrammaticalError =>
+        val index = r.newIndex
+        if (index < 0) {
+          ctx.failIndex = index
           return T
-        } else if (ctx.max < r) {
-          ctx.max = r
+        } else if (ctx.max < index) {
+          ctx.max = index
         }
     }
     return F
   }
 
   def parseOptionsSpecH(ctx: Context, nextState: State): B = {
-    parseOptionsSpec(ctx.j) match {
-      case Either.Left(r) =>
+    val r = parseOptionsSpec(ctx.j)
+    r.kind match {
+      case Result.Kind.Normal =>
         ctx.trees = ctx.trees :+ r.tree
         ctx.j = r.newIndex
         ctx.update(nextState)
         ctx.found = T
-      case Either.Right(r) =>
-        if (r < 0) {
-          ctx.failIndex = r
+      case Result.Kind.LexicalError =>
+        ctx.failIndex = r.newIndex
+        ctx.isLexical = T
+        return T
+      case Result.Kind.GrammaticalError =>
+        val index = r.newIndex
+        if (index < 0) {
+          ctx.failIndex = index
           return T
-        } else if (ctx.max < r) {
-          ctx.max = r
+        } else if (ctx.max < index) {
+          ctx.max = index
         }
     }
     return F
   }
 
   def parseParserRuleH(ctx: Context, nextState: State): B = {
-    parseParserRule(ctx.j) match {
-      case Either.Left(r) =>
+    val r = parseParserRule(ctx.j)
+    r.kind match {
+      case Result.Kind.Normal =>
         ctx.trees = ctx.trees :+ r.tree
         ctx.j = r.newIndex
         ctx.update(nextState)
         ctx.found = T
-      case Either.Right(r) =>
-        if (r < 0) {
-          ctx.failIndex = r
+      case Result.Kind.LexicalError =>
+        ctx.failIndex = r.newIndex
+        ctx.isLexical = T
+        return T
+      case Result.Kind.GrammaticalError =>
+        val index = r.newIndex
+        if (index < 0) {
+          ctx.failIndex = index
           return T
-        } else if (ctx.max < r) {
-          ctx.max = r
+        } else if (ctx.max < index) {
+          ctx.max = index
         }
     }
     return F
   }
 
   def parseLexerRuleH(ctx: Context, nextState: State): B = {
-    parseLexerRule(ctx.j) match {
-      case Either.Left(r) =>
+    val r = parseLexerRule(ctx.j)
+    r.kind match {
+      case Result.Kind.Normal =>
         ctx.trees = ctx.trees :+ r.tree
         ctx.j = r.newIndex
         ctx.update(nextState)
         ctx.found = T
-      case Either.Right(r) =>
-        if (r < 0) {
-          ctx.failIndex = r
+      case Result.Kind.LexicalError =>
+        ctx.failIndex = r.newIndex
+        ctx.isLexical = T
+        return T
+      case Result.Kind.GrammaticalError =>
+        val index = r.newIndex
+        if (index < 0) {
+          ctx.failIndex = index
           return T
-        } else if (ctx.max < r) {
-          ctx.max = r
+        } else if (ctx.max < index) {
+          ctx.max = index
         }
     }
     return F
   }
 
   def parseOptionH(ctx: Context, nextState: State): B = {
-    parseOption(ctx.j) match {
-      case Either.Left(r) =>
+    val r = parseOption(ctx.j)
+    r.kind match {
+      case Result.Kind.Normal =>
         ctx.trees = ctx.trees :+ r.tree
         ctx.j = r.newIndex
         ctx.update(nextState)
         ctx.found = T
-      case Either.Right(r) =>
-        if (r < 0) {
-          ctx.failIndex = r
+      case Result.Kind.LexicalError =>
+        ctx.failIndex = r.newIndex
+        ctx.isLexical = T
+        return T
+      case Result.Kind.GrammaticalError =>
+        val index = r.newIndex
+        if (index < 0) {
+          ctx.failIndex = index
           return T
-        } else if (ctx.max < r) {
-          ctx.max = r
+        } else if (ctx.max < index) {
+          ctx.max = index
         }
     }
     return F
   }
 
   def parseOptionValueH(ctx: Context, nextState: State): B = {
-    parseOptionValue(ctx.j) match {
-      case Either.Left(r) =>
+    val r = parseOptionValue(ctx.j)
+    r.kind match {
+      case Result.Kind.Normal =>
         ctx.trees = ctx.trees :+ r.tree
         ctx.j = r.newIndex
         ctx.update(nextState)
         ctx.found = T
-      case Either.Right(r) =>
-        if (r < 0) {
-          ctx.failIndex = r
+      case Result.Kind.LexicalError =>
+        ctx.failIndex = r.newIndex
+        ctx.isLexical = T
+        return T
+      case Result.Kind.GrammaticalError =>
+        val index = r.newIndex
+        if (index < 0) {
+          ctx.failIndex = index
           return T
-        } else if (ctx.max < r) {
-          ctx.max = r
+        } else if (ctx.max < index) {
+          ctx.max = index
         }
     }
     return F
   }
 
   def parseAltH(ctx: Context, nextState: State): B = {
-    parseAlt(ctx.j) match {
-      case Either.Left(r) =>
+    val r = parseAlt(ctx.j)
+    r.kind match {
+      case Result.Kind.Normal =>
         ctx.trees = ctx.trees :+ r.tree
         ctx.j = r.newIndex
         ctx.update(nextState)
         ctx.found = T
-      case Either.Right(r) =>
-        if (r < 0) {
-          ctx.failIndex = r
+      case Result.Kind.LexicalError =>
+        ctx.failIndex = r.newIndex
+        ctx.isLexical = T
+        return T
+      case Result.Kind.GrammaticalError =>
+        val index = r.newIndex
+        if (index < 0) {
+          ctx.failIndex = index
           return T
-        } else if (ctx.max < r) {
-          ctx.max = r
+        } else if (ctx.max < index) {
+          ctx.max = index
         }
     }
     return F
   }
 
   def parseChannelH(ctx: Context, nextState: State): B = {
-    parseChannel(ctx.j) match {
-      case Either.Left(r) =>
+    val r = parseChannel(ctx.j)
+    r.kind match {
+      case Result.Kind.Normal =>
         ctx.trees = ctx.trees :+ r.tree
         ctx.j = r.newIndex
         ctx.update(nextState)
         ctx.found = T
-      case Either.Right(r) =>
-        if (r < 0) {
-          ctx.failIndex = r
+      case Result.Kind.LexicalError =>
+        ctx.failIndex = r.newIndex
+        ctx.isLexical = T
+        return T
+      case Result.Kind.GrammaticalError =>
+        val index = r.newIndex
+        if (index < 0) {
+          ctx.failIndex = index
           return T
-        } else if (ctx.max < r) {
-          ctx.max = r
+        } else if (ctx.max < index) {
+          ctx.max = index
         }
     }
     return F
   }
 
   def parseElementH(ctx: Context, nextState: State): B = {
-    parseElement(ctx.j) match {
-      case Either.Left(r) =>
+    val r = parseElement(ctx.j)
+    r.kind match {
+      case Result.Kind.Normal =>
         ctx.trees = ctx.trees :+ r.tree
         ctx.j = r.newIndex
         ctx.update(nextState)
         ctx.found = T
-      case Either.Right(r) =>
-        if (r < 0) {
-          ctx.failIndex = r
+      case Result.Kind.LexicalError =>
+        ctx.failIndex = r.newIndex
+        ctx.isLexical = T
+        return T
+      case Result.Kind.GrammaticalError =>
+        val index = r.newIndex
+        if (index < 0) {
+          ctx.failIndex = index
           return T
-        } else if (ctx.max < r) {
-          ctx.max = r
+        } else if (ctx.max < index) {
+          ctx.max = index
         }
     }
     return F
   }
 
   def parseAtomH(ctx: Context, nextState: State): B = {
-    parseAtom(ctx.j) match {
-      case Either.Left(r) =>
+    val r = parseAtom(ctx.j)
+    r.kind match {
+      case Result.Kind.Normal =>
         ctx.trees = ctx.trees :+ r.tree
         ctx.j = r.newIndex
         ctx.update(nextState)
         ctx.found = T
-      case Either.Right(r) =>
-        if (r < 0) {
-          ctx.failIndex = r
+      case Result.Kind.LexicalError =>
+        ctx.failIndex = r.newIndex
+        ctx.isLexical = T
+        return T
+      case Result.Kind.GrammaticalError =>
+        val index = r.newIndex
+        if (index < 0) {
+          ctx.failIndex = index
           return T
-        } else if (ctx.max < r) {
-          ctx.max = r
+        } else if (ctx.max < index) {
+          ctx.max = index
         }
     }
     return F
   }
 
   def parseBlockH(ctx: Context, nextState: State): B = {
-    parseBlock(ctx.j) match {
-      case Either.Left(r) =>
+    val r = parseBlock(ctx.j)
+    r.kind match {
+      case Result.Kind.Normal =>
         ctx.trees = ctx.trees :+ r.tree
         ctx.j = r.newIndex
         ctx.update(nextState)
         ctx.found = T
-      case Either.Right(r) =>
-        if (r < 0) {
-          ctx.failIndex = r
+      case Result.Kind.LexicalError =>
+        ctx.failIndex = r.newIndex
+        ctx.isLexical = T
+        return T
+      case Result.Kind.GrammaticalError =>
+        val index = r.newIndex
+        if (index < 0) {
+          ctx.failIndex = index
           return T
-        } else if (ctx.max < r) {
-          ctx.max = r
+        } else if (ctx.max < index) {
+          ctx.max = index
         }
     }
     return F
   }
 
   def parseRangeH(ctx: Context, nextState: State): B = {
-    parseRange(ctx.j) match {
-      case Either.Left(r) =>
+    val r = parseRange(ctx.j)
+    r.kind match {
+      case Result.Kind.Normal =>
         ctx.trees = ctx.trees :+ r.tree
         ctx.j = r.newIndex
         ctx.update(nextState)
         ctx.found = T
-      case Either.Right(r) =>
-        if (r < 0) {
-          ctx.failIndex = r
+      case Result.Kind.LexicalError =>
+        ctx.failIndex = r.newIndex
+        ctx.isLexical = T
+        return T
+      case Result.Kind.GrammaticalError =>
+        val index = r.newIndex
+        if (index < 0) {
+          ctx.failIndex = index
           return T
-        } else if (ctx.max < r) {
-          ctx.max = r
+        } else if (ctx.max < index) {
+          ctx.max = index
         }
     }
     return F
   }
 
   def parseTerminalH(ctx: Context, nextState: State): B = {
-    parseTerminal(ctx.j) match {
-      case Either.Left(r) =>
+    val r = parseTerminal(ctx.j)
+    r.kind match {
+      case Result.Kind.Normal =>
         ctx.trees = ctx.trees :+ r.tree
         ctx.j = r.newIndex
         ctx.update(nextState)
         ctx.found = T
-      case Either.Right(r) =>
-        if (r < 0) {
-          ctx.failIndex = r
+      case Result.Kind.LexicalError =>
+        ctx.failIndex = r.newIndex
+        ctx.isLexical = T
+        return T
+      case Result.Kind.GrammaticalError =>
+        val index = r.newIndex
+        if (index < 0) {
+          ctx.failIndex = index
           return T
-        } else if (ctx.max < r) {
-          ctx.max = r
+        } else if (ctx.max < index) {
+          ctx.max = index
         }
     }
     return F
   }
 
   def parseNotH(ctx: Context, nextState: State): B = {
-    parseNot(ctx.j) match {
-      case Either.Left(r) =>
+    val r = parseNot(ctx.j)
+    r.kind match {
+      case Result.Kind.Normal =>
         ctx.trees = ctx.trees :+ r.tree
         ctx.j = r.newIndex
         ctx.update(nextState)
         ctx.found = T
-      case Either.Right(r) =>
-        if (r < 0) {
-          ctx.failIndex = r
+      case Result.Kind.LexicalError =>
+        ctx.failIndex = r.newIndex
+        ctx.isLexical = T
+        return T
+      case Result.Kind.GrammaticalError =>
+        val index = r.newIndex
+        if (index < 0) {
+          ctx.failIndex = index
           return T
-        } else if (ctx.max < r) {
-          ctx.max = r
+        } else if (ctx.max < index) {
+          ctx.max = index
         }
     }
     return F
@@ -1934,11 +2047,10 @@ import SireumGrammarParser._
     return 0
   }
 
-  def retVal(n: Z, resOpt: Option[Result], initial: B, noBacktrack: B): Either[Result, Z] = {
+  def retVal(n: Z, resOpt: Option[Result], initial: B, noBacktrack: B): Result = {
     resOpt match {
-      case Some(res) => return Either.Left(res)
-      case _ =>
-        return if (noBacktrack) Either.Right(if (!initial) -n else n) else Either.Right(n)
+      case Some(res) => return res
+      case _ => return Result.error(F, if (noBacktrack && !initial) -n else n)
     }
   }
 
@@ -1961,29 +2073,29 @@ import SireumGrammarParser._
     var i: Z = 0
     var r = ISZ[ParseTree.Leaf]()
     while (i < cis.size) {
-      tokenize(i) match {
-        case Some(lr@Result(token: ParseTree.Leaf, _)) =>
-          i = lr.newIndex
+      val result = tokenize(i)
+      result match {
+        case Result(Result.Kind.Normal, token: ParseTree.Leaf, _) =>
+          i = result.newIndex
           if (!(skipHidden && token.isHidden)) {
             r = r :+ token
           }
         case _ =>
-          val offsetLength = (conversions.Z.toU64(i) << u64"32") | conversions.Z.toU64(1)
-          val posOpt: Option[message.Position] = Some(message.PosInfo(docInfo, offsetLength))
-          reporter.error(posOpt, kind, s"Could not recognize character '${ops.COps(cis(i)).escapeString}'")
+          val posOpt: Option[message.Position] = Some(message.PosInfo(docInfo, offsetLength(i, 1)))
+          reporter.error(posOpt, kind, s"Could not recognize token")
           if (stopAtError) {
             return r
           }
-          r = r :+ ParseTree.Leaf(conversions.String.fromCis(ISZ(cis(i))), "<ERROR>", u32"0xE3CDEDDA", F, posOpt)
+          r = r :+ errorLeaf(text = conversions.String.fromCis(ISZ(cis(i))), posOpt = posOpt)
           i = i + 1
       }
     }
-    r = r :+ ParseTree.Leaf("", "EOF", u32"0xFC5CB374", F, None())
+    r = r :+ eofLeaf
     return r
   }
 
-  @pure def tokenize(i: Z): Option[Result] = {
-    val r = MBox(Result(ParseTree.Leaf("", "", u32"-2", T, None()), -1))
+  @pure def tokenize(i: Z): Result = {
+    val r = MBox(Result.error(T, i))
     updateToken(r, lex_grammar(i))
     updateToken(r, lex_u003B(i))
     updateToken(r, lex_options(i))
@@ -2011,7 +2123,7 @@ import SireumGrammarParser._
     updateToken(r, lex_LHEADER(i))
     updateToken(r, lex_COMMENT(i))
     updateToken(r, lex_WS(i))
-    return if (r.value.newIndex > i) Some(r.value) else None()
+    return r.value
   }
 
   def updateToken(r: MBox[Result], rOpt: Option[Result]): Unit = {
@@ -3105,7 +3217,7 @@ import SireumGrammarParser._
 
   @pure def lexH(index: Z, newIndex: Z, name: String, tipe: U32, isHidden: B): Option[Result] = {
     if (newIndex > 0) {
-      return Some(Result(ParseTree.Leaf(ops.StringOps.substring(cis, index, newIndex),
+      return Some(Result.create(ParseTree.Leaf(ops.StringOps.substring(cis, index, newIndex),
         name, tipe, isHidden, Some(message.PosInfo(docInfo, offsetLength(index, newIndex - index)))),
         newIndex))
     } else {
