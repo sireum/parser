@@ -236,7 +236,7 @@ import org.sireum.parser.{GrammarAst => AST}
     val parserOpt: Option[ST] = ast.rules match {
       case ISZ(first, _*) if !first.isLexer =>
         Some(
-          st"""def parse(uriOpt: Option[String], input: String, reporter: message.Reporter): Option[ParseTree.Result] = {
+          st"""def parse(uriOpt: Option[String], input: String, reporter: message.Reporter): Option[ParseTree] = {
               |  val docInfo = message.DocInfo.create(uriOpt, input)
               |  val tokens = lex(input, docInfo, T, T, reporter)
               |  if (reporter.hasError) {
@@ -244,7 +244,7 @@ import org.sireum.parser.{GrammarAst => AST}
               |  }
               |  val r = ${name}Parser(tokens).${parseName(first.name)}(0)
               |  r.kind match {
-              |    case Result.Kind.Normal => return Some(ParseTree.Result(r.tree, docInfo))
+              |    case Result.Kind.Normal => return Some(r.tree)
               |    case Result.Kind.LexicalError =>
               |      reporter.error(Some(message.PosInfo(docInfo, offsetLength(r.newIndex, 1))), kind, s"Could not recognize token")
               |      return None()

@@ -29,16 +29,16 @@ package org.sireum.parser
 import org.sireum._
 import org.sireum.U32._
 import org.sireum.U64._
-import org.sireum.message.{PosInfo, Position, Reporter}
+import org.sireum.message.{Position, Reporter}
 import org.sireum.parser.{ParseTree => Tree}
 import org.sireum.parser.{GrammarAst => AST}
 
-@datatype class GrammarAstBuilder(parseResult: ParseTree.Result) {
+@datatype class GrammarAstBuilder(tree: ParseTree) {
 
   val kind: String = "GrammarAstBuilder"
 
   def build(reporter: Reporter): AST.Grammar = {
-    val Tree.Node(trees@ISZ(Tree.Leaf(string"grammar"), Tree.Node(ISZ(Tree.Leaf(id))), _*)) = parseResult.tree
+    val Tree.Node(trees@ISZ(Tree.Leaf(string"grammar"), Tree.Node(ISZ(Tree.Leaf(id))), _*)) = tree
     var i = 3
     val options: ISZ[(String, String)] = if (trees(i).ruleName === "optionsSpec") {
       val r = buildOptions(trees(i))
@@ -280,19 +280,15 @@ import org.sireum.parser.{GrammarAst => AST}
     return AST.Element.Block(alts, posOpt(tree))
   }
 
-  @pure def posOpts(posOpt1: Option[Position], posOpt2: Option[Position]): Option[Position] = {
-    val pos1 = posOpt1.get
-    val pos2 = posOpt2.get
-    return Some(PosInfo(parseResult.docInfo, offsetLength(conversions.Z.toU32(pos1.offset),
-      pos2.offset + pos2.length - pos1.offset)))
-  }
-
   @pure def posOpt(tree: Tree): Option[Position] = {
     tree match {
       case tree: Tree.Node => posOpts(posOpt(tree.children(0)), posOpt(tree.children(tree.children.size - 1)))
       case tree: Tree.Leaf => return leafPosOpt(tree)
     }
   }
+
+  @strictpure def posOpts(posOpt1: Option[Position], posOpt2: Option[Position]): Option[Position] =
+    Some(posOpt1.get.to(posOpt2.get))
 
   @pure def leafPosOpt(leaf: Tree.Leaf): Option[Position] = {
     return leaf.posOpt

@@ -180,7 +180,7 @@ object SireumGrammarParser {
   val errorLeaf: ParseTree.Leaf = ParseTree.Leaf("", "<ERROR>", u32"0xE3CDEDDA", F, None())
   val eofLeaf: ParseTree.Leaf = ParseTree.Leaf("", "EOF", u32"0xFC5CB374", F, None())
 
-  def parse(uriOpt: Option[String], input: String, reporter: message.Reporter): Option[ParseTree.Result] = {
+  def parse(uriOpt: Option[String], input: String, reporter: message.Reporter): Option[ParseTree] = {
     val docInfo = message.DocInfo.create(uriOpt, input)
     val tokens = lex(input, docInfo, T, T, reporter)
     if (reporter.hasError) {
@@ -188,7 +188,7 @@ object SireumGrammarParser {
     }
     val r = SireumGrammarParser(tokens).parseGrammarDef(0)
     r.kind match {
-      case Result.Kind.Normal => return Some(ParseTree.Result(r.tree, docInfo))
+      case Result.Kind.Normal => return Some(r.tree)
       case Result.Kind.LexicalError =>
         reporter.error(Some(message.PosInfo(docInfo, offsetLength(r.newIndex, 1))), kind, s"Could not recognize token")
         return None()

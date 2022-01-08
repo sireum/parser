@@ -32,7 +32,7 @@ object SireumAntlr3ParserUtil {
 
   def parseGrammar(uriOpt: Option[String],
                    input: String,
-                   reporter: message.Reporter): Option[ParseTree.Result] = {
+                   reporter: message.Reporter): Option[ParseTree] = {
     val docInfo = message.DocInfo.create(uriOpt, input)
 
     val lex = new SireumAntlr3Lexer(new ANTLRStringStream(input.value)) {
@@ -56,7 +56,7 @@ object SireumAntlr3ParserUtil {
     }
     r.setTreeAdaptor(new Antlr3Util.Adaptor(SireumAntlr3Parser.tokenNames, docInfo))
     val tree = r.grammarDef().tree.asInstanceOf[ParseTree]
-    return Some(ParseTree.Result(tree, docInfo))
+    return Some(tree)
   }
 
 }
