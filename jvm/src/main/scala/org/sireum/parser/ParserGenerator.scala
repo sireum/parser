@@ -66,9 +66,7 @@ import org.sireum.parser.{GrammarAst => AST}
       var typ = 0
 
       def lexST(lexname: ST, recognizerName: ST, tokenString: ST, tokenTipe: ST, isHidden: B): ST = {
-        val r =
-          st"""@strictpure def $lexname(index: Z): Option[Result] =
-              |   lexH(index, $recognizerName(index), $tokenString, $tokenTipe, ${if (isHidden) "T" else "F"})"""
+        val r = st"""@strictpure def $lexname(index: Z): Option[Result] = lexH(index, $recognizerName(index), $tokenString, $tokenTipe, ${if (isHidden) "T" else "F"})"""
         typ = typ + 1
         return r
       }
@@ -353,9 +351,23 @@ import org.sireum.parser.{GrammarAst => AST}
           |                        var failIndex: Z,
           |                        var isLexical: B) {
           |
-          |    def update(newState: State): Unit = {
+          |    def updateTerminal(token: ParseTree.Leaf, newState: State): Unit = {
+          |      found = T
+          |      j = j + 1
           |      initial = F
           |      state = newState
+          |      trees = trees :+ token
+          |      if (accepting(state)) {
+          |        resOpt = Some(Result.create(ParseTree.Node(trees, ruleName, ruleType), j))
+          |      }
+          |    }
+          |
+          |    def updateNonTerminal(r: Result, newState: State): Unit = {
+          |      found = T
+          |      initial = F
+          |      j = r.newIndex
+          |      state = newState
+          |      trees = trees :+ r.tree
           |      if (accepting(state)) {
           |        resOpt = Some(Result.create(ParseTree.Node(trees, ruleName, ruleType), j))
           |      }
@@ -385,9 +397,10 @@ import org.sireum.parser.{GrammarAst => AST}
           |    }
           |  }
           |
-          |  @record class LContext(val accepting: IS[State, B], var state: State, var j: Z, var afterAcceptIndex: Z) {
+          |  @record class LContext(val accepting: IS[State, B], var state: State, var j: Z, var afterAcceptIndex: Z, var found: B) {
           |    def update(newState: State): Unit = {
           |      state = newState
+          |      found = T
           |      if (accepting(state)) {
           |        afterAcceptIndex = j + 1
           |      }
@@ -400,7 +413,7 @@ import org.sireum.parser.{GrammarAst => AST}
           |      for (accept <- accepts) {
           |        accepting(accept) = T
           |      }
-          |      return LContext(accepting = accepting.toIS, state = state"0", j = i, afterAcceptIndex = -1)
+          |      return LContext(accepting = accepting.toIS, state = state"0", j = i, afterAcceptIndex = -1, found = F)
           |    }
           |  }
           |
@@ -582,17 +595,13 @@ import org.sireum.parser.{GrammarAst => AST}
         )
         var refs = ISZ[ST]()
         var checkRefs = ISZ[ST]()
-        var nfo: Option[ST] = None()
         for (p <- refNameDests.elements) {
           refs = refs :+ st"""val n_${p._1} = ${predictName(p._1)}(ctx.j)"""
           if (refNameDests.size > 1) {
             checkRefs = checkRefs :+
-              st"""if (${nfo}n_${p._1} == n && ${parseName(p._1)}H(ctx, state"${p._2}")) {
+              st"""if (n_${p._1} == n && ${parseName(p._1)}H(ctx, state"${p._2}")) {
                   |  return Result.error(ctx.isLexical, ctx.failIndex)
                   |}"""
-          }
-          if (nfo.isEmpty) {
-            nfo = Some(st"!ctx.found && ")
           }
         }
         val checkRefsOpt: Option[ST] = if (refNameDests.isEmpty) {
@@ -608,7 +617,7 @@ import org.sireum.parser.{GrammarAst => AST}
           } else {
             Some(
               st"""for (n <- $k to 1 by -1 if !ctx.found) {
-                  |  ${(checkRefs, "\n")}
+                  |  ${(checkRefs, " else ")}
                   |}"""
             )
           }
@@ -688,11 +697,7 @@ import org.sireum.parser.{GrammarAst => AST}
     st"""def ${parseName(name)}H(ctx: Context, nextState: State): B = {
         |  val r = ${parseName(name)}(ctx.j)
         |  r.kind match {
-        |    case Result.Kind.Normal =>
-        |      ctx.trees = ctx.trees :+ r.tree
-        |      ctx.j = r.newIndex
-        |      ctx.update(nextState)
-        |      ctx.found = T
+        |    case Result.Kind.Normal => ctx.updateNonTerminal(r, nextState)
         |    case Result.Kind.LexicalError =>
         |      ctx.failIndex = r.newIndex
         |      ctx.isLexical = T
@@ -735,11 +740,7 @@ import org.sireum.parser.{GrammarAst => AST}
         |}"""
 
   @strictpure def terminalST(text: String, dest: Z, plain: B, notFoundOpt: Option[ST]): ST =
-    st"""case u32"0x${(valCode(text), "")}" /* ${if (plain) text else st"\"${escape(text)}\"" } */$notFoundOpt =>
-        |  ctx.trees = ctx.trees :+ token
-        |  ctx.j = ctx.j + 1
-        |  ctx.update(state"$dest")
-        |  ctx.found = T"""
+    st"""case u32"0x${(valCode(text), "")}" /* ${if (plain) text else st"\"${escape(text)}\"" } */$notFoundOpt => ctx.updateTerminal(token, state"$dest")"""
 
   def genTries(k: Z, ruleTrie: LookAhead.Trie): ISZ[ST] = {
     var r = ISZ[ST]()
@@ -803,7 +804,6 @@ import org.sireum.parser.{GrammarAst => AST}
       var conds = ISZ[ST]()
       val outgoing = dfa.g.outgoing(node)
       if (!(outgoing.size === 1 && Dfa.isReject(outgoing(0)))) {
-        var notFoundOpt: Option[ST] = None()
         var destMap = HashSMap.empty[Z, ISZ[(C, C)]]
         for (e <- outgoing) {
           val edge = e.asInstanceOf[Graph.Edge.Data[Z, (C, C)]]
@@ -820,23 +820,10 @@ import org.sireum.parser.{GrammarAst => AST}
             val (lo, hi) = data
             cs = cs :+ (if (lo == hi) st"c === ${c2ST(lo)}" else st"${c2ST(lo)} <= c && c <= ${c2ST(hi)}")
           }
-          notFoundOpt match {
-            case Some(nf) =>
-              conds = conds :+
-                st"""if ($nf(${(cs, " || ")})) {
-                    |  ctx.update(state"$dest")
-                    |  found = T
-                    |}"""
-            case _ =>
-              conds = conds :+
-                st"""if (${(cs, " || ")}) {
-                    |  ctx.update(state"$dest")
-                    |  found = T
-                    |}"""
-          }
-          if (notFoundOpt.isEmpty) {
-            notFoundOpt = Some(st"!found && ")
-          }
+          conds = conds :+
+            st"""if (${(cs, " || ")}) {
+                |  ctx.update(state"$dest")
+                |}"""
         }
       }
       if (conds.isEmpty) {
@@ -846,9 +833,9 @@ import org.sireum.parser.{GrammarAst => AST}
         transitions = transitions :+
           st"""case state"$node" =>
               |  val c = cis.at(ctx.j)
-              |  var found = F
-              |  ${(conds, "\n")}
-              |  if (!found) {
+              |  ctx.found = F
+              |  ${(conds, " else ")}
+              |  if (!ctx.found) {
               |    return ctx.afterAcceptIndex
               |  }"""
       }
