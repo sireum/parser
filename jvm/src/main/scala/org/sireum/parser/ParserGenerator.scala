@@ -131,44 +131,51 @@ import org.sireum.parser.{GrammarAst => AST}
       lexerDefs = lexerDefs :+
         st"""@pure def lexH(index: Z, newIndex: Z, name: String, tipe: U32, isHidden: B): Option[Result] = {
             |  if (newIndex > 0) {
-            |    return Some(Result.create(ParseTree.Leaf(ops.StringOps.substring(cis, index, newIndex),
-            |      name, tipe, isHidden, Some(message.PosInfo(docInfo, offsetLength(index, newIndex - index)))),
-            |      newIndex))
+            |    return Some(Result.create(ParseTree.Leaf(conversions.String.fromCis(for (i <- index until newIndex) yield cis.at(i)),
+            |      name, tipe, isHidden, cis.posOpt(index, newIndex - index)), newIndex))
             |  } else {
             |    return None()
             |  }
             |}"""
 
       lexerDefs =
-        st"""def tokenizeAll(skipHidden: B, stopAtError: B, reporter: message.Reporter): ISZ[ParseTree.Leaf] = {
+        st"""def tokenizeAll(skipHidden: B, stopAtError: B, reporter: message.Reporter): ISZ[Result] = {
             |  var i: Z = 0
-            |  var r = ISZ[ParseTree.Leaf]()
-            |  while (i < cis.size) {
-            |    val result = tokenize(i)
-            |    result match {
-            |      case Result(Result.Kind.Normal, token: ParseTree.Leaf, _) =>
-            |        i = result.newIndex
-            |        if (!(skipHidden && token.isHidden)) {
-            |          r = r :+ token
+            |  var r = ISZ[Result]()
+            |  var done = F
+            |  while (!done && cis.has(i)) {
+            |    tokenize(i, skipHidden) match {
+            |      case Some(result) =>
+            |        if (result.kind == Result.Kind.Normal) {
+            |          i = result.newIndex
+            |          r = r :+ result
+            |        } else {
+            |          val posOpt = cis.posOpt(i, 1)
+            |          reporter.error(posOpt, kind, s"Could not recognize token")
+            |          if (stopAtError) {
+            |            return r
+            |          }
+            |          r = r :+ result(tree = errorLeaf(text = conversions.String.fromCis(ISZ(cis.at(i))), posOpt = posOpt))
+            |          i = i + 1
             |        }
-            |      case _ =>
-            |        val posOpt: Option[message.Position] = Some(message.PosInfo(docInfo, offsetLength(i, 1)))
-            |        reporter.error(posOpt, kind, s"Could not recognize token")
-            |        if (stopAtError) {
-            |          return r
-            |        }
-            |        r = r :+ errorLeaf(text = conversions.String.fromCis(ISZ(cis(i))), posOpt = posOpt)
-            |        i = i + 1
+            |      case _ => done = T
             |    }
             |  }
-            |  r = r :+ eofLeaf
+            |  r = r :+ Result.create(eofLeaf, -1)
             |  return r
             |}
             |
-            |@pure def tokenize(i: Z): Result = {
+            |@pure def tokenize(i: Z, skipHidden: B): Option[Result] = {
             |  val r = MBox(Result.error(T, i))
+            |  tokenizeH(r, i)
+            |  while (skipHidden && r.value.leaf.isHidden && cis.has(r.value.newIndex)) {
+            |    tokenizeH(r, r.value.newIndex)
+            |  }
+            |  return if (skipHidden && r.value.leaf.isHidden) None() else Some(r.value)
+            |}
+            |
+            |def tokenizeH(r: MBox[Result], i: Z): Unit = {
             |  ${(for (lexname <- lexNames) yield st"""updateToken(r, $lexname(i))""", "\n")}
-            |  return r.value
             |}
             |
             |def updateToken(r: MBox[Result], rOpt: Option[Result]): Unit = {
@@ -242,7 +249,7 @@ import org.sireum.parser.{GrammarAst => AST}
               |  if (reporter.hasError) {
               |    return None()
               |  }
-              |  val r = ${name}Parser(tokens).${parseName(first.name)}(0)
+              |  val r = ${name}Parser(Indexable.fromIsz(tokens)).${parseName(first.name)}(0)
               |  r.kind match {
               |    case Result.Kind.Normal => return Some(r.tree)
               |    case Result.Kind.LexicalError =>
@@ -251,9 +258,32 @@ import org.sireum.parser.{GrammarAst => AST}
               |    case Result.Kind.GrammaticalError =>
               |      val idx: Z = if (r.newIndex < 0) -r.newIndex else r.newIndex
               |      if (idx < tokens.size) {
-              |        reporter.error(tokens(idx).posOpt, kind, s"Could not parse token: $${tokens(idx).text}")
+              |        val token = tokens(idx).leaf
+              |        reporter.error(token.posOpt, kind, s"Could not parse token: \"$${ops.StringOps(token.text).escapeST.render}\"")
               |      } else {
-              |        reporter.error(tokens(idx - 1).posOpt, kind, "Expecting more input but reached the end")
+              |        val token = tokens(idx - 1).leaf
+              |        reporter.error(token.posOpt, kind, "Expecting more input but reached the end")
+              |      }
+              |      return None()
+              |  }
+              |}
+              |
+              |def parseStream(input: Indexable.Pos[C], reporter: message.Reporter): Option[ParseTree] = {
+              |  val it = IndexableToken(input, T)
+              |  val r = ${name}Parser(it).${parseName(first.name)}(0)
+              |  r.kind match {
+              |    case Result.Kind.Normal => return Some(r.tree)
+              |    case Result.Kind.LexicalError =>
+              |      reporter.error(input.posOpt(r.newIndex, 1), kind, s"Could not recognize token")
+              |      return None()
+              |    case Result.Kind.GrammaticalError =>
+              |      val idx: Z = if (r.newIndex < 0) -r.newIndex else r.newIndex
+              |      if (it.has(idx)) {
+              |        val token = it.at(idx).leaf
+              |        reporter.error(token.posOpt, kind, s"Could not parse token: \"$${ops.StringOps(token.text).escapeST.render}\"")
+              |      } else {
+              |        val token = it.at(idx - 1).leaf
+              |        reporter.error(token.posOpt, kind, "Expecting more input but reached the end")
               |      }
               |      return None()
               |  }
@@ -374,6 +404,52 @@ import org.sireum.parser.{GrammarAst => AST}
           |    }
           |  }
           |
+          |  @datatype class IndexableToken(val input: Indexable.Pos[C], val skipHidden: B) extends Indexable[Result] {
+          |    val lexer: ${name}Lexer = ${name}Lexer(input)
+          |
+          |    override def at(i: Z): Result = {
+          |      return _at(i)
+          |    }
+          |
+          |    override def has(i: Z): B = {
+          |      return _has(i)
+          |    }
+          |
+          |    @memoize def _has(i: Z): B = {
+          |      assert(i >= 0)
+          |      if (i == 0) {
+          |        return T
+          |      }
+          |      if (!_has(i - 1)) {
+          |        return F
+          |      }
+          |      val prev = _at(i - 1)
+          |      return prev.kind == Result.Kind.Normal && prev.newIndex != -1
+          |    }
+          |
+          |    @memoize def _at(i: Z): Result = {
+          |      if (i == 0) {
+          |        if (input.has(0)) {
+          |          lexer.tokenize(0, skipHidden) match {
+          |            case Some(result) => return result
+          |            case _ =>
+          |          }
+          |        }
+          |        return Result(Result.Kind.Normal, eofLeaf, -1)
+          |      } else {
+          |        val prev = _at(i - 1)
+          |        if (input.has(prev.newIndex)) {
+          |          lexer.tokenize(prev.newIndex, skipHidden) match {
+          |            case Some(result) => return result
+          |            case _ =>
+          |          }
+          |        }
+          |        return Result(Result.Kind.Normal, eofLeaf, -1)
+          |      }
+          |    }
+          |
+          |  }
+          |
           |  val kind: String = "${name}Parser"
           |
           |  val minChar: C = '\u0000'
@@ -381,14 +457,14 @@ import org.sireum.parser.{GrammarAst => AST}
           |
           |  ${(objectVals, "\n")}
           |
-          |  val errorLeaf: ParseTree.Leaf = ParseTree.Leaf("", "<ERROR>", u32"0x${(valCode("<ERROR>"), "")}", F, None())
-          |  val eofLeaf: ParseTree.Leaf = ParseTree.Leaf("", "EOF", u32"0x${(valCode("EOF"), "")}", F, None())
+          |  val errorLeaf: ParseTree.Leaf = ParseTree.Leaf("<ERROR>", "<ERROR>", u32"0x${(valCode("<ERROR>"), "")}", F, None())
+          |  val eofLeaf: ParseTree.Leaf = ParseTree.Leaf("<EOF>", "EOF", u32"0x${(valCode("EOF"), "")}", F, None())
           |
           |  $parserOpt
           |
           |  def lex(input: String, docInfo: message.DocInfo, skipHidden: B, stopAtError: B,
-          |          reporter: message.Reporter): ISZ[ParseTree.Leaf] = {
-          |    return ${name}Lexer(input, docInfo).tokenizeAll(skipHidden, stopAtError, reporter)
+          |          reporter: message.Reporter): ISZ[Result] = {
+          |    return ${name}Lexer(Indexable.fromIszDocInfo(conversions.String.toCis(input), docInfo)).tokenizeAll(skipHidden, stopAtError, reporter)
           |  }
           |
           |  @strictpure def offsetLength(offset: Z, length: Z): U64 =
@@ -398,7 +474,7 @@ import org.sireum.parser.{GrammarAst => AST}
           |
           |import ${name}Parser._
           |
-          |@datatype class ${name}Parser(tokens: ISZ[ParseTree.Leaf]) {
+          |@datatype class ${name}Parser(tokens: Indexable[Result]) {
           |
           |  ${(parserDefs, "\n\n")}
           |
@@ -420,9 +496,7 @@ import org.sireum.parser.{GrammarAst => AST}
           |
           |}
           |
-          |@datatype class ${name}Lexer(input: String, docInfo: message.DocInfo) {
-          |
-          |  val cis: ISZ[C] = conversions.String.toCis(input)
+          |@datatype class ${name}Lexer(cis: Indexable.Pos[C]) {
           |
           |  ${(lexerDefs, "\n\n")}
           |
@@ -501,7 +575,7 @@ import org.sireum.parser.{GrammarAst => AST}
           st"""case state"$node" => return retVal(ctx.max, ctx.resOpt, ctx.initial, ${if (noBacktrack) "T" else "F"})"""
       } else {
         val matchOpt: Option[ST] = if (cases.isEmpty) None() else Some(
-          st"""tokens(ctx.j).tipe match {
+          st"""token.tipe match {
               |  ${(cases, "\n")}
               |  case _ =>
               |}"""
@@ -593,7 +667,7 @@ import org.sireum.parser.{GrammarAst => AST}
         transitions = transitions :+ st"""case state"$node" => return retVal(ctx.max, ctx.resOpt, ctx.initial, F)"""
       } else {
         val matchOpt: Option[ST] = if (cases.isEmpty) None() else Some(
-          st"""tokens(ctx.j).tipe match {
+          st"""token.tipe match {
               |  ${(cases, "\n")}
               |  case _ =>
               |}"""
@@ -640,7 +714,14 @@ import org.sireum.parser.{GrammarAst => AST}
     st"""${if (memoize) "@memoize" else "@pure"} def $name(i: Z): Result = {
         |  val ctx = Context.create("$ruleName", $valueST, ISZ(${(for (s <- dfa.accepting.elements) yield st"""state"$s"""", ", ")}), i)
         |
-        |  while (ctx.j < tokens.size) {
+        |  while (tokens.has(ctx.j)) {
+        |    val token: ParseTree.Leaf = {
+        |      val result = tokens.at(ctx.j)
+        |      if (result.kind != Result.Kind.Normal) {
+        |        return result
+        |      }
+        |      result.leaf
+        |    }
         |    ctx.state match {
         |      ${(transitions, "\n")}
         |      case _ => halt("Infeasible")
@@ -655,7 +736,7 @@ import org.sireum.parser.{GrammarAst => AST}
 
   @strictpure def terminalST(text: String, dest: Z, plain: B, notFoundOpt: Option[ST]): ST =
     st"""case u32"0x${(valCode(text), "")}" /* ${if (plain) text else st"\"${escape(text)}\"" } */$notFoundOpt =>
-        |  ctx.trees = ctx.trees :+ tokens(ctx.j)
+        |  ctx.trees = ctx.trees :+ token
         |  ctx.j = ctx.j + 1
         |  ctx.update(state"$dest")
         |  ctx.found = T"""
@@ -666,7 +747,6 @@ import org.sireum.parser.{GrammarAst => AST}
     var offs = HashSSet.empty[Z]
 
     def rec(depth: Z, trie: LookAhead.Trie): ST = {
-
       val subs: ISZ[ST] =
         if (depth >= k) ISZ()
         else for (sub <- trie.subs.values) yield rec(depth + 1, sub)
@@ -679,21 +759,13 @@ import org.sireum.parser.{GrammarAst => AST}
         val acceptOpt: Option[ST] = if (trie.accept) Some(
           st"return $depth"
         ) else None()
-        if (depth == 0) {
-          st"""tokens($idx).tipe match {
-              |  ${(subs, "\n")}
-              |  case _ =>
-              |}
-              |$acceptOpt"""
-        } else {
-          st"""if ($size) {
-              |  tokens($idx).tipe match {
-              |    ${(subs, "\n")}
-              |    case _ =>
-              |  }
-              |}
-              |$acceptOpt"""
-        }
+        st"""if ($size && tokens.at($idx).kind == Result.Kind.Normal) {
+            |  tokens.at($idx).leaf.tipe match {
+            |    ${(subs, "\n")}
+            |    case _ =>
+            |  }
+            |}
+            |$acceptOpt"""
       }
       val cond: ST = trie.value match {
         case v: LookAhead.Case.Value.Str => st"""case u32"0x${valCode(v.value)}" /* "${escape(v.value)}" */"""
@@ -709,16 +781,18 @@ import org.sireum.parser.{GrammarAst => AST}
       r = r :+ st"shouldTry = T"
     } else {
       r = r :+
-        st"""tokens(j).tipe match {
-            |  ${(for (trie <- ruleTrie.subs.values) yield rec(1, trie), "\n")}
-            |  case _ =>
+        st"""if (tokens.at(j).kind == Result.Kind.Normal) {
+            |  tokens.at(j).leaf.tipe match {
+            |    ${(for (trie <- ruleTrie.subs.values) yield rec(1, trie), "\n")}
+            |    case _ =>
+            |  }
             |}"""
     }
 
     var vars = ISZ[ST]()
     for (i <- offs.elements) {
       vars = vars :+ st"val j$i = j + $i"
-      vars = vars :+ st"val off$i = j$i < tokens.size"
+      vars = vars :+ st"val off$i = tokens.has(j$i)"
     }
     return vars ++ r
   }
@@ -771,7 +845,7 @@ import org.sireum.parser.{GrammarAst => AST}
       } else {
         transitions = transitions :+
           st"""case state"$node" =>
-              |  val c = cis(ctx.j)
+              |  val c = cis.at(ctx.j)
               |  var found = F
               |  ${(conds, "\n")}
               |  if (!found) {
@@ -783,7 +857,7 @@ import org.sireum.parser.{GrammarAst => AST}
       st"""@pure def $name(i: Z): Z = {
           |  val ctx = LContext.create(ISZ(${(for (s <- dfa.accepting.elements) yield st"""state"$s"""", ", ")}), i)
           |
-          |  while (ctx.j < cis.size) {
+          |  while (cis.has(ctx.j)) {
           |    ctx.state match {
           |      ${(transitions, "\n")}
           |      case _ => halt("Infeasible")
@@ -820,7 +894,7 @@ import org.sireum.parser.{GrammarAst => AST}
   def genLiteralC(c: C, name: String): ST = {
     val r: ST =
       st"""@pure def $name(i: Z): Z = {
-          |  if (i < cis.size && cis(i) === ${c2ST(c)}) {
+          |  if (cis.has(i) && cis.at(i) === ${c2ST(c)}) {
           |    return i + 1
           |  }
           |  return -1
@@ -831,10 +905,10 @@ import org.sireum.parser.{GrammarAst => AST}
   def genLiteralString(s: String, name: String): ST = {
     val cis = conversions.String.toCis(s)
     val sts: ISZ[ST] = for (i <- cis.indices) yield
-      if (i == 0) st"cis(i) === ${c2ST(cis(i))}" else st"cis(i + $i) === ${c2ST(cis(i))}"
+      if (i == 0) st"cis.at(i) === ${c2ST(cis(i))}" else st"cis.at(i + $i) === ${c2ST(cis(i))}"
     val r =
       st"""@pure def $name(i: Z): Z = {
-          |  if (i + ${s.size} >= cis.size) {
+          |  if (!cis.has(i + ${s.size})) {
           |    return -1
           |  }
           |  if (${(sts, " && ")}) {
