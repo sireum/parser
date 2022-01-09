@@ -61,17 +61,17 @@ block: '(' alt ( '|' alt )* ')' ;
 
 alt: element+ ;
 
-element: ( atom | block ) ( '?' |	'*' |	'+' )? ;
+element: ( atom | block ) ( '?' | '*' | '+' )? ;
 
 atom: range | terminal | not | PID ;
 
-not:	'~' (	CHAR | STRING | block ) ;
+not: '~' ( CHAR | STRING | block ) ;
 
 range: CHAR '..' CHAR ;
 
 terminal: LID | CHAR | STRING | '.'	;
 	
-id:	LID |	PID ;
+id:	LID | PID ;
 
 channel: '{' '$channel' '=' LID ';' '}' ;
 

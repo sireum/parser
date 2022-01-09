@@ -1,4 +1,4 @@
- package org.sireum.parser;
+package org.sireum.parser;
 
 import org.antlr.runtime.*;
 import java.util.Stack;
@@ -75,7 +75,7 @@ public class SireumAntlr3Parser extends Parser {
 		return adaptor;
 	}
 	@Override public String[] getTokenNames() { return SireumAntlr3Parser.tokenNames; }
-	@Override public String getGrammarFileName() { return "/Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g"; }
+	@Override public String getGrammarFileName() { return "parser/jvm/src/main/resources/SireumAntlr3.g"; }
 
 
 	public static class grammarDef_return extends ParserRuleReturnScope {
@@ -86,7 +86,7 @@ public class SireumAntlr3Parser extends Parser {
 
 
 	// $ANTLR start "grammarDef"
-	// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:42:1: grammarDef : 'grammar' id ';' ( optionsSpec )? ( PHEADER )? ( LHEADER )? ( parserRule )* ( lexerRule )* EOF ;
+	// parser/jvm/src/main/resources/SireumAntlr3.g:42:1: grammarDef : 'grammar' id ';' ( optionsSpec )? ( PHEADER )? ( LHEADER )? ( parserRule )* ( lexerRule )* EOF ;
 	public final SireumAntlr3Parser.grammarDef_return grammarDef() throws RecognitionException {
 		SireumAntlr3Parser.grammarDef_return retval = new SireumAntlr3Parser.grammarDef_return();
 		retval.start = input.LT(1);
@@ -110,8 +110,8 @@ public class SireumAntlr3Parser extends Parser {
 		Object EOF9_tree=null;
 
 		try {
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:42:11: ( 'grammar' id ';' ( optionsSpec )? ( PHEADER )? ( LHEADER )? ( parserRule )* ( lexerRule )* EOF )
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:42:13: 'grammar' id ';' ( optionsSpec )? ( PHEADER )? ( LHEADER )? ( parserRule )* ( lexerRule )* EOF
+			// parser/jvm/src/main/resources/SireumAntlr3.g:42:11: ( 'grammar' id ';' ( optionsSpec )? ( PHEADER )? ( LHEADER )? ( parserRule )* ( lexerRule )* EOF )
+			// parser/jvm/src/main/resources/SireumAntlr3.g:42:13: 'grammar' id ';' ( optionsSpec )? ( PHEADER )? ( LHEADER )? ( parserRule )* ( lexerRule )* EOF
 			{
 			root_0 = (Object)adaptor.nil();
 
@@ -130,7 +130,7 @@ public class SireumAntlr3Parser extends Parser {
 			char_literal3_tree = (Object)adaptor.create(char_literal3);
 			adaptor.addChild(root_0, char_literal3_tree);
 
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:42:30: ( optionsSpec )?
+			// parser/jvm/src/main/resources/SireumAntlr3.g:42:30: ( optionsSpec )?
 			int alt1=2;
 			int LA1_0 = input.LA(1);
 			if ( (LA1_0==30) ) {
@@ -138,7 +138,7 @@ public class SireumAntlr3Parser extends Parser {
 			}
 			switch (alt1) {
 				case 1 :
-					// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:42:30: optionsSpec
+					// parser/jvm/src/main/resources/SireumAntlr3.g:42:30: optionsSpec
 					{
 					pushFollow(FOLLOW_optionsSpec_in_grammarDef58);
 					optionsSpec4=optionsSpec();
@@ -151,7 +151,7 @@ public class SireumAntlr3Parser extends Parser {
 
 			}
 
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:42:43: ( PHEADER )?
+			// parser/jvm/src/main/resources/SireumAntlr3.g:42:43: ( PHEADER )?
 			int alt2=2;
 			int LA2_0 = input.LA(1);
 			if ( (LA2_0==PHEADER) ) {
@@ -159,7 +159,7 @@ public class SireumAntlr3Parser extends Parser {
 			}
 			switch (alt2) {
 				case 1 :
-					// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:42:43: PHEADER
+					// parser/jvm/src/main/resources/SireumAntlr3.g:42:43: PHEADER
 					{
 					PHEADER5=(Token)match(input,PHEADER,FOLLOW_PHEADER_in_grammarDef61); 
 					PHEADER5_tree = (Object)adaptor.create(PHEADER5);
@@ -170,7 +170,7 @@ public class SireumAntlr3Parser extends Parser {
 
 			}
 
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:42:52: ( LHEADER )?
+			// parser/jvm/src/main/resources/SireumAntlr3.g:42:52: ( LHEADER )?
 			int alt3=2;
 			int LA3_0 = input.LA(1);
 			if ( (LA3_0==LHEADER) ) {
@@ -178,7 +178,7 @@ public class SireumAntlr3Parser extends Parser {
 			}
 			switch (alt3) {
 				case 1 :
-					// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:42:52: LHEADER
+					// parser/jvm/src/main/resources/SireumAntlr3.g:42:52: LHEADER
 					{
 					LHEADER6=(Token)match(input,LHEADER,FOLLOW_LHEADER_in_grammarDef64); 
 					LHEADER6_tree = (Object)adaptor.create(LHEADER6);
@@ -189,7 +189,7 @@ public class SireumAntlr3Parser extends Parser {
 
 			}
 
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:42:61: ( parserRule )*
+			// parser/jvm/src/main/resources/SireumAntlr3.g:42:61: ( parserRule )*
 			loop4:
 			while (true) {
 				int alt4=2;
@@ -200,7 +200,7 @@ public class SireumAntlr3Parser extends Parser {
 
 				switch (alt4) {
 				case 1 :
-					// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:42:61: parserRule
+					// parser/jvm/src/main/resources/SireumAntlr3.g:42:61: parserRule
 					{
 					pushFollow(FOLLOW_parserRule_in_grammarDef67);
 					parserRule7=parserRule();
@@ -216,7 +216,7 @@ public class SireumAntlr3Parser extends Parser {
 				}
 			}
 
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:42:73: ( lexerRule )*
+			// parser/jvm/src/main/resources/SireumAntlr3.g:42:73: ( lexerRule )*
 			loop5:
 			while (true) {
 				int alt5=2;
@@ -227,7 +227,7 @@ public class SireumAntlr3Parser extends Parser {
 
 				switch (alt5) {
 				case 1 :
-					// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:42:73: lexerRule
+					// parser/jvm/src/main/resources/SireumAntlr3.g:42:73: lexerRule
 					{
 					pushFollow(FOLLOW_lexerRule_in_grammarDef70);
 					lexerRule8=lexerRule();
@@ -276,7 +276,7 @@ public class SireumAntlr3Parser extends Parser {
 
 
 	// $ANTLR start "optionsSpec"
-	// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:44:1: optionsSpec : 'options' '{' ( option )+ '}' ;
+	// parser/jvm/src/main/resources/SireumAntlr3.g:44:1: optionsSpec : 'options' '{' ( option )+ '}' ;
 	public final SireumAntlr3Parser.optionsSpec_return optionsSpec() throws RecognitionException {
 		SireumAntlr3Parser.optionsSpec_return retval = new SireumAntlr3Parser.optionsSpec_return();
 		retval.start = input.LT(1);
@@ -293,8 +293,8 @@ public class SireumAntlr3Parser extends Parser {
 		Object char_literal13_tree=null;
 
 		try {
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:44:12: ( 'options' '{' ( option )+ '}' )
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:44:14: 'options' '{' ( option )+ '}'
+			// parser/jvm/src/main/resources/SireumAntlr3.g:44:12: ( 'options' '{' ( option )+ '}' )
+			// parser/jvm/src/main/resources/SireumAntlr3.g:44:14: 'options' '{' ( option )+ '}'
 			{
 			root_0 = (Object)adaptor.nil();
 
@@ -307,7 +307,7 @@ public class SireumAntlr3Parser extends Parser {
 			char_literal11_tree = (Object)adaptor.create(char_literal11);
 			adaptor.addChild(root_0, char_literal11_tree);
 
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:44:28: ( option )+
+			// parser/jvm/src/main/resources/SireumAntlr3.g:44:28: ( option )+
 			int cnt6=0;
 			loop6:
 			while (true) {
@@ -319,7 +319,7 @@ public class SireumAntlr3Parser extends Parser {
 
 				switch (alt6) {
 				case 1 :
-					// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:44:28: option
+					// parser/jvm/src/main/resources/SireumAntlr3.g:44:28: option
 					{
 					pushFollow(FOLLOW_option_in_optionsSpec85);
 					option12=option();
@@ -371,7 +371,7 @@ public class SireumAntlr3Parser extends Parser {
 
 
 	// $ANTLR start "option"
-	// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:46:1: option : id '=' optionValue ';' ;
+	// parser/jvm/src/main/resources/SireumAntlr3.g:46:1: option : id '=' optionValue ';' ;
 	public final SireumAntlr3Parser.option_return option() throws RecognitionException {
 		SireumAntlr3Parser.option_return retval = new SireumAntlr3Parser.option_return();
 		retval.start = input.LT(1);
@@ -387,8 +387,8 @@ public class SireumAntlr3Parser extends Parser {
 		Object char_literal17_tree=null;
 
 		try {
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:46:7: ( id '=' optionValue ';' )
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:46:9: id '=' optionValue ';'
+			// parser/jvm/src/main/resources/SireumAntlr3.g:46:7: ( id '=' optionValue ';' )
+			// parser/jvm/src/main/resources/SireumAntlr3.g:46:9: id '=' optionValue ';'
 			{
 			root_0 = (Object)adaptor.nil();
 
@@ -442,7 +442,7 @@ public class SireumAntlr3Parser extends Parser {
 
 
 	// $ANTLR start "optionValue"
-	// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:48:1: optionValue : ( id | INT );
+	// parser/jvm/src/main/resources/SireumAntlr3.g:48:1: optionValue : ( id | INT );
 	public final SireumAntlr3Parser.optionValue_return optionValue() throws RecognitionException {
 		SireumAntlr3Parser.optionValue_return retval = new SireumAntlr3Parser.optionValue_return();
 		retval.start = input.LT(1);
@@ -455,7 +455,7 @@ public class SireumAntlr3Parser extends Parser {
 		Object INT19_tree=null;
 
 		try {
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:48:12: ( id | INT )
+			// parser/jvm/src/main/resources/SireumAntlr3.g:48:12: ( id | INT )
 			int alt7=2;
 			int LA7_0 = input.LA(1);
 			if ( (LA7_0==LID||LA7_0==PID) ) {
@@ -473,7 +473,7 @@ public class SireumAntlr3Parser extends Parser {
 
 			switch (alt7) {
 				case 1 :
-					// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:48:14: id
+					// parser/jvm/src/main/resources/SireumAntlr3.g:48:14: id
 					{
 					root_0 = (Object)adaptor.nil();
 
@@ -487,7 +487,7 @@ public class SireumAntlr3Parser extends Parser {
 					}
 					break;
 				case 2 :
-					// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:48:19: INT
+					// parser/jvm/src/main/resources/SireumAntlr3.g:48:19: INT
 					{
 					root_0 = (Object)adaptor.nil();
 
@@ -527,7 +527,7 @@ public class SireumAntlr3Parser extends Parser {
 
 
 	// $ANTLR start "parserRule"
-	// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:50:1: parserRule : PID ':' alt ( '|' alt )* ';' ;
+	// parser/jvm/src/main/resources/SireumAntlr3.g:50:1: parserRule : PID ':' alt ( '|' alt )* ';' ;
 	public final SireumAntlr3Parser.parserRule_return parserRule() throws RecognitionException {
 		SireumAntlr3Parser.parserRule_return retval = new SireumAntlr3Parser.parserRule_return();
 		retval.start = input.LT(1);
@@ -547,8 +547,8 @@ public class SireumAntlr3Parser extends Parser {
 		Object char_literal25_tree=null;
 
 		try {
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:50:11: ( PID ':' alt ( '|' alt )* ';' )
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:50:13: PID ':' alt ( '|' alt )* ';'
+			// parser/jvm/src/main/resources/SireumAntlr3.g:50:11: ( PID ':' alt ( '|' alt )* ';' )
+			// parser/jvm/src/main/resources/SireumAntlr3.g:50:13: PID ':' alt ( '|' alt )* ';'
 			{
 			root_0 = (Object)adaptor.nil();
 
@@ -567,7 +567,7 @@ public class SireumAntlr3Parser extends Parser {
 
 			adaptor.addChild(root_0, alt22.getTree());
 
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:50:25: ( '|' alt )*
+			// parser/jvm/src/main/resources/SireumAntlr3.g:50:25: ( '|' alt )*
 			loop8:
 			while (true) {
 				int alt8=2;
@@ -578,7 +578,7 @@ public class SireumAntlr3Parser extends Parser {
 
 				switch (alt8) {
 				case 1 :
-					// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:50:27: '|' alt
+					// parser/jvm/src/main/resources/SireumAntlr3.g:50:27: '|' alt
 					{
 					char_literal23=(Token)match(input,32,FOLLOW_32_in_parserRule132); 
 					char_literal23_tree = (Object)adaptor.create(char_literal23);
@@ -631,7 +631,7 @@ public class SireumAntlr3Parser extends Parser {
 
 
 	// $ANTLR start "lexerRule"
-	// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:52:1: lexerRule : ( 'fragment' )? LID ':' alt ( ( '|' alt )+ | channel ( '|' alt channel )* )? ';' ;
+	// parser/jvm/src/main/resources/SireumAntlr3.g:52:1: lexerRule : ( 'fragment' )? LID ':' alt ( ( '|' alt )+ | channel ( '|' alt channel )* )? ';' ;
 	public final SireumAntlr3Parser.lexerRule_return lexerRule() throws RecognitionException {
 		SireumAntlr3Parser.lexerRule_return retval = new SireumAntlr3Parser.lexerRule_return();
 		retval.start = input.LT(1);
@@ -658,13 +658,13 @@ public class SireumAntlr3Parser extends Parser {
 		Object char_literal36_tree=null;
 
 		try {
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:52:10: ( ( 'fragment' )? LID ':' alt ( ( '|' alt )+ | channel ( '|' alt channel )* )? ';' )
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:52:12: ( 'fragment' )? LID ':' alt ( ( '|' alt )+ | channel ( '|' alt channel )* )? ';'
+			// parser/jvm/src/main/resources/SireumAntlr3.g:52:10: ( ( 'fragment' )? LID ':' alt ( ( '|' alt )+ | channel ( '|' alt channel )* )? ';' )
+			// parser/jvm/src/main/resources/SireumAntlr3.g:52:12: ( 'fragment' )? LID ':' alt ( ( '|' alt )+ | channel ( '|' alt channel )* )? ';'
 			{
 			root_0 = (Object)adaptor.nil();
 
 
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:52:12: ( 'fragment' )?
+			// parser/jvm/src/main/resources/SireumAntlr3.g:52:12: ( 'fragment' )?
 			int alt9=2;
 			int LA9_0 = input.LA(1);
 			if ( (LA9_0==28) ) {
@@ -672,7 +672,7 @@ public class SireumAntlr3Parser extends Parser {
 			}
 			switch (alt9) {
 				case 1 :
-					// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:52:12: 'fragment'
+					// parser/jvm/src/main/resources/SireumAntlr3.g:52:12: 'fragment'
 					{
 					string_literal26=(Token)match(input,28,FOLLOW_28_in_lexerRule147); 
 					string_literal26_tree = (Object)adaptor.create(string_literal26);
@@ -697,7 +697,7 @@ public class SireumAntlr3Parser extends Parser {
 
 			adaptor.addChild(root_0, alt29.getTree());
 
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:53:12: ( ( '|' alt )+ | channel ( '|' alt channel )* )?
+			// parser/jvm/src/main/resources/SireumAntlr3.g:53:12: ( ( '|' alt )+ | channel ( '|' alt channel )* )?
 			int alt12=3;
 			int LA12_0 = input.LA(1);
 			if ( (LA12_0==32) ) {
@@ -708,9 +708,9 @@ public class SireumAntlr3Parser extends Parser {
 			}
 			switch (alt12) {
 				case 1 :
-					// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:54:14: ( '|' alt )+
+					// parser/jvm/src/main/resources/SireumAntlr3.g:54:14: ( '|' alt )+
 					{
-					// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:54:14: ( '|' alt )+
+					// parser/jvm/src/main/resources/SireumAntlr3.g:54:14: ( '|' alt )+
 					int cnt10=0;
 					loop10:
 					while (true) {
@@ -722,7 +722,7 @@ public class SireumAntlr3Parser extends Parser {
 
 						switch (alt10) {
 						case 1 :
-							// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:54:16: '|' alt
+							// parser/jvm/src/main/resources/SireumAntlr3.g:54:16: '|' alt
 							{
 							char_literal30=(Token)match(input,32,FOLLOW_32_in_lexerRule186); 
 							char_literal30_tree = (Object)adaptor.create(char_literal30);
@@ -748,7 +748,7 @@ public class SireumAntlr3Parser extends Parser {
 					}
 					break;
 				case 2 :
-					// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:55:14: channel ( '|' alt channel )*
+					// parser/jvm/src/main/resources/SireumAntlr3.g:55:14: channel ( '|' alt channel )*
 					{
 					pushFollow(FOLLOW_channel_in_lexerRule206);
 					channel32=channel();
@@ -756,7 +756,7 @@ public class SireumAntlr3Parser extends Parser {
 
 					adaptor.addChild(root_0, channel32.getTree());
 
-					// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:55:22: ( '|' alt channel )*
+					// parser/jvm/src/main/resources/SireumAntlr3.g:55:22: ( '|' alt channel )*
 					loop11:
 					while (true) {
 						int alt11=2;
@@ -767,7 +767,7 @@ public class SireumAntlr3Parser extends Parser {
 
 						switch (alt11) {
 						case 1 :
-							// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:55:24: '|' alt channel
+							// parser/jvm/src/main/resources/SireumAntlr3.g:55:24: '|' alt channel
 							{
 							char_literal33=(Token)match(input,32,FOLLOW_32_in_lexerRule210); 
 							char_literal33_tree = (Object)adaptor.create(char_literal33);
@@ -831,7 +831,7 @@ public class SireumAntlr3Parser extends Parser {
 
 
 	// $ANTLR start "block"
-	// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:60:1: block : '(' alt ( '|' alt )* ')' ;
+	// parser/jvm/src/main/resources/SireumAntlr3.g:60:1: block : '(' alt ( '|' alt )* ')' ;
 	public final SireumAntlr3Parser.block_return block() throws RecognitionException {
 		SireumAntlr3Parser.block_return retval = new SireumAntlr3Parser.block_return();
 		retval.start = input.LT(1);
@@ -849,8 +849,8 @@ public class SireumAntlr3Parser extends Parser {
 		Object char_literal41_tree=null;
 
 		try {
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:60:6: ( '(' alt ( '|' alt )* ')' )
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:60:8: '(' alt ( '|' alt )* ')'
+			// parser/jvm/src/main/resources/SireumAntlr3.g:60:6: ( '(' alt ( '|' alt )* ')' )
+			// parser/jvm/src/main/resources/SireumAntlr3.g:60:8: '(' alt ( '|' alt )* ')'
 			{
 			root_0 = (Object)adaptor.nil();
 
@@ -865,7 +865,7 @@ public class SireumAntlr3Parser extends Parser {
 
 			adaptor.addChild(root_0, alt38.getTree());
 
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:60:16: ( '|' alt )*
+			// parser/jvm/src/main/resources/SireumAntlr3.g:60:16: ( '|' alt )*
 			loop13:
 			while (true) {
 				int alt13=2;
@@ -876,7 +876,7 @@ public class SireumAntlr3Parser extends Parser {
 
 				switch (alt13) {
 				case 1 :
-					// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:60:18: '|' alt
+					// parser/jvm/src/main/resources/SireumAntlr3.g:60:18: '|' alt
 					{
 					char_literal39=(Token)match(input,32,FOLLOW_32_in_block269); 
 					char_literal39_tree = (Object)adaptor.create(char_literal39);
@@ -929,7 +929,7 @@ public class SireumAntlr3Parser extends Parser {
 
 
 	// $ANTLR start "alt"
-	// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:62:1: alt : ( element )+ ;
+	// parser/jvm/src/main/resources/SireumAntlr3.g:62:1: alt : ( element )+ ;
 	public final SireumAntlr3Parser.alt_return alt() throws RecognitionException {
 		SireumAntlr3Parser.alt_return retval = new SireumAntlr3Parser.alt_return();
 		retval.start = input.LT(1);
@@ -940,13 +940,13 @@ public class SireumAntlr3Parser extends Parser {
 
 
 		try {
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:62:4: ( ( element )+ )
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:62:6: ( element )+
+			// parser/jvm/src/main/resources/SireumAntlr3.g:62:4: ( ( element )+ )
+			// parser/jvm/src/main/resources/SireumAntlr3.g:62:6: ( element )+
 			{
 			root_0 = (Object)adaptor.nil();
 
 
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:62:6: ( element )+
+			// parser/jvm/src/main/resources/SireumAntlr3.g:62:6: ( element )+
 			int cnt14=0;
 			loop14:
 			while (true) {
@@ -958,7 +958,7 @@ public class SireumAntlr3Parser extends Parser {
 
 				switch (alt14) {
 				case 1 :
-					// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:62:6: element
+					// parser/jvm/src/main/resources/SireumAntlr3.g:62:6: element
 					{
 					pushFollow(FOLLOW_element_in_alt284);
 					element42=element();
@@ -1006,7 +1006,7 @@ public class SireumAntlr3Parser extends Parser {
 
 
 	// $ANTLR start "element"
-	// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:64:1: element : ( atom | block ) ( '?' | '*' | '+' )? ;
+	// parser/jvm/src/main/resources/SireumAntlr3.g:64:1: element : ( atom | block ) ( '?' | '*' | '+' )? ;
 	public final SireumAntlr3Parser.element_return element() throws RecognitionException {
 		SireumAntlr3Parser.element_return retval = new SireumAntlr3Parser.element_return();
 		retval.start = input.LT(1);
@@ -1020,13 +1020,13 @@ public class SireumAntlr3Parser extends Parser {
 		Object set45_tree=null;
 
 		try {
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:64:8: ( ( atom | block ) ( '?' | '*' | '+' )? )
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:64:10: ( atom | block ) ( '?' | '*' | '+' )?
+			// parser/jvm/src/main/resources/SireumAntlr3.g:64:8: ( ( atom | block ) ( '?' | '*' | '+' )? )
+			// parser/jvm/src/main/resources/SireumAntlr3.g:64:10: ( atom | block ) ( '?' | '*' | '+' )?
 			{
 			root_0 = (Object)adaptor.nil();
 
 
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:64:10: ( atom | block )
+			// parser/jvm/src/main/resources/SireumAntlr3.g:64:10: ( atom | block )
 			int alt15=2;
 			int LA15_0 = input.LA(1);
 			if ( (LA15_0==CHAR||LA15_0==LID||(LA15_0 >= PID && LA15_0 <= STRING)||LA15_0==22||LA15_0==34) ) {
@@ -1044,7 +1044,7 @@ public class SireumAntlr3Parser extends Parser {
 
 			switch (alt15) {
 				case 1 :
-					// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:64:12: atom
+					// parser/jvm/src/main/resources/SireumAntlr3.g:64:12: atom
 					{
 					pushFollow(FOLLOW_atom_in_element295);
 					atom43=atom();
@@ -1055,7 +1055,7 @@ public class SireumAntlr3Parser extends Parser {
 					}
 					break;
 				case 2 :
-					// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:64:19: block
+					// parser/jvm/src/main/resources/SireumAntlr3.g:64:19: block
 					{
 					pushFollow(FOLLOW_block_in_element299);
 					block44=block();
@@ -1068,7 +1068,7 @@ public class SireumAntlr3Parser extends Parser {
 
 			}
 
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:64:27: ( '?' | '*' | '+' )?
+			// parser/jvm/src/main/resources/SireumAntlr3.g:64:27: ( '?' | '*' | '+' )?
 			int alt16=2;
 			int LA16_0 = input.LA(1);
 			if ( ((LA16_0 >= 20 && LA16_0 <= 21)||LA16_0==27) ) {
@@ -1076,7 +1076,7 @@ public class SireumAntlr3Parser extends Parser {
 			}
 			switch (alt16) {
 				case 1 :
-					// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:
+					// parser/jvm/src/main/resources/SireumAntlr3.g:
 					{
 					set45=input.LT(1);
 					if ( (input.LA(1) >= 20 && input.LA(1) <= 21)||input.LA(1)==27 ) {
@@ -1122,7 +1122,7 @@ public class SireumAntlr3Parser extends Parser {
 
 
 	// $ANTLR start "atom"
-	// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:66:1: atom : ( range | terminal | not | PID );
+	// parser/jvm/src/main/resources/SireumAntlr3.g:66:1: atom : ( range | terminal | not | PID );
 	public final SireumAntlr3Parser.atom_return atom() throws RecognitionException {
 		SireumAntlr3Parser.atom_return retval = new SireumAntlr3Parser.atom_return();
 		retval.start = input.LT(1);
@@ -1137,7 +1137,7 @@ public class SireumAntlr3Parser extends Parser {
 		Object PID49_tree=null;
 
 		try {
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:66:5: ( range | terminal | not | PID )
+			// parser/jvm/src/main/resources/SireumAntlr3.g:66:5: ( range | terminal | not | PID )
 			int alt17=4;
 			switch ( input.LA(1) ) {
 			case CHAR:
@@ -1188,7 +1188,7 @@ public class SireumAntlr3Parser extends Parser {
 			}
 			switch (alt17) {
 				case 1 :
-					// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:66:7: range
+					// parser/jvm/src/main/resources/SireumAntlr3.g:66:7: range
 					{
 					root_0 = (Object)adaptor.nil();
 
@@ -1202,7 +1202,7 @@ public class SireumAntlr3Parser extends Parser {
 					}
 					break;
 				case 2 :
-					// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:66:15: terminal
+					// parser/jvm/src/main/resources/SireumAntlr3.g:66:15: terminal
 					{
 					root_0 = (Object)adaptor.nil();
 
@@ -1216,7 +1216,7 @@ public class SireumAntlr3Parser extends Parser {
 					}
 					break;
 				case 3 :
-					// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:66:26: not
+					// parser/jvm/src/main/resources/SireumAntlr3.g:66:26: not
 					{
 					root_0 = (Object)adaptor.nil();
 
@@ -1230,7 +1230,7 @@ public class SireumAntlr3Parser extends Parser {
 					}
 					break;
 				case 4 :
-					// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:66:32: PID
+					// parser/jvm/src/main/resources/SireumAntlr3.g:66:32: PID
 					{
 					root_0 = (Object)adaptor.nil();
 
@@ -1270,7 +1270,7 @@ public class SireumAntlr3Parser extends Parser {
 
 
 	// $ANTLR start "not"
-	// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:68:1: not : '~' ( CHAR | STRING | block ) ;
+	// parser/jvm/src/main/resources/SireumAntlr3.g:68:1: not : '~' ( CHAR | STRING | block ) ;
 	public final SireumAntlr3Parser.not_return not() throws RecognitionException {
 		SireumAntlr3Parser.not_return retval = new SireumAntlr3Parser.not_return();
 		retval.start = input.LT(1);
@@ -1287,8 +1287,8 @@ public class SireumAntlr3Parser extends Parser {
 		Object STRING52_tree=null;
 
 		try {
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:68:4: ( '~' ( CHAR | STRING | block ) )
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:68:6: '~' ( CHAR | STRING | block )
+			// parser/jvm/src/main/resources/SireumAntlr3.g:68:4: ( '~' ( CHAR | STRING | block ) )
+			// parser/jvm/src/main/resources/SireumAntlr3.g:68:6: '~' ( CHAR | STRING | block )
 			{
 			root_0 = (Object)adaptor.nil();
 
@@ -1297,7 +1297,7 @@ public class SireumAntlr3Parser extends Parser {
 			char_literal50_tree = (Object)adaptor.create(char_literal50);
 			adaptor.addChild(root_0, char_literal50_tree);
 
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:68:10: ( CHAR | STRING | block )
+			// parser/jvm/src/main/resources/SireumAntlr3.g:68:10: ( CHAR | STRING | block )
 			int alt18=3;
 			switch ( input.LA(1) ) {
 			case CHAR:
@@ -1322,7 +1322,7 @@ public class SireumAntlr3Parser extends Parser {
 			}
 			switch (alt18) {
 				case 1 :
-					// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:68:12: CHAR
+					// parser/jvm/src/main/resources/SireumAntlr3.g:68:12: CHAR
 					{
 					CHAR51=(Token)match(input,CHAR,FOLLOW_CHAR_in_not348); 
 					CHAR51_tree = (Object)adaptor.create(CHAR51);
@@ -1331,7 +1331,7 @@ public class SireumAntlr3Parser extends Parser {
 					}
 					break;
 				case 2 :
-					// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:68:19: STRING
+					// parser/jvm/src/main/resources/SireumAntlr3.g:68:19: STRING
 					{
 					STRING52=(Token)match(input,STRING,FOLLOW_STRING_in_not352); 
 					STRING52_tree = (Object)adaptor.create(STRING52);
@@ -1340,7 +1340,7 @@ public class SireumAntlr3Parser extends Parser {
 					}
 					break;
 				case 3 :
-					// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:68:28: block
+					// parser/jvm/src/main/resources/SireumAntlr3.g:68:28: block
 					{
 					pushFollow(FOLLOW_block_in_not356);
 					block53=block();
@@ -1382,7 +1382,7 @@ public class SireumAntlr3Parser extends Parser {
 
 
 	// $ANTLR start "range"
-	// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:70:1: range : CHAR '..' CHAR ;
+	// parser/jvm/src/main/resources/SireumAntlr3.g:70:1: range : CHAR '..' CHAR ;
 	public final SireumAntlr3Parser.range_return range() throws RecognitionException {
 		SireumAntlr3Parser.range_return retval = new SireumAntlr3Parser.range_return();
 		retval.start = input.LT(1);
@@ -1398,8 +1398,8 @@ public class SireumAntlr3Parser extends Parser {
 		Object CHAR56_tree=null;
 
 		try {
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:70:6: ( CHAR '..' CHAR )
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:70:8: CHAR '..' CHAR
+			// parser/jvm/src/main/resources/SireumAntlr3.g:70:6: ( CHAR '..' CHAR )
+			// parser/jvm/src/main/resources/SireumAntlr3.g:70:8: CHAR '..' CHAR
 			{
 			root_0 = (Object)adaptor.nil();
 
@@ -1445,7 +1445,7 @@ public class SireumAntlr3Parser extends Parser {
 
 
 	// $ANTLR start "terminal"
-	// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:72:1: terminal : ( LID | CHAR | STRING | '.' );
+	// parser/jvm/src/main/resources/SireumAntlr3.g:72:1: terminal : ( LID | CHAR | STRING | '.' );
 	public final SireumAntlr3Parser.terminal_return terminal() throws RecognitionException {
 		SireumAntlr3Parser.terminal_return retval = new SireumAntlr3Parser.terminal_return();
 		retval.start = input.LT(1);
@@ -1457,8 +1457,8 @@ public class SireumAntlr3Parser extends Parser {
 		Object set57_tree=null;
 
 		try {
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:72:9: ( LID | CHAR | STRING | '.' )
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:
+			// parser/jvm/src/main/resources/SireumAntlr3.g:72:9: ( LID | CHAR | STRING | '.' )
+			// parser/jvm/src/main/resources/SireumAntlr3.g:
 			{
 			root_0 = (Object)adaptor.nil();
 
@@ -1502,7 +1502,7 @@ public class SireumAntlr3Parser extends Parser {
 
 
 	// $ANTLR start "id"
-	// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:74:1: id : ( LID | PID );
+	// parser/jvm/src/main/resources/SireumAntlr3.g:74:1: id : ( LID | PID );
 	public final SireumAntlr3Parser.id_return id() throws RecognitionException {
 		SireumAntlr3Parser.id_return retval = new SireumAntlr3Parser.id_return();
 		retval.start = input.LT(1);
@@ -1514,8 +1514,8 @@ public class SireumAntlr3Parser extends Parser {
 		Object set58_tree=null;
 
 		try {
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:74:3: ( LID | PID )
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:
+			// parser/jvm/src/main/resources/SireumAntlr3.g:74:3: ( LID | PID )
+			// parser/jvm/src/main/resources/SireumAntlr3.g:
 			{
 			root_0 = (Object)adaptor.nil();
 
@@ -1559,7 +1559,7 @@ public class SireumAntlr3Parser extends Parser {
 
 
 	// $ANTLR start "channel"
-	// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:76:1: channel : '{' '$channel' '=' LID ';' '}' ;
+	// parser/jvm/src/main/resources/SireumAntlr3.g:76:1: channel : '{' '$channel' '=' LID ';' '}' ;
 	public final SireumAntlr3Parser.channel_return channel() throws RecognitionException {
 		SireumAntlr3Parser.channel_return retval = new SireumAntlr3Parser.channel_return();
 		retval.start = input.LT(1);
@@ -1581,8 +1581,8 @@ public class SireumAntlr3Parser extends Parser {
 		Object char_literal64_tree=null;
 
 		try {
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:76:8: ( '{' '$channel' '=' LID ';' '}' )
-			// /Users/robby/Repositories/Robby/slang-ll1/jvm/src/main/resources/SireumAntlr3.g:76:10: '{' '$channel' '=' LID ';' '}'
+			// parser/jvm/src/main/resources/SireumAntlr3.g:76:8: ( '{' '$channel' '=' LID ';' '}' )
+			// parser/jvm/src/main/resources/SireumAntlr3.g:76:10: '{' '$channel' '=' LID ';' '}'
 			{
 			root_0 = (Object)adaptor.nil();
 
