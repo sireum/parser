@@ -211,9 +211,9 @@ import org.sireum.parser.{GrammarAst => AST}
         objectVals = objectVals :+ st"""val T_${p._1}: U32 = $valueST"""
         val (parserST, cds): (ST, ISZ[String]) =
           if (predict && !backtracking) genPredictiveParserDfa(k, memoize, backtracking, parseName(p._1), p._1,
-            st"$valueST /* ${p._1} */", p._2._1, p._2._2)
+            valueST, p._2._1, p._2._2)
           else genBacktrackingParserDfa(memoize, predict, parseName(p._1), p._1,
-            st"$valueST /* ${p._1} */", p._2._1, p._2._2)
+            valueST, p._2._1, p._2._2)
         parserDefs = parserDefs :+ parserST
         condDefs = condDefs ++ cds
       }
@@ -266,7 +266,7 @@ import org.sireum.parser.{GrammarAst => AST}
               |  }
               |}
               |
-              |def parseStream(input: Indexable.Pos[C], reporter: message.Reporter): Option[ParseTree] = {
+              |def parseIndexable(input: Indexable.Pos[C], reporter: message.Reporter): Option[ParseTree] = {
               |  val it = IndexableToken(input, T)
               |  val r = ${name}Parser(it).${parseName(first.name)}(0)
               |  r.kind match {
@@ -448,7 +448,6 @@ import org.sireum.parser.{GrammarAst => AST}
           |            case _ =>
           |          }
           |        }
-          |        return Result(Result.Kind.Normal, eofLeaf, -1)
           |      } else {
           |        val prev = _at(i - 1)
           |        if (input.has(prev.newIndex)) {
@@ -457,8 +456,8 @@ import org.sireum.parser.{GrammarAst => AST}
           |            case _ =>
           |          }
           |        }
-          |        return Result(Result.Kind.Normal, eofLeaf, -1)
           |      }
+          |      return Result(Result.Kind.Normal, eofLeaf, -1)
           |    }
           |
           |  }
@@ -565,21 +564,17 @@ import org.sireum.parser.{GrammarAst => AST}
           }
         }
       }
-      var notFoundOpt: Option[ST] = if (refNameDests.isEmpty) None() else Some(st" if !ctx.found")
       for (t <- edgesOf(dfa, node)) {
         val (dest, lo, hi) = t
         for (i <- lo to hi) {
           atoms(i) match {
             case e: AST.Element.Char =>
-              cases = cases :+ terminalST(conversions.String.fromCis(ISZ(e.value)), dest, F, notFoundOpt)
+              cases = cases :+ terminalST(conversions.String.fromCis(ISZ(e.value)), dest, F, None())
             case e: AST.Element.Str =>
-              cases = cases :+ terminalST(e.value, dest, F, notFoundOpt)
-            case e: AST.Element.Ref if e.isTerminal =>
-              cases = cases :+ terminalST(e.name, dest, T, notFoundOpt)
+              cases = cases :+ terminalST(e.value, dest, F, None())
+            case e: AST.Element.Ref if e.isTerminal => None()
+              cases = cases :+ terminalST(e.name, dest, T, None())
             case _ =>
-          }
-          if (notFoundOpt.isEmpty) {
-            notFoundOpt = Some(st" if !ctx.found")
           }
         }
       }
@@ -588,10 +583,18 @@ import org.sireum.parser.{GrammarAst => AST}
           st"""case state"$node" => return retVal(ctx.max, ctx.resOpt, ctx.initial, ${if (noBacktrack) "T" else "F"})"""
       } else {
         val matchOpt: Option[ST] = if (cases.isEmpty) None() else Some(
-          st"""token.tipe match {
-              |  ${(cases, "\n")}
-              |  case _ =>
-              |}"""
+          if (refNameDests.isEmpty)
+            st"""token.tipe match {
+                |  ${(cases, "\n")}
+                |  case _ =>
+                |}"""
+          else
+            st"""if (!ctx.found) {
+                |  token.tipe match {
+                |    ${(cases, "\n")}
+                |    case _ =>
+                |  }
+                |}"""
         )
         var refs = ISZ[ST]()
         var checkRefs = ISZ[ST]()
@@ -756,14 +759,15 @@ import org.sireum.parser.{GrammarAst => AST}
       } else {
         offs = offs + depth
         val idx = st"j$depth"
-        val size = st"off$depth"
-        val acceptOpt: Option[ST] = if (trie.accept) Some(
-          st"return $depth"
-        ) else None()
-        st"""if ($size && tokens.at($idx).kind == Result.Kind.Normal) {
-            |  tokens.at($idx).leaf.tipe match {
-            |    ${(subs, "\n")}
-            |    case _ =>
+        val size = st"hasJ$depth"
+        val acceptOpt: Option[ST] = if (trie.accept) Some(st"return $depth") else None()
+        st"""if ($size) {
+            |  val tokenJ$depth = tokens.at($idx)
+            |  if (tokenJ$depth.kind == Result.Kind.Normal) {
+            |    tokenJ$depth.leaf.tipe match {
+            |      ${(subs, "\n")}
+            |      case _ =>
+            |    }
             |  }
             |}
             |$acceptOpt"""
@@ -782,8 +786,9 @@ import org.sireum.parser.{GrammarAst => AST}
       r = r :+ st"shouldTry = T"
     } else {
       r = r :+
-        st"""if (tokens.at(j).kind == Result.Kind.Normal) {
-            |  tokens.at(j).leaf.tipe match {
+        st"""val tokenJ = tokens.at(j)
+            |if (tokenJ.kind == Result.Kind.Normal) {
+            |  tokenJ.leaf.tipe match {
             |    ${(for (trie <- ruleTrie.subs.values) yield rec(1, trie), "\n")}
             |    case _ =>
             |  }
@@ -793,7 +798,7 @@ import org.sireum.parser.{GrammarAst => AST}
     var vars = ISZ[ST]()
     for (i <- offs.elements) {
       vars = vars :+ st"val j$i = j + $i"
-      vars = vars :+ st"val off$i = tokens.has(j$i)"
+      vars = vars :+ st"val hasJ$i = tokens.has(j$i)"
     }
     return vars ++ r
   }
