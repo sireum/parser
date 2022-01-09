@@ -572,7 +572,7 @@ import org.sireum.parser.{GrammarAst => AST}
               cases = cases :+ terminalST(conversions.String.fromCis(ISZ(e.value)), dest, F, None())
             case e: AST.Element.Str =>
               cases = cases :+ terminalST(e.value, dest, F, None())
-            case e: AST.Element.Ref if e.isTerminal => None()
+            case e: AST.Element.Ref if e.isTerminal =>
               cases = cases :+ terminalST(e.name, dest, T, None())
             case _ =>
           }
