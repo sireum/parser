@@ -291,7 +291,7 @@ import org.sireum.parser.{GrammarAst => AST}
     }
 
     val imptOpt: Option[String] = if (packageOpt.isEmpty ||
-      ops.StringOps(packageOpt.get.render).trim =!= "package org.sireum.parser") Some(
+      ops.StringOps(packageOpt.get.render).trim != "package org.sireum.parser") Some(
       "import org.sireum.parser.ParseTree"
     ) else None()
 
@@ -532,7 +532,7 @@ import org.sireum.parser.{GrammarAst => AST}
 
   @pure def edgesOf(dfa: Dfa, node: Z): ISZ[(Z, Z, Z)] = {
     val outgoing = dfa.g.outgoing(node)
-    if (outgoing.size === 1 && Dfa.isReject(outgoing(0))) {
+    if (outgoing.size == 1 && Dfa.isReject(outgoing(0))) {
       return ISZ()
     }
     var r = ISZ[(Z, Z, Z)]()
@@ -808,7 +808,7 @@ import org.sireum.parser.{GrammarAst => AST}
     for (node <- dfa.g.nodesInverse) {
       var conds = ISZ[ST]()
       val outgoing = dfa.g.outgoing(node)
-      if (!(outgoing.size === 1 && Dfa.isReject(outgoing(0)))) {
+      if (!(outgoing.size == 1 && Dfa.isReject(outgoing(0)))) {
         var destMap = HashSMap.empty[Z, ISZ[(C, C)]]
         for (e <- outgoing) {
           val edge = e.asInstanceOf[Graph.Edge.Data[Z, (C, C)]]
@@ -823,7 +823,7 @@ import org.sireum.parser.{GrammarAst => AST}
           var cs = ISZ[ST]()
           for (data <- p._2) {
             val (lo, hi) = data
-            cs = cs :+ (if (lo == hi) st"c === ${c2ST(lo)}" else st"${c2ST(lo)} <= c && c <= ${c2ST(hi)}")
+            cs = cs :+ (if (lo == hi) st"c == ${c2ST(lo)}" else st"${c2ST(lo)} <= c && c <= ${c2ST(hi)}")
           }
           conds = conds :+
             st"""if (${(cs, " || ")}) {
@@ -886,7 +886,7 @@ import org.sireum.parser.{GrammarAst => AST}
   def genLiteralC(c: C, name: String): ST = {
     val r: ST =
       st"""@pure def $name(i: Z): Z = {
-          |  if (cis.has(i) && cis.at(i) === ${c2ST(c)}) {
+          |  if (cis.has(i) && cis.at(i) == ${c2ST(c)}) {
           |    return i + 1
           |  }
           |  return -1
@@ -897,7 +897,7 @@ import org.sireum.parser.{GrammarAst => AST}
   def genLiteralString(s: String, name: String): ST = {
     val cis = conversions.String.toCis(s)
     val sts: ISZ[ST] = for (i <- cis.indices) yield
-      if (i == 0) st"cis.at(i) === ${c2ST(cis(i))}" else st"cis.at(i + $i) === ${c2ST(cis(i))}"
+      if (i == 0) st"cis.at(i) == ${c2ST(cis(i))}" else st"cis.at(i + $i) == ${c2ST(cis(i))}"
     val r =
       st"""@pure def $name(i: Z): Z = {
           |  if (!cis.has(i + ${s.size})) {
@@ -912,7 +912,7 @@ import org.sireum.parser.{GrammarAst => AST}
   }
 
   def genNameH(c: C): ST = {
-    if (c === '$') {
+    if (c == '$') {
       return st"_"
     }
     if ('a' <= c && c <= 'z' || 'A' <= c && c <= 'Z' || '0' <= c && c <= '9' || c == '_') {

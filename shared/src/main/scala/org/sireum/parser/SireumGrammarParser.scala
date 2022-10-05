@@ -2188,7 +2188,7 @@ import SireumGrammarParser._
     if (!cis.has(i + 7)) {
       return -1
     }
-    if (cis.at(i) === 'g' && cis.at(i + 1) === 'r' && cis.at(i + 2) === 'a' && cis.at(i + 3) === 'm' && cis.at(i + 4) === 'm' && cis.at(i + 5) === 'a' && cis.at(i + 6) === 'r') {
+    if (cis.at(i) == 'g' && cis.at(i + 1) == 'r' && cis.at(i + 2) == 'a' && cis.at(i + 3) == 'm' && cis.at(i + 4) == 'm' && cis.at(i + 5) == 'a' && cis.at(i + 6) == 'r') {
       return i + 7
     }
     return -1
@@ -2197,7 +2197,7 @@ import SireumGrammarParser._
   @strictpure def lex_grammar(index: Z): Option[Result] = lexH(index, lit_grammar(index), """'grammar'""", u32"0xAEB64436" /* "grammar" */, F)
 
   @pure def lit_u003B(i: Z): Z = {
-    if (cis.has(i) && cis.at(i) === ';') {
+    if (cis.has(i) && cis.at(i) == ';') {
       return i + 1
     }
     return -1
@@ -2209,7 +2209,7 @@ import SireumGrammarParser._
     if (!cis.has(i + 7)) {
       return -1
     }
-    if (cis.at(i) === 'o' && cis.at(i + 1) === 'p' && cis.at(i + 2) === 't' && cis.at(i + 3) === 'i' && cis.at(i + 4) === 'o' && cis.at(i + 5) === 'n' && cis.at(i + 6) === 's') {
+    if (cis.at(i) == 'o' && cis.at(i + 1) == 'p' && cis.at(i + 2) == 't' && cis.at(i + 3) == 'i' && cis.at(i + 4) == 'o' && cis.at(i + 5) == 'n' && cis.at(i + 6) == 's') {
       return i + 7
     }
     return -1
@@ -2218,7 +2218,7 @@ import SireumGrammarParser._
   @strictpure def lex_options(index: Z): Option[Result] = lexH(index, lit_options(index), """'options'""", u32"0xED16D169" /* "options" */, F)
 
   @pure def lit_u007B(i: Z): Z = {
-    if (cis.has(i) && cis.at(i) === '{') {
+    if (cis.has(i) && cis.at(i) == '{') {
       return i + 1
     }
     return -1
@@ -2227,7 +2227,7 @@ import SireumGrammarParser._
   @strictpure def lex_u007B(index: Z): Option[Result] = lexH(index, lit_u007B(index), """'{'""", u32"0xFDCE65E5" /* "{" */, F)
 
   @pure def lit_u007D(i: Z): Z = {
-    if (cis.has(i) && cis.at(i) === '}') {
+    if (cis.has(i) && cis.at(i) == '}') {
       return i + 1
     }
     return -1
@@ -2236,7 +2236,7 @@ import SireumGrammarParser._
   @strictpure def lex_u007D(index: Z): Option[Result] = lexH(index, lit_u007D(index), """'}'""", u32"0x5BF60471" /* "}" */, F)
 
   @pure def lit_u003D(i: Z): Z = {
-    if (cis.has(i) && cis.at(i) === '=') {
+    if (cis.has(i) && cis.at(i) == '=') {
       return i + 1
     }
     return -1
@@ -2245,7 +2245,7 @@ import SireumGrammarParser._
   @strictpure def lex_u003D(index: Z): Option[Result] = lexH(index, lit_u003D(index), """'='""", u32"0xEF954474" /* "=" */, F)
 
   @pure def lit_u003A(i: Z): Z = {
-    if (cis.has(i) && cis.at(i) === ':') {
+    if (cis.has(i) && cis.at(i) == ':') {
       return i + 1
     }
     return -1
@@ -2254,7 +2254,7 @@ import SireumGrammarParser._
   @strictpure def lex_u003A(index: Z): Option[Result] = lexH(index, lit_u003A(index), """':'""", u32"0x763C38BE" /* ":" */, F)
 
   @pure def lit_u007C(i: Z): Z = {
-    if (cis.has(i) && cis.at(i) === '|') {
+    if (cis.has(i) && cis.at(i) == '|') {
       return i + 1
     }
     return -1
@@ -2266,7 +2266,7 @@ import SireumGrammarParser._
     if (!cis.has(i + 8)) {
       return -1
     }
-    if (cis.at(i) === 'f' && cis.at(i + 1) === 'r' && cis.at(i + 2) === 'a' && cis.at(i + 3) === 'g' && cis.at(i + 4) === 'm' && cis.at(i + 5) === 'e' && cis.at(i + 6) === 'n' && cis.at(i + 7) === 't') {
+    if (cis.at(i) == 'f' && cis.at(i + 1) == 'r' && cis.at(i + 2) == 'a' && cis.at(i + 3) == 'g' && cis.at(i + 4) == 'm' && cis.at(i + 5) == 'e' && cis.at(i + 6) == 'n' && cis.at(i + 7) == 't') {
       return i + 8
     }
     return -1
@@ -2275,7 +2275,7 @@ import SireumGrammarParser._
   @strictpure def lex_fragment(index: Z): Option[Result] = lexH(index, lit_fragment(index), """'fragment'""", u32"0x072BDD2B" /* "fragment" */, F)
 
   @pure def lit_u0028(i: Z): Z = {
-    if (cis.has(i) && cis.at(i) === '(') {
+    if (cis.has(i) && cis.at(i) == '(') {
       return i + 1
     }
     return -1
@@ -2284,7 +2284,7 @@ import SireumGrammarParser._
   @strictpure def lex_u0028(index: Z): Option[Result] = lexH(index, lit_u0028(index), """'('""", u32"0x71F6371D" /* "(" */, F)
 
   @pure def lit_u0029(i: Z): Z = {
-    if (cis.has(i) && cis.at(i) === ')') {
+    if (cis.has(i) && cis.at(i) == ')') {
       return i + 1
     }
     return -1
@@ -2293,7 +2293,7 @@ import SireumGrammarParser._
   @strictpure def lex_u0029(index: Z): Option[Result] = lexH(index, lit_u0029(index), """')'""", u32"0xB9401340" /* ")" */, F)
 
   @pure def lit_u003F(i: Z): Z = {
-    if (cis.has(i) && cis.at(i) === '?') {
+    if (cis.has(i) && cis.at(i) == '?') {
       return i + 1
     }
     return -1
@@ -2302,7 +2302,7 @@ import SireumGrammarParser._
   @strictpure def lex_u003F(index: Z): Option[Result] = lexH(index, lit_u003F(index), """'?'""", u32"0xD827FEB7" /* "?" */, F)
 
   @pure def lit_u002A(i: Z): Z = {
-    if (cis.has(i) && cis.at(i) === '*') {
+    if (cis.has(i) && cis.at(i) == '*') {
       return i + 1
     }
     return -1
@@ -2311,7 +2311,7 @@ import SireumGrammarParser._
   @strictpure def lex_u002A(index: Z): Option[Result] = lexH(index, lit_u002A(index), """'*'""", u32"0x82283B4B" /* "*" */, F)
 
   @pure def lit_u002B(i: Z): Z = {
-    if (cis.has(i) && cis.at(i) === '+') {
+    if (cis.has(i) && cis.at(i) == '+') {
       return i + 1
     }
     return -1
@@ -2320,7 +2320,7 @@ import SireumGrammarParser._
   @strictpure def lex_u002B(index: Z): Option[Result] = lexH(index, lit_u002B(index), """'+'""", u32"0x797D7BC8" /* "+" */, F)
 
   @pure def lit_u007E(i: Z): Z = {
-    if (cis.has(i) && cis.at(i) === '~') {
+    if (cis.has(i) && cis.at(i) == '~') {
       return i + 1
     }
     return -1
@@ -2332,7 +2332,7 @@ import SireumGrammarParser._
     if (!cis.has(i + 2)) {
       return -1
     }
-    if (cis.at(i) === '.' && cis.at(i + 1) === '.') {
+    if (cis.at(i) == '.' && cis.at(i + 1) == '.') {
       return i + 2
     }
     return -1
@@ -2341,7 +2341,7 @@ import SireumGrammarParser._
   @strictpure def lex_u002Eu002E(index: Z): Option[Result] = lexH(index, lit_u002Eu002E(index), """'..'""", u32"0x3A15194D" /* ".." */, F)
 
   @pure def lit_u002E(i: Z): Z = {
-    if (cis.has(i) && cis.at(i) === '.') {
+    if (cis.has(i) && cis.at(i) == '.') {
       return i + 1
     }
     return -1
@@ -2353,7 +2353,7 @@ import SireumGrammarParser._
     if (!cis.has(i + 8)) {
       return -1
     }
-    if (cis.at(i) === '$' && cis.at(i + 1) === 'c' && cis.at(i + 2) === 'h' && cis.at(i + 3) === 'a' && cis.at(i + 4) === 'n' && cis.at(i + 5) === 'n' && cis.at(i + 6) === 'e' && cis.at(i + 7) === 'l') {
+    if (cis.at(i) == '$' && cis.at(i + 1) == 'c' && cis.at(i + 2) == 'h' && cis.at(i + 3) == 'a' && cis.at(i + 4) == 'n' && cis.at(i + 5) == 'n' && cis.at(i + 6) == 'e' && cis.at(i + 7) == 'l') {
       return i + 8
     }
     return -1
@@ -2369,7 +2369,7 @@ import SireumGrammarParser._
         case state"0" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if (c === '\'') {
+          if (c == '\'') {
             ctx.update(state"1")
           }
           if (!ctx.found) {
@@ -2380,7 +2380,7 @@ import SireumGrammarParser._
           ctx.found = F
           if (minChar <= c && c <= '&' || '(' <= c && c <= '[' || ']' <= c && c <= maxChar) {
             ctx.update(state"2")
-          } else if (c === '\\') {
+          } else if (c == '\\') {
             ctx.update(state"4")
           }
           if (!ctx.found) {
@@ -2389,7 +2389,7 @@ import SireumGrammarParser._
         case state"2" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if (c === '\'') {
+          if (c == '\'') {
             ctx.update(state"3")
           }
           if (!ctx.found) {
@@ -2399,9 +2399,9 @@ import SireumGrammarParser._
         case state"4" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if (c === '"' || c === '\'' || c === '\\' || c === 'b' || c === 'f' || c === 'n' || c === 'r' || c === 't') {
+          if (c == '"' || c == '\'' || c == '\\' || c == 'b' || c == 'f' || c == 'n' || c == 'r' || c == 't') {
             ctx.update(state"2")
-          } else if (c === 'u') {
+          } else if (c == 'u') {
             ctx.update(state"5")
           }
           if (!ctx.found) {
@@ -2460,7 +2460,7 @@ import SireumGrammarParser._
         case state"0" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if (c === '\'') {
+          if (c == '\'') {
             ctx.update(state"1")
           }
           if (!ctx.found) {
@@ -2471,7 +2471,7 @@ import SireumGrammarParser._
           ctx.found = F
           if (minChar <= c && c <= '&' || '(' <= c && c <= '[' || ']' <= c && c <= maxChar) {
             ctx.update(state"2")
-          } else if (c === '\\') {
+          } else if (c == '\\') {
             ctx.update(state"10")
           }
           if (!ctx.found) {
@@ -2482,7 +2482,7 @@ import SireumGrammarParser._
           ctx.found = F
           if (minChar <= c && c <= '&' || '(' <= c && c <= '[' || ']' <= c && c <= maxChar) {
             ctx.update(state"3")
-          } else if (c === '\\') {
+          } else if (c == '\\') {
             ctx.update(state"5")
           }
           if (!ctx.found) {
@@ -2493,9 +2493,9 @@ import SireumGrammarParser._
           ctx.found = F
           if (minChar <= c && c <= '&' || '(' <= c && c <= '[' || ']' <= c && c <= maxChar) {
             ctx.update(state"3")
-          } else if (c === '\'') {
+          } else if (c == '\'') {
             ctx.update(state"4")
-          } else if (c === '\\') {
+          } else if (c == '\\') {
             ctx.update(state"5")
           }
           if (!ctx.found) {
@@ -2505,9 +2505,9 @@ import SireumGrammarParser._
         case state"5" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if (c === '"' || c === '\'' || c === '\\' || c === 'b' || c === 'f' || c === 'n' || c === 'r' || c === 't') {
+          if (c == '"' || c == '\'' || c == '\\' || c == 'b' || c == 'f' || c == 'n' || c == 'r' || c == 't') {
             ctx.update(state"3")
-          } else if (c === 'u') {
+          } else if (c == 'u') {
             ctx.update(state"6")
           }
           if (!ctx.found) {
@@ -2552,9 +2552,9 @@ import SireumGrammarParser._
         case state"10" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if (c === '"' || c === '\'' || c === '\\' || c === 'b' || c === 'f' || c === 'n' || c === 'r' || c === 't') {
+          if (c == '"' || c == '\'' || c == '\\' || c == 'b' || c == 'f' || c == 'n' || c == 'r' || c == 't') {
             ctx.update(state"2")
-          } else if (c === 'u') {
+          } else if (c == 'u') {
             ctx.update(state"11")
           }
           if (!ctx.found) {
@@ -2654,7 +2654,7 @@ import SireumGrammarParser._
         case state"1" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if ('0' <= c && c <= '9' || 'A' <= c && c <= 'Z' || c === '_' || 'a' <= c && c <= 'z') {
+          if ('0' <= c && c <= '9' || 'A' <= c && c <= 'Z' || c == '_' || 'a' <= c && c <= 'z') {
             ctx.update(state"1")
           }
           if (!ctx.found) {
@@ -2686,7 +2686,7 @@ import SireumGrammarParser._
         case state"1" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if ('0' <= c && c <= '9' || 'A' <= c && c <= 'Z' || c === '_' || 'a' <= c && c <= 'z') {
+          if ('0' <= c && c <= '9' || 'A' <= c && c <= 'Z' || c == '_' || 'a' <= c && c <= 'z') {
             ctx.update(state"1")
           }
           if (!ctx.found) {
@@ -2709,7 +2709,7 @@ import SireumGrammarParser._
         case state"0" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if (c === '@') {
+          if (c == '@') {
             ctx.update(state"1")
           }
           if (!ctx.found) {
@@ -2718,9 +2718,9 @@ import SireumGrammarParser._
         case state"1" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ') {
+          if ('\u0009' <= c && c <= '\u000A' || c == '\u000D' || c == ' ') {
             ctx.update(state"1")
-          } else if (c === 'h') {
+          } else if (c == 'h') {
             ctx.update(state"2")
           }
           if (!ctx.found) {
@@ -2729,7 +2729,7 @@ import SireumGrammarParser._
         case state"2" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if (c === 'e') {
+          if (c == 'e') {
             ctx.update(state"3")
           }
           if (!ctx.found) {
@@ -2738,7 +2738,7 @@ import SireumGrammarParser._
         case state"3" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if (c === 'a') {
+          if (c == 'a') {
             ctx.update(state"4")
           }
           if (!ctx.found) {
@@ -2747,7 +2747,7 @@ import SireumGrammarParser._
         case state"4" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if (c === 'd') {
+          if (c == 'd') {
             ctx.update(state"5")
           }
           if (!ctx.found) {
@@ -2756,7 +2756,7 @@ import SireumGrammarParser._
         case state"5" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if (c === 'e') {
+          if (c == 'e') {
             ctx.update(state"6")
           }
           if (!ctx.found) {
@@ -2765,7 +2765,7 @@ import SireumGrammarParser._
         case state"6" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if (c === 'r') {
+          if (c == 'r') {
             ctx.update(state"7")
           }
           if (!ctx.found) {
@@ -2774,9 +2774,9 @@ import SireumGrammarParser._
         case state"7" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ') {
+          if ('\u0009' <= c && c <= '\u000A' || c == '\u000D' || c == ' ') {
             ctx.update(state"7")
-          } else if (c === '{') {
+          } else if (c == '{') {
             ctx.update(state"8")
           }
           if (!ctx.found) {
@@ -2787,7 +2787,7 @@ import SireumGrammarParser._
           ctx.found = F
           if (minChar <= c && c <= '|' || '~' <= c && c <= maxChar) {
             ctx.update(state"8")
-          } else if (c === '}') {
+          } else if (c == '}') {
             ctx.update(state"9")
           }
           if (!ctx.found) {
@@ -2811,7 +2811,7 @@ import SireumGrammarParser._
         case state"0" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if (c === '@') {
+          if (c == '@') {
             ctx.update(state"1")
           }
           if (!ctx.found) {
@@ -2820,9 +2820,9 @@ import SireumGrammarParser._
         case state"1" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ') {
+          if ('\u0009' <= c && c <= '\u000A' || c == '\u000D' || c == ' ') {
             ctx.update(state"1")
-          } else if (c === 'l') {
+          } else if (c == 'l') {
             ctx.update(state"2")
           }
           if (!ctx.found) {
@@ -2831,7 +2831,7 @@ import SireumGrammarParser._
         case state"2" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if (c === 'e') {
+          if (c == 'e') {
             ctx.update(state"3")
           }
           if (!ctx.found) {
@@ -2840,7 +2840,7 @@ import SireumGrammarParser._
         case state"3" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if (c === 'x') {
+          if (c == 'x') {
             ctx.update(state"4")
           }
           if (!ctx.found) {
@@ -2849,7 +2849,7 @@ import SireumGrammarParser._
         case state"4" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if (c === 'e') {
+          if (c == 'e') {
             ctx.update(state"5")
           }
           if (!ctx.found) {
@@ -2858,7 +2858,7 @@ import SireumGrammarParser._
         case state"5" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if (c === 'r') {
+          if (c == 'r') {
             ctx.update(state"6")
           }
           if (!ctx.found) {
@@ -2867,9 +2867,9 @@ import SireumGrammarParser._
         case state"6" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ') {
+          if ('\u0009' <= c && c <= '\u000A' || c == '\u000D' || c == ' ') {
             ctx.update(state"6")
-          } else if (c === ':') {
+          } else if (c == ':') {
             ctx.update(state"7")
           }
           if (!ctx.found) {
@@ -2878,9 +2878,9 @@ import SireumGrammarParser._
         case state"7" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ') {
+          if ('\u0009' <= c && c <= '\u000A' || c == '\u000D' || c == ' ') {
             ctx.update(state"7")
-          } else if (c === ':') {
+          } else if (c == ':') {
             ctx.update(state"8")
           }
           if (!ctx.found) {
@@ -2889,9 +2889,9 @@ import SireumGrammarParser._
         case state"8" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ') {
+          if ('\u0009' <= c && c <= '\u000A' || c == '\u000D' || c == ' ') {
             ctx.update(state"8")
-          } else if (c === 'h') {
+          } else if (c == 'h') {
             ctx.update(state"9")
           }
           if (!ctx.found) {
@@ -2900,7 +2900,7 @@ import SireumGrammarParser._
         case state"9" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if (c === 'e') {
+          if (c == 'e') {
             ctx.update(state"10")
           }
           if (!ctx.found) {
@@ -2909,7 +2909,7 @@ import SireumGrammarParser._
         case state"10" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if (c === 'a') {
+          if (c == 'a') {
             ctx.update(state"11")
           }
           if (!ctx.found) {
@@ -2918,7 +2918,7 @@ import SireumGrammarParser._
         case state"11" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if (c === 'd') {
+          if (c == 'd') {
             ctx.update(state"12")
           }
           if (!ctx.found) {
@@ -2927,7 +2927,7 @@ import SireumGrammarParser._
         case state"12" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if (c === 'e') {
+          if (c == 'e') {
             ctx.update(state"13")
           }
           if (!ctx.found) {
@@ -2936,7 +2936,7 @@ import SireumGrammarParser._
         case state"13" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if (c === 'r') {
+          if (c == 'r') {
             ctx.update(state"14")
           }
           if (!ctx.found) {
@@ -2945,9 +2945,9 @@ import SireumGrammarParser._
         case state"14" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ') {
+          if ('\u0009' <= c && c <= '\u000A' || c == '\u000D' || c == ' ') {
             ctx.update(state"14")
-          } else if (c === '{') {
+          } else if (c == '{') {
             ctx.update(state"15")
           }
           if (!ctx.found) {
@@ -2958,7 +2958,7 @@ import SireumGrammarParser._
           ctx.found = F
           if (minChar <= c && c <= '|' || '~' <= c && c <= maxChar) {
             ctx.update(state"15")
-          } else if (c === '}') {
+          } else if (c == '}') {
             ctx.update(state"16")
           }
           if (!ctx.found) {
@@ -2982,7 +2982,7 @@ import SireumGrammarParser._
         case state"0" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if (c === '/') {
+          if (c == '/') {
             ctx.update(state"1")
           }
           if (!ctx.found) {
@@ -2991,9 +2991,9 @@ import SireumGrammarParser._
         case state"1" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if (c === '*') {
+          if (c == '*') {
             ctx.update(state"2")
-          } else if (c === '/') {
+          } else if (c == '/') {
             ctx.update(state"7")
           }
           if (!ctx.found) {
@@ -3004,7 +3004,7 @@ import SireumGrammarParser._
           ctx.found = F
           if (minChar <= c && c <= ')' || '+' <= c && c <= maxChar) {
             ctx.update(state"2")
-          } else if (c === '*') {
+          } else if (c == '*') {
             ctx.update(state"3")
           }
           if (!ctx.found) {
@@ -3015,9 +3015,9 @@ import SireumGrammarParser._
           ctx.found = F
           if (minChar <= c && c <= ')' || '+' <= c && c <= '.' || '0' <= c && c <= maxChar) {
             ctx.update(state"2")
-          } else if (c === '*') {
+          } else if (c == '*') {
             ctx.update(state"4")
-          } else if (c === '/') {
+          } else if (c == '/') {
             ctx.update(state"6")
           }
           if (!ctx.found) {
@@ -3028,9 +3028,9 @@ import SireumGrammarParser._
           ctx.found = F
           if (minChar <= c && c <= ')' || '+' <= c && c <= '.' || '0' <= c && c <= maxChar) {
             ctx.update(state"2")
-          } else if (c === '*') {
+          } else if (c == '*') {
             ctx.update(state"3")
-          } else if (c === '/') {
+          } else if (c == '/') {
             ctx.update(state"5")
           }
           if (!ctx.found) {
@@ -3041,7 +3041,7 @@ import SireumGrammarParser._
           ctx.found = F
           if (minChar <= c && c <= ')' || '+' <= c && c <= maxChar) {
             ctx.update(state"2")
-          } else if (c === '*') {
+          } else if (c == '*') {
             ctx.update(state"3")
           }
           if (!ctx.found) {
@@ -3053,9 +3053,9 @@ import SireumGrammarParser._
           ctx.found = F
           if (minChar <= c && c <= '\u0009' || '\u000B' <= c && c <= '\u000C' || '\u000E' <= c && c <= maxChar) {
             ctx.update(state"7")
-          } else if (c === '\u000A') {
+          } else if (c == '\u000A') {
             ctx.update(state"6")
-          } else if (c === '\u000D') {
+          } else if (c == '\u000D') {
             ctx.update(state"8")
           }
           if (!ctx.found) {
@@ -3064,7 +3064,7 @@ import SireumGrammarParser._
         case state"8" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if (c === '\u000A') {
+          if (c == '\u000A') {
             ctx.update(state"6")
           }
           if (!ctx.found) {
@@ -3087,7 +3087,7 @@ import SireumGrammarParser._
         case state"0" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ') {
+          if ('\u0009' <= c && c <= '\u000A' || c == '\u000D' || c == ' ') {
             ctx.update(state"1")
           }
           if (!ctx.found) {
@@ -3096,7 +3096,7 @@ import SireumGrammarParser._
         case state"1" =>
           val c = cis.at(ctx.j)
           ctx.found = F
-          if ('\u0009' <= c && c <= '\u000A' || c === '\u000D' || c === ' ') {
+          if ('\u0009' <= c && c <= '\u000A' || c == '\u000D' || c == ' ') {
             ctx.update(state"1")
           }
           if (!ctx.found) {

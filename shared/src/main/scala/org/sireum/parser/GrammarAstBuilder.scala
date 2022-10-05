@@ -40,7 +40,7 @@ import org.sireum.parser.{GrammarAst => AST}
   def build(reporter: Reporter): AST.Grammar = {
     val Tree.Node(trees@ISZ(Tree.Leaf(string"grammar"), Tree.Node(ISZ(Tree.Leaf(id))), _*)) = tree
     var i = 3
-    val options: ISZ[(String, String)] = if (trees(i).ruleName === "optionsSpec") {
+    val options: ISZ[(String, String)] = if (trees(i).ruleName == "optionsSpec") {
       val r = buildOptions(trees(i))
       i = i + 1
       r
@@ -105,7 +105,7 @@ import org.sireum.parser.{GrammarAst => AST}
     var isFragment = F
     var isHidden = F
     var i = 0
-    if (trees(i).ruleName === "'fragment'") {
+    if (trees(i).ruleName == "'fragment'") {
       isFragment = T
       i = i + 1
     }
@@ -117,7 +117,7 @@ import org.sireum.parser.{GrammarAst => AST}
     if (trees(i).ruleName == "channel") {
       def checkChannel(j: Z): Unit = {
         val Tree.Node(ISZ(_, _, _, lid: Tree.Leaf, _*)) = trees(j)
-        if (lid.text =!= "HIDDEN") {
+        if (lid.text != "HIDDEN") {
           reporter.error(leafPosOpt(lid), kind, s"Only HIDDEN channel is supported")
         }
       }
@@ -151,7 +151,7 @@ import org.sireum.parser.{GrammarAst => AST}
       case string"atom" => buildAtom(isLexer, trees(0), reporter)
       case string"block" => buildBlock(isLexer, trees(0), reporter)
     }
-    if (trees.size === 2) {
+    if (trees.size == 2) {
       val op@Tree.Leaf(_) = trees(1)
       op.text match {
         case string"?" => r = AST.Element.Opt(r, leafPosOpt(op))

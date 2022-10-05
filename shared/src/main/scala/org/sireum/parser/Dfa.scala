@@ -36,7 +36,7 @@ object Dfa {
 
   @pure def isReject(edge: Graph.Edge[Z, (C, C)]): B = {
     val e = edge.asInstanceOf[Graph.Edge.Data[Z, (C, C)]]
-    return e.source == e.dest && e.data._1 === '\u0000' && e.data._2 == maxChar
+    return e.source == e.dest && e.data._1 == '\u0000' && e.data._2 == maxChar
   }
 
 }
