@@ -282,7 +282,7 @@ import org.sireum.parser.{GrammarAst => AST}
 
   @pure def posOpt(tree: Tree): Option[Position] = {
     tree match {
-      case tree: Tree.Node => posOpts(posOpt(tree.children(0)), posOpt(tree.children(tree.children.size - 1)))
+      case tree: Tree.Node => return posOpts(posOpt(tree.children(0)), posOpt(tree.children(tree.children.size - 1)))
       case tree: Tree.Leaf => return leafPosOpt(tree)
     }
   }
