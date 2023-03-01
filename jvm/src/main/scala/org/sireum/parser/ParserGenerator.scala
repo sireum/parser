@@ -782,9 +782,7 @@ import org.sireum.parser.{GrammarAst => AST}
       return rf
     }
 
-    if (ruleTrie.accept || ruleTrie.subs.isEmpty) {
-      r = r :+ st"shouldTry = T"
-    } else {
+    if (!(ruleTrie.accept || ruleTrie.subs.isEmpty)) {
       r = r :+
         st"""val tokenJ = tokens.at(j)
             |if (tokenJ.kind == Result.Kind.Normal) {
