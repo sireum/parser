@@ -88,8 +88,9 @@ import org.sireum.parser.{GrammarAst => AST}
     return r
   }
 
-  @strictpure def offsetLength(u: U32, z: Z): U64 =
-    (conversions.U32.toU64(u) << u64"32") | (conversions.Z.toU64(z) & u64"0xFFFFFFFF")
+  @pure def offsetLength(u: U32, z: Z): U64 = {
+    return (conversions.U32.toU64(u) << u64"32") | (conversions.Z.toU64(z) & u64"0xFFFFFFFF")
+  }
 
   def buildParserRule(tree: Tree, reporter: Reporter): AST.Rule = {
     val Tree.Node(trees@ISZ(name: Tree.Leaf, _*)) = tree
@@ -287,8 +288,9 @@ import org.sireum.parser.{GrammarAst => AST}
     }
   }
 
-  @strictpure def posOpts(posOpt1: Option[Position], posOpt2: Option[Position]): Option[Position] =
-    Some(posOpt1.get.to(posOpt2.get))
+  @pure def posOpts(posOpt1: Option[Position], posOpt2: Option[Position]): Option[Position] = {
+    return Some(posOpt1.get.to(posOpt2.get))
+  }
 
   @pure def leafPosOpt(leaf: Tree.Leaf): Option[Position] = {
     return leaf.posOpt

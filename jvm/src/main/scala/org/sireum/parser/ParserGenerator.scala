@@ -66,7 +66,7 @@ import org.sireum.parser.{GrammarAst => AST}
       var typ = 0
 
       def lexST(lexname: ST, recognizerName: ST, tokenString: ST, tokenTipe: ST, isHidden: B): ST = {
-        val r = st"""@strictpure def $lexname(index: Z): Option[Result] = lexH(index, $recognizerName(index), $tokenString, $tokenTipe, ${if (isHidden) "T" else "F"})"""
+        val r = st"""@pure def $lexname(index: Z): Option[Result] = { return lexH(index, $recognizerName(index), $tokenString, $tokenTipe, ${if (isHidden) "T" else "F"}) }"""
         typ = typ + 1
         return r
       }
@@ -479,8 +479,9 @@ import org.sireum.parser.{GrammarAst => AST}
           |    return ${name}Lexer(Indexable.fromIszDocInfo(conversions.String.toCis(input), docInfo)).tokenizeAll(skipHidden, stopAtError, reporter)
           |  }
           |
-          |  @strictpure def offsetLength(offset: Z, length: Z): U64 =
-          |    (conversions.Z.toU64(offset) << u64"32") | (conversions.Z.toU64(length) & u64"0xFFFFFFFF")
+          |  @pure def offsetLength(offset: Z, length: Z): U64 = {
+          |    return (conversions.Z.toU64(offset) << u64"32") | (conversions.Z.toU64(length) & u64"0xFFFFFFFF")
+          |  }
           |
           |}
           |
@@ -522,9 +523,13 @@ import org.sireum.parser.{GrammarAst => AST}
     return ops.ISZOps(sha3.finalise()).take(4)
   }
 
-  @strictpure def predictName(name: String): ST = st"predict${ops.StringOps(name).firstToUpper}"
+  @pure def predictName(name: String): ST = {
+    return st"predict${ops.StringOps(name).firstToUpper}"
+  }
 
-  @strictpure def parseName(name: String): ST = st"parse${ops.StringOps(name).firstToUpper}"
+  @pure def parseName(name: String): ST = {
+    return st"parse${ops.StringOps(name).firstToUpper}"
+  }
 
   @strictpure def lexName(name: String): ST = st"lex_$name"
 
@@ -696,54 +701,57 @@ import org.sireum.parser.{GrammarAst => AST}
     return (parserDfaST(memoize, name, ruleName, valueST, dfa, transitions, F), condDefs.elements)
   }
 
-  @strictpure def condDefST(name: String): ST =
-    st"""def ${parseName(name)}H(ctx: Context, nextState: State): B = {
-        |  val r = ${parseName(name)}(ctx.j)
-        |  r.kind match {
-        |    case Result.Kind.Normal => ctx.updateNonTerminal(r, nextState)
-        |    case Result.Kind.LexicalError =>
-        |      ctx.failIndex = r.newIndex
-        |      ctx.isLexical = T
-        |      return T
-        |    case Result.Kind.GrammaticalError =>
-        |      val index = r.newIndex
-        |      if (index < 0) {
-        |        ctx.failIndex = index
-        |        return T
-        |      } else if (ctx.max < index) {
-        |        ctx.max = index
-        |      }
-        |  }
-        |  return F
-        |}"""
+  @pure def condDefST(name: String): ST = {
+    return st"""def ${parseName(name)}H(ctx: Context, nextState: State): B = {
+               |  val r = ${parseName(name)}(ctx.j)
+               |  r.kind match {
+               |    case Result.Kind.Normal => ctx.updateNonTerminal(r, nextState)
+               |    case Result.Kind.LexicalError =>
+               |      ctx.failIndex = r.newIndex
+               |      ctx.isLexical = T
+               |      return T
+               |    case Result.Kind.GrammaticalError =>
+               |      val index = r.newIndex
+               |      if (index < 0) {
+               |        ctx.failIndex = index
+               |        return T
+               |      } else if (ctx.max < index) {
+               |        ctx.max = index
+               |      }
+               |  }
+               |  return F
+               |}"""
+  }
 
-  @strictpure def parserDfaST(memoize: B, name: ST, ruleName: String, valueST: ST, dfa: Dfa,
-                              transitions: ISZ[ST], noBacktrack: B): ST =
-    st"""${if (memoize) "@memoize" else "@pure"} def $name(i: Z): Result = {
-        |  val ctx = Context.create("$ruleName", $valueST, ISZ(${(for (s <- dfa.accepting.elements) yield st"""state"$s"""", ", ")}), i)
-        |
-        |  while (tokens.has(ctx.j)) {
-        |    val token: ParseTree.Leaf = {
-        |      val result = tokens.at(ctx.j)
-        |      if (result.kind != Result.Kind.Normal) {
-        |        return result
-        |      }
-        |      result.leaf
-        |    }
-        |    ctx.state match {
-        |      ${(transitions, "\n")}
-        |      case _ => halt("Infeasible")
-        |    }
-        |    if (ctx.max < ctx.j) {
-        |      ctx.max = ctx.j
-        |    }
-        |  }
-        |
-        |  return retVal(ctx.j, ctx.resOpt, ctx.initial, ${if (noBacktrack) "T" else "F"})
-        |}"""
+  @pure def parserDfaST(memoize: B, name: ST, ruleName: String, valueST: ST, dfa: Dfa,
+                              transitions: ISZ[ST], noBacktrack: B): ST = {
+    return st"""${if (memoize) "@memoize" else "@pure"} def $name(i: Z): Result = {
+               |  val ctx = Context.create("$ruleName", $valueST, ISZ(${(for (s <- dfa.accepting.elements) yield st"""state"$s"""", ", ")}), i)
+               |
+               |  while (tokens.has(ctx.j)) {
+               |    val token: ParseTree.Leaf = {
+               |      val result = tokens.at(ctx.j)
+               |      if (result.kind != Result.Kind.Normal) {
+               |        return result
+               |      }
+               |      result.leaf
+               |    }
+               |    ctx.state match {
+               |      ${(transitions, "\n")}
+               |      case _ => halt("Infeasible")
+               |    }
+               |    if (ctx.max < ctx.j) {
+               |      ctx.max = ctx.j
+               |    }
+               |  }
+               |
+               |  return retVal(ctx.j, ctx.resOpt, ctx.initial, ${if (noBacktrack) "T" else "F"})
+               |}"""
+  }
 
-  @strictpure def terminalST(text: String, dest: Z, plain: B, notFoundOpt: Option[ST]): ST =
-    st"""case u32"0x${(valCode(text), "")}" /* ${if (plain) text else st"\"${escape(text)}\"" } */$notFoundOpt => ctx.updateTerminal(token, state"$dest")"""
+  @pure def terminalST(text: String, dest: Z, plain: B, notFoundOpt: Option[ST]): ST = {
+    return st"""case u32"0x${(valCode(text), "")}" /* ${if (plain) text else st"\"${escape(text)}\"" } */$notFoundOpt => ctx.updateTerminal(token, state"$dest")"""
+  }
 
   def genTries(k: Z, ruleTrie: LookAhead.Trie): ISZ[ST] = {
     var r = ISZ[ST]()

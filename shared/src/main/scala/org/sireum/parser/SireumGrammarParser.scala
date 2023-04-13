@@ -291,8 +291,9 @@ object SireumGrammarParser {
     return SireumGrammarLexer(Indexable.fromIszDocInfo(conversions.String.toCis(input), docInfo)).tokenizeAll(skipHidden, stopAtError, reporter)
   }
 
-  @strictpure def offsetLength(offset: Z, length: Z): U64 =
-    (conversions.Z.toU64(offset) << u64"32") | (conversions.Z.toU64(length) & u64"0xFFFFFFFF")
+  @pure def offsetLength(offset: Z, length: Z): U64 = {
+    return (conversions.Z.toU64(offset) << u64"32") | (conversions.Z.toU64(length) & u64"0xFFFFFFFF")
+  }
 
 }
 
@@ -2194,7 +2195,7 @@ import SireumGrammarParser._
     return -1
   }
 
-  @strictpure def lex_grammar(index: Z): Option[Result] = lexH(index, lit_grammar(index), """'grammar'""", u32"0xAEB64436" /* "grammar" */, F)
+  @pure def lex_grammar(index: Z): Option[Result] = { return lexH(index, lit_grammar(index), """'grammar'""", u32"0xAEB64436" /* "grammar" */, F) }
 
   @pure def lit_u003B(i: Z): Z = {
     if (cis.has(i) && cis.at(i) == ';') {
@@ -2203,7 +2204,7 @@ import SireumGrammarParser._
     return -1
   }
 
-  @strictpure def lex_u003B(index: Z): Option[Result] = lexH(index, lit_u003B(index), """';'""", u32"0x36F2899D" /* ";" */, F)
+  @pure def lex_u003B(index: Z): Option[Result] = { return lexH(index, lit_u003B(index), """';'""", u32"0x36F2899D" /* ";" */, F) }
 
   @pure def lit_options(i: Z): Z = {
     if (!cis.has(i + 7)) {
@@ -2215,7 +2216,7 @@ import SireumGrammarParser._
     return -1
   }
 
-  @strictpure def lex_options(index: Z): Option[Result] = lexH(index, lit_options(index), """'options'""", u32"0xED16D169" /* "options" */, F)
+  @pure def lex_options(index: Z): Option[Result] = { return lexH(index, lit_options(index), """'options'""", u32"0xED16D169" /* "options" */, F) }
 
   @pure def lit_u007B(i: Z): Z = {
     if (cis.has(i) && cis.at(i) == '{') {
@@ -2224,7 +2225,7 @@ import SireumGrammarParser._
     return -1
   }
 
-  @strictpure def lex_u007B(index: Z): Option[Result] = lexH(index, lit_u007B(index), """'{'""", u32"0xFDCE65E5" /* "{" */, F)
+  @pure def lex_u007B(index: Z): Option[Result] = { return lexH(index, lit_u007B(index), """'{'""", u32"0xFDCE65E5" /* "{" */, F) }
 
   @pure def lit_u007D(i: Z): Z = {
     if (cis.has(i) && cis.at(i) == '}') {
@@ -2233,7 +2234,7 @@ import SireumGrammarParser._
     return -1
   }
 
-  @strictpure def lex_u007D(index: Z): Option[Result] = lexH(index, lit_u007D(index), """'}'""", u32"0x5BF60471" /* "}" */, F)
+  @pure def lex_u007D(index: Z): Option[Result] = { return lexH(index, lit_u007D(index), """'}'""", u32"0x5BF60471" /* "}" */, F) }
 
   @pure def lit_u003D(i: Z): Z = {
     if (cis.has(i) && cis.at(i) == '=') {
@@ -2242,7 +2243,7 @@ import SireumGrammarParser._
     return -1
   }
 
-  @strictpure def lex_u003D(index: Z): Option[Result] = lexH(index, lit_u003D(index), """'='""", u32"0xEF954474" /* "=" */, F)
+  @pure def lex_u003D(index: Z): Option[Result] = { return lexH(index, lit_u003D(index), """'='""", u32"0xEF954474" /* "=" */, F) }
 
   @pure def lit_u003A(i: Z): Z = {
     if (cis.has(i) && cis.at(i) == ':') {
@@ -2251,7 +2252,7 @@ import SireumGrammarParser._
     return -1
   }
 
-  @strictpure def lex_u003A(index: Z): Option[Result] = lexH(index, lit_u003A(index), """':'""", u32"0x763C38BE" /* ":" */, F)
+  @pure def lex_u003A(index: Z): Option[Result] = { return lexH(index, lit_u003A(index), """':'""", u32"0x763C38BE" /* ":" */, F) }
 
   @pure def lit_u007C(i: Z): Z = {
     if (cis.has(i) && cis.at(i) == '|') {
@@ -2260,7 +2261,7 @@ import SireumGrammarParser._
     return -1
   }
 
-  @strictpure def lex_u007C(index: Z): Option[Result] = lexH(index, lit_u007C(index), """'|'""", u32"0x687111E8" /* "|" */, F)
+  @pure def lex_u007C(index: Z): Option[Result] = { return lexH(index, lit_u007C(index), """'|'""", u32"0x687111E8" /* "|" */, F) }
 
   @pure def lit_fragment(i: Z): Z = {
     if (!cis.has(i + 8)) {
@@ -2272,7 +2273,7 @@ import SireumGrammarParser._
     return -1
   }
 
-  @strictpure def lex_fragment(index: Z): Option[Result] = lexH(index, lit_fragment(index), """'fragment'""", u32"0x072BDD2B" /* "fragment" */, F)
+  @pure def lex_fragment(index: Z): Option[Result] = { return lexH(index, lit_fragment(index), """'fragment'""", u32"0x072BDD2B" /* "fragment" */, F) }
 
   @pure def lit_u0028(i: Z): Z = {
     if (cis.has(i) && cis.at(i) == '(') {
@@ -2281,7 +2282,7 @@ import SireumGrammarParser._
     return -1
   }
 
-  @strictpure def lex_u0028(index: Z): Option[Result] = lexH(index, lit_u0028(index), """'('""", u32"0x71F6371D" /* "(" */, F)
+  @pure def lex_u0028(index: Z): Option[Result] = { return lexH(index, lit_u0028(index), """'('""", u32"0x71F6371D" /* "(" */, F) }
 
   @pure def lit_u0029(i: Z): Z = {
     if (cis.has(i) && cis.at(i) == ')') {
@@ -2290,7 +2291,7 @@ import SireumGrammarParser._
     return -1
   }
 
-  @strictpure def lex_u0029(index: Z): Option[Result] = lexH(index, lit_u0029(index), """')'""", u32"0xB9401340" /* ")" */, F)
+  @pure def lex_u0029(index: Z): Option[Result] = { return lexH(index, lit_u0029(index), """')'""", u32"0xB9401340" /* ")" */, F) }
 
   @pure def lit_u003F(i: Z): Z = {
     if (cis.has(i) && cis.at(i) == '?') {
@@ -2299,7 +2300,7 @@ import SireumGrammarParser._
     return -1
   }
 
-  @strictpure def lex_u003F(index: Z): Option[Result] = lexH(index, lit_u003F(index), """'?'""", u32"0xD827FEB7" /* "?" */, F)
+  @pure def lex_u003F(index: Z): Option[Result] = { return lexH(index, lit_u003F(index), """'?'""", u32"0xD827FEB7" /* "?" */, F) }
 
   @pure def lit_u002A(i: Z): Z = {
     if (cis.has(i) && cis.at(i) == '*') {
@@ -2308,7 +2309,7 @@ import SireumGrammarParser._
     return -1
   }
 
-  @strictpure def lex_u002A(index: Z): Option[Result] = lexH(index, lit_u002A(index), """'*'""", u32"0x82283B4B" /* "*" */, F)
+  @pure def lex_u002A(index: Z): Option[Result] = { return lexH(index, lit_u002A(index), """'*'""", u32"0x82283B4B" /* "*" */, F) }
 
   @pure def lit_u002B(i: Z): Z = {
     if (cis.has(i) && cis.at(i) == '+') {
@@ -2317,7 +2318,7 @@ import SireumGrammarParser._
     return -1
   }
 
-  @strictpure def lex_u002B(index: Z): Option[Result] = lexH(index, lit_u002B(index), """'+'""", u32"0x797D7BC8" /* "+" */, F)
+  @pure def lex_u002B(index: Z): Option[Result] = { return lexH(index, lit_u002B(index), """'+'""", u32"0x797D7BC8" /* "+" */, F) }
 
   @pure def lit_u007E(i: Z): Z = {
     if (cis.has(i) && cis.at(i) == '~') {
@@ -2326,7 +2327,7 @@ import SireumGrammarParser._
     return -1
   }
 
-  @strictpure def lex_u007E(index: Z): Option[Result] = lexH(index, lit_u007E(index), """'~'""", u32"0xAAB7E55C" /* "~" */, F)
+  @pure def lex_u007E(index: Z): Option[Result] = { return lexH(index, lit_u007E(index), """'~'""", u32"0xAAB7E55C" /* "~" */, F) }
 
   @pure def lit_u002Eu002E(i: Z): Z = {
     if (!cis.has(i + 2)) {
@@ -2338,7 +2339,7 @@ import SireumGrammarParser._
     return -1
   }
 
-  @strictpure def lex_u002Eu002E(index: Z): Option[Result] = lexH(index, lit_u002Eu002E(index), """'..'""", u32"0x3A15194D" /* ".." */, F)
+  @pure def lex_u002Eu002E(index: Z): Option[Result] = { return lexH(index, lit_u002Eu002E(index), """'..'""", u32"0x3A15194D" /* ".." */, F) }
 
   @pure def lit_u002E(i: Z): Z = {
     if (cis.has(i) && cis.at(i) == '.') {
@@ -2347,7 +2348,7 @@ import SireumGrammarParser._
     return -1
   }
 
-  @strictpure def lex_u002E(index: Z): Option[Result] = lexH(index, lit_u002E(index), """'.'""", u32"0x6890427A" /* "." */, F)
+  @pure def lex_u002E(index: Z): Option[Result] = { return lexH(index, lit_u002E(index), """'.'""", u32"0x6890427A" /* "." */, F) }
 
   @pure def lit__channel(i: Z): Z = {
     if (!cis.has(i + 8)) {
@@ -2359,7 +2360,7 @@ import SireumGrammarParser._
     return -1
   }
 
-  @strictpure def lex__channel(index: Z): Option[Result] = lexH(index, lit__channel(index), """'$channel'""", u32"0x46562B21" /* "$channel" */, F)
+  @pure def lex__channel(index: Z): Option[Result] = { return lexH(index, lit__channel(index), """'$channel'""", u32"0x46562B21" /* "$channel" */, F) }
 
   @pure def dfa_CHAR(i: Z): Z = {
     val ctx = LContext.create(ISZ(state"3"), i)
@@ -2450,7 +2451,7 @@ import SireumGrammarParser._
     return ctx.afterAcceptIndex
   }
 
-  @strictpure def lex_CHAR(index: Z): Option[Result] = lexH(index, dfa_CHAR(index), """CHAR""", u32"0xE95F063A", F)
+  @pure def lex_CHAR(index: Z): Option[Result] = { return lexH(index, dfa_CHAR(index), """CHAR""", u32"0xE95F063A", F) }
 
   @pure def dfa_STRING(i: Z): Z = {
     val ctx = LContext.create(ISZ(state"4"), i)
@@ -2603,7 +2604,7 @@ import SireumGrammarParser._
     return ctx.afterAcceptIndex
   }
 
-  @strictpure def lex_STRING(index: Z): Option[Result] = lexH(index, dfa_STRING(index), """STRING""", u32"0xA7CF0FE0", F)
+  @pure def lex_STRING(index: Z): Option[Result] = { return lexH(index, dfa_STRING(index), """STRING""", u32"0xA7CF0FE0", F) }
 
   @pure def dfa_INT(i: Z): Z = {
     val ctx = LContext.create(ISZ(state"1"), i)
@@ -2635,7 +2636,7 @@ import SireumGrammarParser._
     return ctx.afterAcceptIndex
   }
 
-  @strictpure def lex_INT(index: Z): Option[Result] = lexH(index, dfa_INT(index), """INT""", u32"0x589C233C", F)
+  @pure def lex_INT(index: Z): Option[Result] = { return lexH(index, dfa_INT(index), """INT""", u32"0x589C233C", F) }
 
   @pure def dfa_LID(i: Z): Z = {
     val ctx = LContext.create(ISZ(state"1"), i)
@@ -2667,7 +2668,7 @@ import SireumGrammarParser._
     return ctx.afterAcceptIndex
   }
 
-  @strictpure def lex_LID(index: Z): Option[Result] = lexH(index, dfa_LID(index), """LID""", u32"0x8E18F45B", F)
+  @pure def lex_LID(index: Z): Option[Result] = { return lexH(index, dfa_LID(index), """LID""", u32"0x8E18F45B", F) }
 
   @pure def dfa_PID(i: Z): Z = {
     val ctx = LContext.create(ISZ(state"1"), i)
@@ -2699,7 +2700,7 @@ import SireumGrammarParser._
     return ctx.afterAcceptIndex
   }
 
-  @strictpure def lex_PID(index: Z): Option[Result] = lexH(index, dfa_PID(index), """PID""", u32"0xD2EDBEA1", F)
+  @pure def lex_PID(index: Z): Option[Result] = { return lexH(index, dfa_PID(index), """PID""", u32"0xD2EDBEA1", F) }
 
   @pure def dfa_PHEADER(i: Z): Z = {
     val ctx = LContext.create(ISZ(state"9"), i)
@@ -2801,7 +2802,7 @@ import SireumGrammarParser._
     return ctx.afterAcceptIndex
   }
 
-  @strictpure def lex_PHEADER(index: Z): Option[Result] = lexH(index, dfa_PHEADER(index), """PHEADER""", u32"0xEDD2348C", F)
+  @pure def lex_PHEADER(index: Z): Option[Result] = { return lexH(index, dfa_PHEADER(index), """PHEADER""", u32"0xEDD2348C", F) }
 
   @pure def dfa_LHEADER(i: Z): Z = {
     val ctx = LContext.create(ISZ(state"16"), i)
@@ -2972,7 +2973,7 @@ import SireumGrammarParser._
     return ctx.afterAcceptIndex
   }
 
-  @strictpure def lex_LHEADER(index: Z): Option[Result] = lexH(index, dfa_LHEADER(index), """LHEADER""", u32"0x2322FC01", F)
+  @pure def lex_LHEADER(index: Z): Option[Result] = { return lexH(index, dfa_LHEADER(index), """LHEADER""", u32"0x2322FC01", F) }
 
   @pure def dfa_COMMENT(i: Z): Z = {
     val ctx = LContext.create(ISZ(state"5", state"6"), i)
@@ -3077,7 +3078,7 @@ import SireumGrammarParser._
     return ctx.afterAcceptIndex
   }
 
-  @strictpure def lex_COMMENT(index: Z): Option[Result] = lexH(index, dfa_COMMENT(index), """COMMENT""", u32"0x486B464F", T)
+  @pure def lex_COMMENT(index: Z): Option[Result] = { return lexH(index, dfa_COMMENT(index), """COMMENT""", u32"0x486B464F", T) }
 
   @pure def dfa_WS(i: Z): Z = {
     val ctx = LContext.create(ISZ(state"1"), i)
@@ -3109,7 +3110,7 @@ import SireumGrammarParser._
     return ctx.afterAcceptIndex
   }
 
-  @strictpure def lex_WS(index: Z): Option[Result] = lexH(index, dfa_WS(index), """WS""", u32"0x0E3F5D1E", T)
+  @pure def lex_WS(index: Z): Option[Result] = { return lexH(index, dfa_WS(index), """WS""", u32"0x0E3F5D1E", T) }
 
   @pure def hidden(i: Z): Z = {
      var j: Z = -1
