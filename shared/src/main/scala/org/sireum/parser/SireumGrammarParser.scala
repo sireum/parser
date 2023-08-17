@@ -2186,7 +2186,7 @@ import SireumGrammarParser._
   }
 
   @pure def lit_grammar(i: Z): Z = {
-    if (!cis.has(i + 7)) {
+    if (!cis.has(i + 6)) {
       return -1
     }
     if (cis.at(i) == 'g' && cis.at(i + 1) == 'r' && cis.at(i + 2) == 'a' && cis.at(i + 3) == 'm' && cis.at(i + 4) == 'm' && cis.at(i + 5) == 'a' && cis.at(i + 6) == 'r') {
@@ -2207,7 +2207,7 @@ import SireumGrammarParser._
   @pure def lex_u003B(index: Z): Option[Result] = { return lexH(index, lit_u003B(index), """';'""", u32"0x36F2899D" /* ";" */, F) }
 
   @pure def lit_options(i: Z): Z = {
-    if (!cis.has(i + 7)) {
+    if (!cis.has(i + 6)) {
       return -1
     }
     if (cis.at(i) == 'o' && cis.at(i + 1) == 'p' && cis.at(i + 2) == 't' && cis.at(i + 3) == 'i' && cis.at(i + 4) == 'o' && cis.at(i + 5) == 'n' && cis.at(i + 6) == 's') {
@@ -2264,7 +2264,7 @@ import SireumGrammarParser._
   @pure def lex_u007C(index: Z): Option[Result] = { return lexH(index, lit_u007C(index), """'|'""", u32"0x687111E8" /* "|" */, F) }
 
   @pure def lit_fragment(i: Z): Z = {
-    if (!cis.has(i + 8)) {
+    if (!cis.has(i + 7)) {
       return -1
     }
     if (cis.at(i) == 'f' && cis.at(i + 1) == 'r' && cis.at(i + 2) == 'a' && cis.at(i + 3) == 'g' && cis.at(i + 4) == 'm' && cis.at(i + 5) == 'e' && cis.at(i + 6) == 'n' && cis.at(i + 7) == 't') {
@@ -2330,7 +2330,7 @@ import SireumGrammarParser._
   @pure def lex_u007E(index: Z): Option[Result] = { return lexH(index, lit_u007E(index), """'~'""", u32"0xAAB7E55C" /* "~" */, F) }
 
   @pure def lit_u002Eu002E(i: Z): Z = {
-    if (!cis.has(i + 2)) {
+    if (!cis.has(i + 1)) {
       return -1
     }
     if (cis.at(i) == '.' && cis.at(i + 1) == '.') {
@@ -2351,7 +2351,7 @@ import SireumGrammarParser._
   @pure def lex_u002E(index: Z): Option[Result] = { return lexH(index, lit_u002E(index), """'.'""", u32"0x6890427A" /* "." */, F) }
 
   @pure def lit__channel(i: Z): Z = {
-    if (!cis.has(i + 8)) {
+    if (!cis.has(i + 7)) {
       return -1
     }
     if (cis.at(i) == '$' && cis.at(i + 1) == 'c' && cis.at(i + 2) == 'h' && cis.at(i + 3) == 'a' && cis.at(i + 4) == 'n' && cis.at(i + 5) == 'n' && cis.at(i + 6) == 'e' && cis.at(i + 7) == 'l') {

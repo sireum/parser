@@ -906,7 +906,7 @@ import org.sireum.parser.{GrammarAst => AST}
       if (i == 0) st"cis.at(i) == ${c2ST(cis(i))}" else st"cis.at(i + $i) == ${c2ST(cis(i))}"
     val r =
       st"""@pure def $name(i: Z): Z = {
-          |  if (!cis.has(i + ${s.size})) {
+          |  if (!cis.has(i + ${s.size - 1})) {
           |    return -1
           |  }
           |  if (${(sts, " && ")}) {
