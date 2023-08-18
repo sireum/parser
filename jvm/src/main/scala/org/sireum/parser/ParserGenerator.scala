@@ -229,7 +229,7 @@ import org.sireum.parser.{GrammarAst => AST}
           parserDefs = parserDefs :+
             st"""${if (memoize) "@memoize" else "@pure"} def ${predictName(p._1)}(j: Z): Z = {
                 |  ${(sts, "\n")}
-                |  return 0
+                |  return ${if (trie.accept) 0 else -1}
                 |}"""
         }
       }
@@ -350,6 +350,12 @@ import org.sireum.parser.{GrammarAst => AST}
           |                        var found: B,
           |                        var failIndex: Z,
           |                        var isLexical: B) {
+          |    def updateAcceptingEpsilon(newState: State): Unit = {
+          |      found = T
+          |      initial = F
+          |      state = newState
+          |      resOpt = Some(Result.create(ParseTree.Node(trees, ruleName, ruleType), j))
+          |    }
           |
           |    def updateTerminal(token: ParseTree.Leaf, newState: State): Unit = {
           |      found = T
@@ -618,7 +624,7 @@ import org.sireum.parser.{GrammarAst => AST}
           if (refNameDests.size == 1) {
             val p = refNameDests.elements(0)
             Some(
-              st"""if (n_${p._1} > 0 && ${parseName(p._1)}H(ctx, state"${p._2}")) {
+              st"""if (n_${p._1} >= 0 && ${parseName(p._1)}H(ctx, state"${p._2}")) {
                   |  return Result.error(ctx.isLexical, ctx.failIndex)
                   |}"""
             )
@@ -630,6 +636,11 @@ import org.sireum.parser.{GrammarAst => AST}
             )
           }
         }
+        val retST: ST = if (dfa.accepting.contains(dfa.initial) && node == dfa.initial)
+          st"""ctx.updateAcceptingEpsilon(state"${dfa.initial}")
+              |return retVal(ctx.j, ctx.resOpt, ctx.initial, ${if (noBacktrack) "T" else "F"})"""
+         else
+          st"""return retVal(ctx.max, ctx.resOpt, ctx.initial, ${if (noBacktrack) "T" else "F"})"""
         transitions = transitions :+
           st"""case state"$node" =>
               |  ctx.found = F
@@ -637,7 +648,7 @@ import org.sireum.parser.{GrammarAst => AST}
               |  $checkRefsOpt
               |  $matchOpt
               |  if (!ctx.found) {
-              |    return retVal(ctx.max, ctx.resOpt, ctx.initial, ${if (noBacktrack) "T" else "F"})
+              |    $retST
               |  }"""
       }
     }
@@ -667,7 +678,7 @@ import org.sireum.parser.{GrammarAst => AST}
                 if (notFoundOpt.isEmpty) {
                   notFoundOpt = Some(st" if !ctx.found")
                 }
-                val predictOpt: Option[ST] = if (predict) Some(st"${predictName(e.name)}(ctx.j) > 0 && ") else None()
+                val predictOpt: Option[ST] = if (predict) Some(st"${predictName(e.name)}(ctx.j) >= 0 && ") else None()
                 val parsename = parseName(e.name)
                 condDefs = condDefs + e.name
                 cases = cases :+
@@ -790,7 +801,7 @@ import org.sireum.parser.{GrammarAst => AST}
       return rf
     }
 
-    if (!(ruleTrie.accept || ruleTrie.subs.isEmpty)) {
+    if (ruleTrie.subs.nonEmpty) {
       r = r :+
         st"""val tokenJ = tokens.at(j)
             |if (tokenJ.kind == Result.Kind.Normal) {

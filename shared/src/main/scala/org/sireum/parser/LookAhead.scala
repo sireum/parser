@@ -122,6 +122,9 @@ object LookAhead {
                     for (cas <- cases) {
                       rec(edge.dest, acc ++ cas.value)
                     }
+                    if (refDfa.accepting.contains(refDfa.initial)) {
+                      rec(edge.dest, acc)
+                    }
                   }
                 }
               case e => halt(s"Infeasible: $e")

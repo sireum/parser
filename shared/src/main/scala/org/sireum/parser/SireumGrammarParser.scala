@@ -77,6 +77,12 @@ object SireumGrammarParser {
                         var found: B,
                         var failIndex: Z,
                         var isLexical: B) {
+    def updateAcceptingEpsilon(newState: State): Unit = {
+      found = T
+      initial = F
+      state = newState
+      resOpt = Some(Result.create(ParseTree.Node(trees, ruleName, ruleType), j))
+    }
 
     def updateTerminal(token: ParseTree.Leaf, newState: State): Unit = {
       found = T
@@ -325,7 +331,7 @@ import SireumGrammarParser._
         case state"1" =>
           ctx.found = F
           val n_id = predictId(ctx.j)
-          if (n_id > 0 && parseIdH(ctx, state"2")) {
+          if (n_id >= 0 && parseIdH(ctx, state"2")) {
             return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
@@ -431,7 +437,7 @@ import SireumGrammarParser._
         case state"7" =>
           ctx.found = F
           val n_lexerRule = predictLexerRule(ctx.j)
-          if (n_lexerRule > 0 && parseLexerRuleH(ctx, state"7")) {
+          if (n_lexerRule >= 0 && parseLexerRuleH(ctx, state"7")) {
             return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
@@ -487,7 +493,7 @@ import SireumGrammarParser._
         case state"2" =>
           ctx.found = F
           val n_option = predictOption(ctx.j)
-          if (n_option > 0 && parseOptionH(ctx, state"3")) {
+          if (n_option >= 0 && parseOptionH(ctx, state"3")) {
             return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
@@ -496,7 +502,7 @@ import SireumGrammarParser._
         case state"3" =>
           ctx.found = F
           val n_option = predictOption(ctx.j)
-          if (n_option > 0 && parseOptionH(ctx, state"3")) {
+          if (n_option >= 0 && parseOptionH(ctx, state"3")) {
             return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
@@ -534,7 +540,7 @@ import SireumGrammarParser._
         case state"0" =>
           ctx.found = F
           val n_id = predictId(ctx.j)
-          if (n_id > 0 && parseIdH(ctx, state"1")) {
+          if (n_id >= 0 && parseIdH(ctx, state"1")) {
             return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
@@ -552,7 +558,7 @@ import SireumGrammarParser._
         case state"2" =>
           ctx.found = F
           val n_optionValue = predictOptionValue(ctx.j)
-          if (n_optionValue > 0 && parseOptionValueH(ctx, state"3")) {
+          if (n_optionValue >= 0 && parseOptionValueH(ctx, state"3")) {
             return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
@@ -593,7 +599,7 @@ import SireumGrammarParser._
         case state"0" =>
           ctx.found = F
           val n_id = predictId(ctx.j)
-          if (n_id > 0 && parseIdH(ctx, state"1")) {
+          if (n_id >= 0 && parseIdH(ctx, state"1")) {
             return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
@@ -649,7 +655,7 @@ import SireumGrammarParser._
         case state"2" =>
           ctx.found = F
           val n_alt = predictAlt(ctx.j)
-          if (n_alt > 0 && parseAltH(ctx, state"3")) {
+          if (n_alt >= 0 && parseAltH(ctx, state"3")) {
             return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
@@ -668,7 +674,7 @@ import SireumGrammarParser._
         case state"4" =>
           ctx.found = F
           val n_alt = predictAlt(ctx.j)
-          if (n_alt > 0 && parseAltH(ctx, state"3")) {
+          if (n_alt >= 0 && parseAltH(ctx, state"3")) {
             return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
@@ -728,7 +734,7 @@ import SireumGrammarParser._
         case state"3" =>
           ctx.found = F
           val n_alt = predictAlt(ctx.j)
-          if (n_alt > 0 && parseAltH(ctx, state"4")) {
+          if (n_alt >= 0 && parseAltH(ctx, state"4")) {
             return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
@@ -737,7 +743,7 @@ import SireumGrammarParser._
         case state"4" =>
           ctx.found = F
           val n_channel = predictChannel(ctx.j)
-          if (n_channel > 0 && parseChannelH(ctx, state"8")) {
+          if (n_channel >= 0 && parseChannelH(ctx, state"8")) {
             return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
@@ -753,7 +759,7 @@ import SireumGrammarParser._
         case state"5" =>
           ctx.found = F
           val n_alt = predictAlt(ctx.j)
-          if (n_alt > 0 && parseAltH(ctx, state"6")) {
+          if (n_alt >= 0 && parseAltH(ctx, state"6")) {
             return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
@@ -783,7 +789,7 @@ import SireumGrammarParser._
         case state"9" =>
           ctx.found = F
           val n_alt = predictAlt(ctx.j)
-          if (n_alt > 0 && parseAltH(ctx, state"10")) {
+          if (n_alt >= 0 && parseAltH(ctx, state"10")) {
             return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
@@ -792,7 +798,7 @@ import SireumGrammarParser._
         case state"10" =>
           ctx.found = F
           val n_channel = predictChannel(ctx.j)
-          if (n_channel > 0 && parseChannelH(ctx, state"8")) {
+          if (n_channel >= 0 && parseChannelH(ctx, state"8")) {
             return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
@@ -832,7 +838,7 @@ import SireumGrammarParser._
         case state"1" =>
           ctx.found = F
           val n_alt = predictAlt(ctx.j)
-          if (n_alt > 0 && parseAltH(ctx, state"2")) {
+          if (n_alt >= 0 && parseAltH(ctx, state"2")) {
             return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
@@ -851,7 +857,7 @@ import SireumGrammarParser._
         case state"3" =>
           ctx.found = F
           val n_alt = predictAlt(ctx.j)
-          if (n_alt > 0 && parseAltH(ctx, state"2")) {
+          if (n_alt >= 0 && parseAltH(ctx, state"2")) {
             return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
@@ -883,7 +889,7 @@ import SireumGrammarParser._
         case state"0" =>
           ctx.found = F
           val n_element = predictElement(ctx.j)
-          if (n_element > 0 && parseElementH(ctx, state"1")) {
+          if (n_element >= 0 && parseElementH(ctx, state"1")) {
             return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
@@ -892,7 +898,7 @@ import SireumGrammarParser._
         case state"1" =>
           ctx.found = F
           val n_element = predictElement(ctx.j)
-          if (n_element > 0 && parseElementH(ctx, state"1")) {
+          if (n_element >= 0 && parseElementH(ctx, state"1")) {
             return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
@@ -1026,7 +1032,7 @@ import SireumGrammarParser._
         case state"1" =>
           ctx.found = F
           val n_block = predictBlock(ctx.j)
-          if (n_block > 0 && parseBlockH(ctx, state"2")) {
+          if (n_block >= 0 && parseBlockH(ctx, state"2")) {
             return Result.error(ctx.isLexical, ctx.failIndex)
           }
           if (!ctx.found) {
@@ -1545,7 +1551,7 @@ import SireumGrammarParser._
         case _ =>
       }
     }
-    return 0
+    return -1
   }
 
   @pure def predictAtom(j: Z): Z = {
@@ -1585,7 +1591,7 @@ import SireumGrammarParser._
         case _ =>
       }
     }
-    return 0
+    return -1
   }
 
   @pure def predictOptionsSpec(j: Z): Z = {
@@ -1608,7 +1614,7 @@ import SireumGrammarParser._
         case _ =>
       }
     }
-    return 0
+    return -1
   }
 
   @pure def predictAlt(j: Z): Z = {
@@ -1751,7 +1757,7 @@ import SireumGrammarParser._
         case _ =>
       }
     }
-    return 0
+    return -1
   }
 
   @pure def predictTerminal(j: Z): Z = {
@@ -1765,7 +1771,7 @@ import SireumGrammarParser._
         case _ =>
       }
     }
-    return 0
+    return -1
   }
 
   @pure def predictLexerRule(j: Z): Z = {
@@ -1799,7 +1805,7 @@ import SireumGrammarParser._
         case _ =>
       }
     }
-    return 0
+    return -1
   }
 
   @pure def predictElement(j: Z): Z = {
@@ -1907,7 +1913,7 @@ import SireumGrammarParser._
         case _ =>
       }
     }
-    return 0
+    return -1
   }
 
   @pure def predictChannel(j: Z): Z = {
@@ -1930,7 +1936,7 @@ import SireumGrammarParser._
         case _ =>
       }
     }
-    return 0
+    return -1
   }
 
   @pure def predictOption(j: Z): Z = {
@@ -1964,7 +1970,7 @@ import SireumGrammarParser._
         case _ =>
       }
     }
-    return 0
+    return -1
   }
 
   @pure def predictOptionValue(j: Z): Z = {
@@ -1977,7 +1983,7 @@ import SireumGrammarParser._
         case _ =>
       }
     }
-    return 0
+    return -1
   }
 
   @pure def predictBlock(j: Z): Z = {
@@ -2006,7 +2012,7 @@ import SireumGrammarParser._
         case _ =>
       }
     }
-    return 0
+    return -1
   }
 
   @pure def predictGrammarDef(j: Z): Z = {
@@ -2030,7 +2036,7 @@ import SireumGrammarParser._
         case _ =>
       }
     }
-    return 0
+    return -1
   }
 
   @pure def predictRange(j: Z): Z = {
@@ -2053,7 +2059,7 @@ import SireumGrammarParser._
         case _ =>
       }
     }
-    return 0
+    return -1
   }
 
   @pure def predictId(j: Z): Z = {
@@ -2065,7 +2071,7 @@ import SireumGrammarParser._
         case _ =>
       }
     }
-    return 0
+    return -1
   }
 
   @pure def predictNot(j: Z): Z = {
@@ -2090,7 +2096,7 @@ import SireumGrammarParser._
         case _ =>
       }
     }
-    return 0
+    return -1
   }
 
   def retVal(n: Z, resOpt: Option[Result], initial: B, noBacktrack: B): Result = {
