@@ -136,9 +136,9 @@ object GrammarAst {
       * @return `Some(table)` with O(k) lookup per prediction if the grammar is LL(k),
       *         or `None` if there are conflicts.
       */
-    @memoize def computePredictiveTable: Option[PredictiveTable] = {
+    @memoize def computePredictiveTableOpt: Option[PredictiveTable] = {
       computeParsingTableOpt match {
-        case Some(table) => return Some(PredictiveTable.build(table))
+        case Some(table) => return Some(PredictiveTable.build(k, table))
         case _ => return None()
       }
     }
