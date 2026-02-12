@@ -35,9 +35,15 @@ options {
 	k=2;
 }
 
-@header { package org.sireum.parser; }
+@header {
+package org.sireum.parser;
+import org.antlr.runtime.Token;
+}
 
-@lexer::header { package org.sireum.parser; }
+@lexer::header {
+package org.sireum.parser;
+import org.antlr.runtime.Token;
+}
 
 grammarDef: 'grammar' id ';' optionsSpec? PHEADER? LHEADER? parserRule* lexerRule* EOF ;
 

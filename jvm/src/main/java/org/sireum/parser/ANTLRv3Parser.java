@@ -2,6 +2,7 @@
 package org.sireum.parser;
 
 import org.antlr.runtime.*;
+import org.antlr.runtime.Token;
 import org.antlr.runtime.tree.*;
 
 import java.util.ArrayList;

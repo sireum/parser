@@ -1,6 +1,7 @@
 // $ANTLR 3.5.2 /Users/robby/Repositories/Sireum/kekinian/hamr/sysmlv2/frontend/jvm/src/main/java/org/sireum/sysmlv2/antlrv3/ANTLRv3.g 2023-10-22 11:00:21
 package org.sireum.parser;
 import org.antlr.runtime.*;
+import org.antlr.runtime.Token;
 
 @SuppressWarnings("all")
 public class ANTLRv3Lexer extends Lexer {
