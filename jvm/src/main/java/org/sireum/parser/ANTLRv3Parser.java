@@ -4,7 +4,7 @@ package org.sireum.parser;
 import org.antlr.runtime.*;
 import org.antlr.runtime.Token;
 import org.antlr.runtime.tree.*;
-
+import org.antlr.runtime.Token;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;

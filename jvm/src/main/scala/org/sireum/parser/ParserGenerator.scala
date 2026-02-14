@@ -27,6 +27,7 @@
 package org.sireum.parser
 
 import org.sireum._
+import org.sireum.automaton._
 import org.sireum.message.Reporter
 import org.sireum.parser.{GrammarAst => AST}
 
@@ -541,7 +542,7 @@ import org.sireum.parser.{GrammarAst => AST}
 
   @strictpure def dfaName(name: String): ST = st"dfa_$name"
 
-  @pure def edgesOf(dfa: Dfa, node: Z): ISZ[(Z, Z, Z)] = {
+  @pure def edgesOf(dfa: Dfa[(C, C)], node: Z): ISZ[(Z, Z, Z)] = {
     val outgoing = dfa.g.outgoing(node)
     if (outgoing.size == 1 && Dfa.isReject(outgoing(0))) {
       return ISZ()
@@ -556,7 +557,7 @@ import org.sireum.parser.{GrammarAst => AST}
     return r
   }
 
-  def genPredictiveParserDfa(k: Z, memoize: B, backtracking: B, name: ST, ruleName: String, valueST: ST, dfa: Dfa,
+  def genPredictiveParserDfa(k: Z, memoize: B, backtracking: B, name: ST, ruleName: String, valueST: ST, dfa: Dfa[(C, C)],
                              atoms: ISZ[AST.Element]): (ST, ISZ[String]) = {
     val noBacktrack: B = !backtracking || ops.StringOps(ruleName).endsWith("_cut")
     var transitions = ISZ[ST]()
@@ -655,7 +656,7 @@ import org.sireum.parser.{GrammarAst => AST}
     return (parserDfaST(memoize, name, ruleName, valueST, dfa, transitions, noBacktrack), condDefs.elements)
   }
 
-  def genBacktrackingParserDfa(memoize: B, predict: B, name: ST, ruleName: String, valueST: ST, dfa: Dfa,
+  def genBacktrackingParserDfa(memoize: B, predict: B, name: ST, ruleName: String, valueST: ST, dfa: Dfa[(C, C)],
                                atoms: ISZ[AST.Element]): (ST, ISZ[String]) = {
     var transitions = ISZ[ST]()
     var condDefs = HashSSet.empty[String]
@@ -734,7 +735,7 @@ import org.sireum.parser.{GrammarAst => AST}
                |}"""
   }
 
-  @pure def parserDfaST(memoize: B, name: ST, ruleName: String, valueST: ST, dfa: Dfa,
+  @pure def parserDfaST(memoize: B, name: ST, ruleName: String, valueST: ST, dfa: Dfa[(C, C)],
                               transitions: ISZ[ST], noBacktrack: B): ST = {
     return st"""${if (memoize) "@memoize" else "@pure"} def $name(i: Z): Result = {
                |  val ctx = Context.create("$ruleName", $valueST, ISZ(${(for (s <- dfa.accepting.elements) yield st"""state"$s"""", ", ")}), i)
@@ -820,7 +821,7 @@ import org.sireum.parser.{GrammarAst => AST}
     return vars ++ r
   }
 
-  def genLexerDfa(name: ST, dfa: Dfa): ST = {
+  def genLexerDfa(name: ST, dfa: Dfa[(C, C)]): ST = {
     var transitions = ISZ[ST]()
     for (node <- dfa.g.nodesInverse) {
       var conds = ISZ[ST]()
@@ -996,8 +997,8 @@ object ParserGenerator {
   val kind: String = "Parser Generator"
 
   @ext("DfaBuilder") object Ext {
-    def computeParserDfas(ast: AST.Grammar): HashSMap[String, (Dfa, ISZ[AST.Element])] = $
+    def computeParserDfas(ast: AST.Grammar): HashSMap[String, (Dfa[(C, C)], ISZ[AST.Element])] = $
 
-    def computeLexerDfas(ast: AST.Grammar, reporter: Reporter): HashSMap[String, Dfa] = $
+    def computeLexerDfas(ast: AST.Grammar, reporter: Reporter): HashSMap[String, Dfa[(C, C)]] = $
   }
 }

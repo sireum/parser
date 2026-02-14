@@ -33,12 +33,12 @@ import org.sireum.message.{Position, Reporter}
 import org.sireum.parser.{ParseTree => Tree}
 import org.sireum.parser.{GrammarAst => AST}
 
-@datatype class GrammarAstBuilder(tree: ParseTree) {
+@datatype class LLkGrammarAstBuilder(tree: ParseTree) {
 
-  val kind: String = "GrammarAstBuilder"
+  val kind: String = "LLkGrammarAstBuilder"
 
   def build(reporter: Reporter): AST.Grammar = {
-    val Tree.Node(trees@ISZ(Tree.Leaf(string"grammar"), Tree.Node(ISZ(Tree.Leaf(id))), _*)) = tree
+    val Tree.Node(trees@ISZ(Tree.Leaf(_), Tree.Leaf(id), _*)) = tree
     var i = 3
     val options: ISZ[(String, String)] = if (trees(i).ruleName == "optionsSpec") {
       val r = buildOptions(trees(i))
@@ -78,12 +78,8 @@ import org.sireum.parser.{GrammarAst => AST}
     val Tree.Node(trees) = tree
     var r = ISZ[(String, String)]()
     for (i <- 2 until trees.size - 1) {
-      val Tree.Node(ISZ(Tree.Node(ISZ(Tree.Leaf(key))), _, Tree.Node(ISZ(value)), _)) = trees(i)
-      value match {
-        case Tree.Node(ISZ(Tree.Leaf(v))) => r = r :+ ((key, v))
-        case Tree.Leaf(v) => r = r :+ ((key, v))
-        case _ => halt(s"Infeasible: $value")
-      }
+      val Tree.Node(ISZ(Tree.Leaf(key), _, Tree.Leaf(v), _)) = trees(i)
+      r = r :+ ((key, v))
     }
     return r
   }
@@ -149,8 +145,10 @@ import org.sireum.parser.{GrammarAst => AST}
   def buildElement(isLexer: B, tree: ParseTree, reporter: Reporter): AST.Element = {
     val Tree.Node(trees) = tree
     var r: AST.Element = trees(0).ruleName match {
-      case string"atom" => buildAtom(isLexer, trees(0), reporter)
+      case string"range" => buildRange(isLexer, trees(0), reporter)
+      case string"not" => buildNot(isLexer, trees(0), reporter)
       case string"block" => buildBlock(isLexer, trees(0), reporter)
+      case _ => buildTerminal(isLexer, trees(0), reporter)
     }
     if (trees.size == 2) {
       val op@Tree.Leaf(_) = trees(1)
@@ -164,14 +162,20 @@ import org.sireum.parser.{GrammarAst => AST}
     return r
   }
 
-  def buildAtom(isLexer: B, tree: ParseTree, reporter: Reporter): AST.Element = {
-    val Tree.Node(ISZ(t)) = tree
-    t.ruleName match {
-      case string"range" => return buildRange(isLexer, t, reporter)
-      case string"terminal" => return buildTerminal(isLexer, t, reporter)
-      case string"not" => return buildNot(isLexer, t, reporter)
-      case string"PID" =>
-        return AST.Element.Ref(F, t.asInstanceOf[Tree.Leaf].text, posOpt(t))
+  def buildTerminal(isLexer: B, tree: ParseTree, reporter: Reporter): AST.Element = {
+    val leaf@Tree.Leaf(_) = tree
+    leaf.ruleName match {
+      case string"LID" => return AST.Element.Ref(T, leaf.text, leafPosOpt(leaf))
+      case string"CHAR" => return buildCHAR(leaf)
+      case string"STRING" => return buildSTRING(leaf, reporter)
+      case string"'.'" =>
+        val pOpt = leafPosOpt(leaf)
+        if (!isLexer) {
+          reporter.error(pOpt, kind, s"Any char '.' specs cannot appear inside parser rules")
+        }
+        return AST.Element.Dot(pOpt)
+      case string"PID" => return AST.Element.Ref(F, leaf.text, leafPosOpt(leaf))
+      case _ => halt(s"Infeasible: $tree")
     }
   }
 
@@ -184,22 +188,6 @@ import org.sireum.parser.{GrammarAst => AST}
       reporter.error(pOpt, kind, s"Range '..' specs cannot appear inside parser rules")
     }
     return AST.Element.Range(buildCHAR(c1), buildCHAR(c2), pOpt)
-  }
-
-  def buildTerminal(isLexer: B, tree: ParseTree, reporter: Reporter): AST.Element = {
-    val Tree.Node(ISZ(leaf: Tree.Leaf)) = tree
-    leaf.ruleName match {
-      case string"LID" => return AST.Element.Ref(T, leaf.text, leafPosOpt(leaf))
-      case string"CHAR" => return buildCHAR(leaf)
-      case string"STRING" => return buildSTRING(leaf, reporter)
-      case string"'.'" =>
-        val pOpt = leafPosOpt(leaf)
-        if (!isLexer) {
-          reporter.error(pOpt, kind, s"Any char '.' specs cannot appear inside parser rules")
-        }
-        return AST.Element.Dot(pOpt)
-      case _ => halt(s"Infeasible: $tree")
-    }
   }
 
   def buildNot(isLexer: B, tree: ParseTree, reporter: Reporter): AST.Element = {

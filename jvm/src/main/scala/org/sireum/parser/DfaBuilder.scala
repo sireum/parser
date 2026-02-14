@@ -26,16 +26,17 @@
 package org.sireum.parser
 
 import org.sireum._
+import org.sireum.automaton._
 import org.sireum.parser.{GrammarAst => AST}
 import dk.brics.automaton.{Automaton, State}
 import org.sireum.message.Reporter
 
 object DfaBuilder {
 
-  def computeParserDfas(ast: AST.Grammar): HashSMap[String, (Dfa, ISZ[AST.Element])] = {
-    var r = HashSMap.empty[String, (Dfa, ISZ[AST.Element])]
+  def computeParserDfas(ast: AST.Grammar): HashSMap[String, (Dfa[(C, C)], ISZ[AST.Element])] = {
+    var r = HashSMap.empty[String, (Dfa[(C, C)], ISZ[AST.Element])]
 
-    def constructDfa(ast: AST.Rule): (Dfa, ISZ[AST.Element]) = {
+    def constructDfa(ast: AST.Rule): (Dfa[(C, C)], ISZ[AST.Element]) = {
       var atoms = ISZ[AST.Element]()
 
       def constructElement(e: AST.Element): Automaton = {
@@ -115,15 +116,15 @@ object DfaBuilder {
     return r
   }
 
-  def computeLexerDfas(ast: AST.Grammar, reporter: Reporter): HashSMap[String, Dfa] = {
+  def computeLexerDfas(ast: AST.Grammar, reporter: Reporter): HashSMap[String, Dfa[(C, C)]] = {
     var fragmentMap = Map.empty[String, AST.Rule]
     for (rule <- ast.rules if rule.isFragment) {
       fragmentMap = fragmentMap + rule.name ~> rule
     }
 
-    var r = HashSMap.empty[String, Dfa]
+    var r = HashSMap.empty[String, Dfa[(C, C)]]
 
-    def constructDfa(ast: AST.Rule): Dfa = {
+    def constructDfa(ast: AST.Rule): Dfa[(C, C)] = {
       def constructElement(e: AST.Element): Automaton = {
         e match {
           case _: AST.Element.Dot => return Automaton.makeAnyChar

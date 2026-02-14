@@ -1,4 +1,3 @@
-// #Sireum
 /*
  Copyright (c) 2017-2026,Robby, Kansas State University
  All rights reserved.
@@ -23,20 +22,47 @@
  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 package org.sireum.parser
 
 import org.sireum._
-import org.sireum.U32._
+import org.sireum.test._
 
-@datatype class Dfa(val initial: Z, val accepting: HashSSet[Z], val g: Graph[Z, (C, C)])
 
-object Dfa {
-  val maxChar: C = conversions.U32.toC(u32"0x0010FFFF")
+class SlangLl2ParserTest extends SireumRcSpec {
 
-  @pure def isReject(edge: Graph.Edge[Z, (C, C)]): B = {
-    val e = edge.asInstanceOf[Graph.Edge.Data[Z, (C, C)]]
-    return e.source == e.dest && e.data._1 == '\u0000' && e.data._2 == maxChar
+  def shouldIgnore(name: Predef.String, isSimplified: Boolean): Boolean = false
+
+  def textResources: scala.collection.SortedMap[scala.Vector[Predef.String], Predef.String] = {
+    val m = $internal.RC.text(Vector(
+      "example/"
+    )) { (p, _) => T }
+
+    implicit val ordering: Ordering[Vector[Predef.String]] = m.ordering
+    for ((k, v) <- m; pair <- {
+      var r = Vector[(Vector[Predef.String], Predef.String)]()
+      if (!shouldIgnore(k.last, F)) {
+        r = r :+ (k, v)
+      }
+      r
+    }) yield pair
   }
 
+  def check(path: scala.Vector[Predef.String], content: Predef.String): scala.Boolean = {
+    val reporter = message.Reporter.create
+    val tree = SlangLl2Parser.parse(Some(st"${(ISZ(path: _*), "/")}".render), content, reporter)
+    reporter.printMessages()
+    assert(!reporter.hasError)
+    println(tree.get)
+    !reporter.hasIssue
+  }
+
+  def decompress(compressed: Array[Byte]): String = {
+    import java.io.ByteArrayInputStream
+    import java.util.zip.GZIPInputStream
+    import scala.util.Try
+    Try {
+      val inputStream = new GZIPInputStream(new ByteArrayInputStream(compressed))
+      scala.io.Source.fromInputStream(inputStream).mkString
+    }.toOption.get
+  }
 }

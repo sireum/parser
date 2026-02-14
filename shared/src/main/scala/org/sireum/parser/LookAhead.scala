@@ -27,6 +27,7 @@
 package org.sireum.parser
 
 import org.sireum._
+import org.sireum.automaton._
 import org.sireum.parser.{GrammarAst => AST}
 
 object LookAhead {
@@ -64,7 +65,7 @@ object LookAhead {
 
   def compute(k: Z,
               nameRuleMap: HashMap[String, AST.Rule],
-              parserDfaMap: HashSMap[String, (Dfa, ISZ[AST.Element])],
+              parserDfaMap: HashSMap[String, (Dfa[(C, C)], ISZ[AST.Element])],
               reporter: message.Reporter): HashMap[String, Trie] = {
     return LookAhead(k, nameRuleMap, parserDfaMap).compute(reporter)
   }
@@ -72,11 +73,11 @@ object LookAhead {
 
 @record class LookAhead(val k: Z,
                         val nameRuleMap: HashMap[String, AST.Rule],
-                        val parserDfaMap: HashSMap[String, (Dfa, ISZ[AST.Element])]) {
+                        val parserDfaMap: HashSMap[String, (Dfa[(C, C)], ISZ[AST.Element])]) {
 
   var cache: HashMap[(String, Z), ISZ[LookAhead.Case]] = HashMap.empty
 
-  def computeRule(seen: HashSet[(String, Z)], size: Z, name: String, dfa: Dfa, atoms: ISZ[AST.Element], reporter: message.Reporter): ISZ[LookAhead.Case] = {
+  def computeRule(seen: HashSet[(String, Z)], size: Z, name: String, dfa: Dfa[(C, C)], atoms: ISZ[AST.Element], reporter: message.Reporter): ISZ[LookAhead.Case] = {
 
     val key = (name, size)
     cache.get(key) match {
