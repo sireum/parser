@@ -3,7 +3,6 @@
 package org.sireum.parser
 
 import org.sireum._
-import org.sireum.U32._
 import org.sireum.parser._
 
 object SireumAntlr3Parser {
