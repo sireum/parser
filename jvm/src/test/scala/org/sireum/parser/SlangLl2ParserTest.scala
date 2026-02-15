@@ -48,11 +48,25 @@ class SlangLl2ParserTest extends SireumRcSpec {
   }
 
   def check(path: scala.Vector[Predef.String], content: Predef.String): scala.Boolean = {
+    val uriOpt = Some(st"${(ISZ(path: _*), "/")}".render)
     val reporter = message.Reporter.create
-    val tree = SlangLl2Parser.parse(Some(st"${(ISZ(path: _*), "/")}".render), content, reporter)
+    val tree = SlangLl2Parser.parse(uriOpt, content, reporter)
     reporter.printMessages()
     assert(!reporter.hasError)
     println(tree.get)
+
+    // Verify parseIterative produces identical result
+    val cis = conversions.String.toCis(content)
+    val docInfo = message.DocInfo.createFromCis(uriOpt, cis)
+    val chars = Indexable.IszDocInfo[C](cis, docInfo)
+    val (errorIndex, tokens) = SlangLl2Parser.lexerDfas.tokens(chars, T)
+    assert(errorIndex < 0, s"Lex error at $errorIndex")
+    val indexable = Indexable.fromIsz(tokens)
+    val reporter2 = message.Reporter.create
+    val iterTree = SlangLl2Parser.g.parse("file", indexable, reporter2)
+    assert(!reporter2.hasError, "parse had errors")
+    assert(tree.get == iterTree.get, s"parse result differs for ${path.last}")
+
     !reporter.hasIssue
   }
 

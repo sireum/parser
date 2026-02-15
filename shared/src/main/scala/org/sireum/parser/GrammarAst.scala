@@ -1138,7 +1138,7 @@ object GrammarAst {
             }
           }
 
-          var ruleMap = HashSMap.empty[U32, NRule]
+          var ruleMapMs = MS.create[U32, NRule](conversions.U32.toZ(nextId), NRule.sentinel)
           for (r <- ng.rules if !r.isLexer) {
             val ruleNum = nameMap.get(r.name).get
             if (r.alts.size > 1) {
@@ -1148,24 +1148,24 @@ object GrammarAst {
                   case ref: Element.Ref =>
                     val refNum = nameMap.get(ref.name).get
                     altNums = altNums :+ refNum
-                    if (ref.isTerminal && !ruleMap.contains(refNum)) {
-                      ruleMap = ruleMap + refNum ~> NRule.Elements(
+                    if (ref.isTerminal && ruleMapMs(refNum) == NRule.sentinel) {
+                      ruleMapMs(refNum) = NRule.Elements(
                         name = ref.name, num = refNum, isSynthetic = T,
                         elements = ISZ(NElement.Ref(isTerminal = T, ruleName = ref.name, num = refNum)))
                     }
                   case _ => halt("Expected single Ref in alt of multi-alt normalized rule")
                 }
               }
-              ruleMap = ruleMap + ruleNum ~> NRule.Alts(name = r.name, num = ruleNum, isSynthetic = r.isSynthetic, alts = altNums)
+              ruleMapMs(ruleNum) = NRule.Alts(name = r.name, num = ruleNum, isSynthetic = r.isSynthetic, alts = altNums)
             } else if (r.alts.size == 1) {
               var nelems = ISZ[NElement]()
               for (e <- r.alts(0).elements) {
                 nelems = nelems :+ toNElement(e)
               }
-              ruleMap = ruleMap + ruleNum ~> NRule.Elements(name = r.name, num = ruleNum, isSynthetic = r.isSynthetic, elements = nelems)
+              ruleMapMs(ruleNum) = NRule.Elements(name = r.name, num = ruleNum, isSynthetic = r.isSynthetic, elements = nelems)
             }
           }
-          return Some(NGrammar(ruleMap, augPt))
+          return Some(NGrammar(ruleMapMs.toIS, augPt))
         case _ => return None()
       }
     }

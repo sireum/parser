@@ -59,6 +59,19 @@ class SireumAntlr3ParserTest extends SireumRcSpec {
     reporter.printMessages()
     assert(!reporter.hasError)
     assert(ast == origAst)
+
+    // Verify parseIterative produces identical parse tree
+    val cis = conversions.String.toCis(content)
+    val docInfo = message.DocInfo.createFromCis(uriOpt, cis)
+    val chars = Indexable.IszDocInfo[C](cis, docInfo)
+    val (errorIndex, tokens) = SireumAntlr3Parser.lexerDfas.tokens(chars, T)
+    assert(errorIndex < 0, s"Lex error at $errorIndex")
+    val indexable = Indexable.fromIsz(tokens)
+    val reporter2 = message.Reporter.create
+    val iterTree = SireumAntlr3Parser.g.parse("grammarDef", indexable, reporter2)
+    assert(!reporter2.hasError, "parse had errors")
+    assert(tree == iterTree.get, s"parse result differs for ${path.last}")
+
     !reporter.hasIssue
   }
 
