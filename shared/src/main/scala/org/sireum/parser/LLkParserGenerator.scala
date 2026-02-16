@@ -27,7 +27,6 @@
 package org.sireum.parser
 
 import org.sireum._
-import org.sireum.U32._
 import org.sireum.automaton._
 
 object LLkParserGenerator {
@@ -310,7 +309,7 @@ object LLkParserGenerator {
     val nameMap = ng.pt.nameMap
 
     // Build DFA infos for string literals
-    var dfaInfos = ISZ[(automaton.Dfa[(C, C)], String, U32, B)]()
+    var dfaInfos = ISZ[(automaton.Dfa[(C, C)], String, Z, B)]()
     for (s <- strs) {
       val nfa = nfaElement(s, z"0")
       val dfa = minimize(nfaToDfa(nfa))
@@ -333,7 +332,7 @@ object LLkParserGenerator {
       dfaInfos = dfaInfos :+ (dfa, r.name, nameMap.get(r.name).get, r.isHidden)
     }
 
-    val eofTypeOpt: Option[U32] = nameMap.get("EOF")
+    val eofTypeOpt: Option[Z] = nameMap.get("EOF")
     val lexerDfas = LexerDfas.fromDfas(dfaInfos = dfaInfos, eofTypeOpt = eofTypeOpt)
 
     val maxChunkSize: Z = 60000

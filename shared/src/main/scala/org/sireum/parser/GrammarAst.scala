@@ -1080,17 +1080,17 @@ object GrammarAst {
           // Augment the nameMap with all rule names and literals that may not
           // appear in k-token lookahead sequences but are still referenced in rules
           var nameMap = pt.nameMap
-          var nextId: U32 = u32"0"
+          var nextId: Z = 0
           for (e <- nameMap.entries) {
-            if (conversions.U32.toZ(e._2) >= conversions.U32.toZ(nextId)) {
-              nextId = e._2 + u32"1"
+            if (e._2 >= nextId) {
+              nextId = e._2 + 1
             }
           }
 
           def ensureName(name: String): Unit = {
             if (!nameMap.contains(name)) {
               nameMap = nameMap + name ~> nextId
-              nextId = nextId + u32"1"
+              nextId = nextId + 1
             }
           }
 
@@ -1138,11 +1138,11 @@ object GrammarAst {
             }
           }
 
-          var ruleMapMs = MS.create[U32, NRule](conversions.U32.toZ(nextId), NRule.sentinel)
+          var ruleMapMs = MSZ.create[NRule](nextId, NRule.sentinel)
           for (r <- ng.rules if !r.isLexer) {
             val ruleNum = nameMap.get(r.name).get
             if (r.alts.size > 1) {
-              var altNums = ISZ[U32]()
+              var altNums = ISZ[Z]()
               for (alt <- r.alts) {
                 alt.elements(0) match {
                   case ref: Element.Ref =>

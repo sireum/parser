@@ -80,8 +80,8 @@ object XxxParser {
 
 ### DFA Info Tuples
 
-`LexerDfas.fromDfas` takes `ISZ[(Dfa[(C, C)], String, U32, B)]` where each tuple is:
+`LexerDfas.fromDfas` takes `ISZ[(Dfa[(C, C)], String, Z, B)]` where each tuple is:
 - `Dfa[(C, C)]` — the minimized DFA
 - `String` — the token name (e.g., `"ID"`, `"'val'"`)
-- `U32` — the token type ID from `PredictiveTable.nameMap`
+- `Z` — the token type ID from `PredictiveTable.nameMap`
 - `B` — `T` if the token is hidden (whitespace/comments, skipped during parsing)
