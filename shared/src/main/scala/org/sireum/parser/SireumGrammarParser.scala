@@ -37,12 +37,10 @@ object SireumGrammarParser {
   val lexerDfas: LexerDfas = LexerDfas.fromCompact("7wQAAPN5xxsACSdncmFtbWFyJwknb3B0aW9ucycEJy4uJwonJGNoYW5uZWwnCidmcmFnbWVudCcDJzsnAyd7JwMnfScDJz0nAyc6JwMnKCcDJyknAyd+JwMnfCcDJz8nAycqJwMnKycDJy4nBENIQVIGU1RSSU5HA0lOVANMSUQDUElEB1BIRUFERVIHTAgA8gFDT01NRU5UAldTxwABGwjCAQDyEcMBZ2cBAXJyAgFhYQQBYWEGAW1tBQFtbQMBcnIHAAjCAQDzHsMBb28CAW9vBQFwcAMBdHQEAWlpAQFubgYBc3MHAAPCwsMBLi4BAS4uAgAJwgEA8xXDASQkAQFjYwIBaGgDAWFhBAFubgUBbm4GAWVlBwFsbAgACcIBAPEawwFmZgEBcnICAWFhAwFnZwQBbW0FAWVlBgFubgcBdHQIAALCwwE7OwEIAKJ7ewEAAsLDAX19CACiPT0BAALCwwE6OggAoigoAQACwsMBKSkIAKJ+fgEAAsLDAXx8CACiPz8BAALCwwEqKggA4ysrAQACwsMBLi4BAAnCAQD5UsMBJycBBAAmAihbAlxcA13OABD//wIBJycICSIiAicnAlxcAmJiAmZmAm5uAnJyAnR0AnV1BAMwOQVBRgVhZgUDMDkGQUYGYWYGAzA5B0FGB2FmBwMwOQJBRgJhZgIAD8IBAPIRwwEnJwEEACYCKFsCXFwDXc4AEP//AgQAJgUoWwVcXAQRAPCaBQkiIgInJwJcXAJiYgJmZgJubgJycgJ0dAJ1dQYJIiIFJycFXFwFYmIFZmYFbm4FcnIFdHQFdXUHBQAmBScnDihbBVxcBF3OABD//wUDMDkIQUYIYWYIAzA5CUFGCWFmCQMwOQpBRgphZgoDMDkLQUYLYWYLAzA5DEFGDGFmDAMwOQ1BRg1hZg0DMDkCQUYCYWYCAzA5BUFGBWFmBQACwsMBMTkBATA5AQsA8ARBWgEEMDkBQVoBX18BYXoBAsLDBwD0AAQwOQFBWgFfXwFhegEKwgEA+zvDAUBAAQUJCQEKCgENDQEgIAFoaAIBZWUEAWVlBgFhYQUBZGQDAXJyBwUJCQcKCgcNDQcgIAd7ewgDAHwIfX0Jfs4AEP//CAARwgEA8DPDAUBAAQUJCQEKCgENDQEgIAFsbAIBZWUGAWVlBwFlZQgBZWUMAXh4AwFycgkBcnIOBQkJCQoKCQ0NCSAgCTo6CgUPAPI1CgoNDQogIAo6OgsFCQkLCgoLDQ0LICALaGgFAWFhDQFkZAQFCQkOCgoODQ0OICAOe3sPAwB8D319EH7OABD//w8ACcIBAPEaw8MBLy8BAioqAi8vAwMAKQIqKgQrzgAQ//8CBQAJAwoKBwsMAw0NBg4UAPIGAwUAKQIqKgUrLgIvLwcwzgAQ//8CFADyDAQrLgIvLwgwzgAQ//8CAQoKBwADACkCKioEKxMA+QECwsMECQkBCgoBDQ0BICABDQD/KAABAgMEBQYHCAkKCwwNDg8QERITFBUWFxgZGgEFHCQPCgY1CA0RGxUaFxgZFBITCwIDJidwdcIBAAVAw8PDXg==")
 
   def parseRule(uriOpt: Option[String], content: String, ruleName: String, reporter: message.Reporter): Option[ParseTree] = {
-    val cis = conversions.String.toCis(content)
-    val docInfo = message.DocInfo.createFromCis(uriOpt, cis)
-    val chars = Indexable.IszDocInfoC(cis, docInfo)
+    val chars = Indexable.Ext.fromString(uriOpt, content)
     val (errorIndex, tokens) = lexerDfas.tokens(chars, T)
     if (errorIndex >= 0) {
-      reporter.error(chars.posOpt(errorIndex, 1), "SireumGrammarParser", st"Unrecognized character '${ops.COps(cis(errorIndex)).escapeString}'".render)
+      reporter.error(chars.posOpt(errorIndex, 1), "SireumGrammarParser", st"Unrecognized character '${ops.COps(chars.at(errorIndex)).escapeString}'".render)
       return None()
     }
     return g.parse(ruleName, Indexable.fromIsz(tokens), reporter)
