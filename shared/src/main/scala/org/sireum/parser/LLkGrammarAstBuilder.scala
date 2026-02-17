@@ -27,6 +27,7 @@
 package org.sireum.parser
 
 import org.sireum._
+import org.sireum.S32._
 import org.sireum.U32._
 import org.sireum.U64._
 import org.sireum.message.{Position, Reporter}
@@ -37,63 +38,74 @@ import org.sireum.parser.{GrammarAst => AST}
 
   val kind: String = "LLkGrammarAstBuilder"
 
+  @strictpure def ch(t: ParseTree): IS[S32, Tree] = t.asInstanceOf[Tree.Node].children
+
+  @strictpure def asLeaf(t: ParseTree): Tree.Leaf = t.asInstanceOf[Tree.Leaf]
+
   def build(reporter: Reporter): AST.Grammar = {
-    val Tree.Node(trees@ISZ(Tree.Leaf(_), Tree.Node(ISZ(Tree.Leaf(id))), _*)) = tree
-    var i = 3
-    val options: ISZ[(String, String)] = if (trees(i).ruleName == "optionsSpec") {
-      val r = buildOptions(trees(i))
-      i = i + 1
+    val trees = ch(tree)
+    val id = asLeaf(ch(trees.atS32(s32"1")).atS32(s32"0")).text
+    var i: S32 = s32"3"
+    val options: ISZ[(String, String)] = if (trees.atS32(i).ruleName == "optionsSpec") {
+      val r = buildOptions(trees.atS32(i))
+      i = i + s32"1"
       r
     } else {
       ISZ()
     }
-    val pheaderOpt: Option[String] = if (trees(i).ruleName == "PHEADER") {
-      val Tree.Leaf(pheader) = trees(i)
-      i = i + 1
+    val pheaderOpt: Option[String] = if (trees.atS32(i).ruleName == "PHEADER") {
+      val pheader = asLeaf(trees.atS32(i)).text
+      i = i + s32"1"
       Some(pheader)
     } else {
       None()
     }
-    val lheaderOpt: Option[String] = if (trees(i).ruleName == "LHEADER") {
-      val Tree.Leaf(lheader) = trees(i)
-      i = i + 1
+    val lheaderOpt: Option[String] = if (trees.atS32(i).ruleName == "LHEADER") {
+      val lheader = asLeaf(trees.atS32(i)).text
+      i = i + s32"1"
       Some(lheader)
     } else {
       None()
     }
 
     var rules = ISZ[AST.Rule]()
-    for (j <- i until trees.size - 1) {
-      trees(j).ruleName match {
-        case string"parserRule" => rules = rules :+ buildParserRule(trees(j), reporter)
-        case string"lexerRule" => rules = rules :+ buildLexerRule(trees(j), reporter)
-        case _ => halt(s"Infeasible: ${trees(j)}")
+    val last: S32 = trees.sizeS32 - s32"1"
+    var j: S32 = i
+    while (j < last) {
+      trees.atS32(j).ruleName match {
+        case string"parserRule" => rules = rules :+ buildParserRule(trees.atS32(j), reporter)
+        case string"lexerRule" => rules = rules :+ buildLexerRule(trees.atS32(j), reporter)
+        case _ => halt(s"Infeasible: ${trees.atS32(j)}")
       }
+      j = j + s32"1"
     }
 
     return AST.Grammar(id, options, pheaderOpt, lheaderOpt, rules)
   }
 
   def buildOptions(tree: Tree): ISZ[(String, String)] = {
-    val Tree.Node(trees) = tree
+    val trees = ch(tree)
     var r = ISZ[(String, String)]()
-    for (i <- 2 until trees.size - 1) {
-      val Tree.Node(ISZ(keyId, _, valueNode, _)) = trees(i)
-      val key = extractId(keyId)
-      val Tree.Node(valueChildren) = valueNode
-      val value: String = valueChildren(0) match {
+    var i: S32 = s32"2"
+    val last: S32 = trees.sizeS32 - s32"1"
+    while (i < last) {
+      val optTrees = ch(trees.atS32(i))
+      val key = extractId(optTrees.atS32(s32"0"))
+      val valueChildren = ch(optTrees.atS32(s32"2"))
+      val value: String = valueChildren.atS32(s32"0") match {
         case n: Tree.Node => extractId(n)
         case l: Tree.Leaf => l.text
       }
       r = r :+ ((key, value))
+      i = i + s32"1"
     }
     return r
   }
 
   def extractId(tree: Tree): String = {
     tree match {
-      case Tree.Node(ISZ(inner)) => return extractId(inner)
-      case Tree.Leaf(text) => return text
+      case n: Tree.Node if n.children.sizeS32 == s32"1" => return extractId(n.children.atS32(s32"0"))
+      case l: Tree.Leaf => return l.text
       case _ => halt(s"Infeasible: $tree")
     }
   }
@@ -103,79 +115,91 @@ import org.sireum.parser.{GrammarAst => AST}
   }
 
   def buildParserRule(tree: Tree, reporter: Reporter): AST.Rule = {
-    val Tree.Node(trees@ISZ(name: Tree.Leaf, _*)) = tree
+    val trees = ch(tree)
+    val name = asLeaf(trees.atS32(s32"0"))
     var alts = ISZ[AST.Alt]()
-    for (i <- 2 until trees.size by 2) {
-      alts = alts :+ buildAlt(F, trees(i), reporter)
+    var i: S32 = s32"2"
+    while (i < trees.sizeS32) {
+      alts = alts :+ buildAlt(F, trees.atS32(i), reporter)
+      i = i + s32"2"
     }
     return AST.Rule(name = name.text, isLexer = F, isFragment = F, isHidden = F, isSynthetic = F, posOpt = leafPosOpt(name), alts = alts)
   }
 
   def buildLexerRule(tree: ParseTree, reporter: Reporter): AST.Rule = {
-    val Tree.Node(trees) = tree
+    val trees = ch(tree)
     var isFragment = F
     var isHidden = F
-    var i = 0
-    if (trees(i).ruleName == "'fragment'") {
+    var i: S32 = s32"0"
+    if (trees.atS32(i).ruleName == "'fragment'") {
       isFragment = T
-      i = i + 1
+      i = i + s32"1"
     }
-    val name@Tree.Leaf(_) = trees(i)
-    i = i + 2
+    val name = asLeaf(trees.atS32(i))
+    i = i + s32"2"
     var alts = ISZ[AST.Alt]()
-    alts = alts :+ buildAlt(T, trees(i), reporter)
-    i = i + 1
-    if (trees(i).ruleName == "channel") {
-      def checkChannel(j: Z): Unit = {
-        val Tree.Node(ISZ(_, _, _, lid: Tree.Leaf, _*)) = trees(j)
+    alts = alts :+ buildAlt(T, trees.atS32(i), reporter)
+    i = i + s32"1"
+    if (trees.atS32(i).ruleName == "channel") {
+      def checkChannel(j: S32): Unit = {
+        val channelTrees = ch(trees.atS32(j))
+        val lid = asLeaf(channelTrees.atS32(s32"3"))
         if (lid.text != "HIDDEN") {
           reporter.error(leafPosOpt(lid), kind, s"Only HIDDEN channel is supported")
         }
       }
       checkChannel(i)
       isHidden = T
-      i = i + 2
-      for (j <- i until trees.size - 1 by 3) {
-        alts = alts :+ buildAlt(T, trees(j), reporter)
-        checkChannel(j + 1)
+      i = i + s32"2"
+      var j: S32 = i
+      val last: S32 = trees.sizeS32 - s32"1"
+      while (j < last) {
+        alts = alts :+ buildAlt(T, trees.atS32(j), reporter)
+        checkChannel(j + s32"1")
+        j = j + s32"3"
       }
     } else {
-      for (j <- i + 1 until trees.size - 1 by 2) {
-        alts = alts :+ buildAlt(T, trees(j), reporter)
+      var j: S32 = i + s32"1"
+      val last: S32 = trees.sizeS32 - s32"1"
+      while (j < last) {
+        alts = alts :+ buildAlt(T, trees.atS32(j), reporter)
+        j = j + s32"2"
       }
     }
     return AST.Rule(name = name.text, isLexer = T, isFragment = isFragment, isHidden = isHidden, isSynthetic = F, posOpt = leafPosOpt(name), alts = alts)
   }
 
   def buildAlt(isLexer: B, tree: ParseTree, reporter: Reporter): AST.Alt = {
-    val Tree.Node(trees) = tree
+    val trees = ch(tree)
     var elements = ISZ[AST.Element]()
-    for (i <- 0 until trees.size) {
-      elements = elements :+ buildElement(isLexer, trees(i), reporter)
+    var i: S32 = s32"0"
+    while (i < trees.sizeS32) {
+      elements = elements :+ buildElement(isLexer, trees.atS32(i), reporter)
+      i = i + s32"1"
     }
     return AST.Alt(elements)
   }
 
   def buildElement(isLexer: B, tree: ParseTree, reporter: Reporter): AST.Element = {
-    val Tree.Node(trees) = tree
-    var r: AST.Element = trees(0).ruleName match {
-      case string"atom" => buildAtom(isLexer, trees(0), reporter)
-      case string"block" => buildBlock(isLexer, trees(0), reporter)
+    val trees = ch(tree)
+    var r: AST.Element = trees.atS32(s32"0").ruleName match {
+      case string"atom" => buildAtom(isLexer, trees.atS32(s32"0"), reporter)
+      case string"block" => buildBlock(isLexer, trees.atS32(s32"0"), reporter)
     }
-    if (trees.size == 2) {
-      val op@Tree.Leaf(_) = trees(1)
+    if (trees.sizeS32 == s32"2") {
+      val op = asLeaf(trees.atS32(s32"1"))
       op.text match {
         case string"?" => r = AST.Element.Opt(r, leafPosOpt(op))
         case string"*" => r = AST.Element.Star(r, leafPosOpt(op))
         case string"+" => r = AST.Element.Plus(r, leafPosOpt(op))
-        case _ => halt(s"Infeasible: ${trees(1)}")
+        case _ => halt(s"Infeasible: ${trees.atS32(s32"1")}")
       }
     }
     return r
   }
 
   def buildAtom(isLexer: B, tree: ParseTree, reporter: Reporter): AST.Element = {
-    val Tree.Node(ISZ(t)) = tree
+    val t = ch(tree).atS32(s32"0")
     t.ruleName match {
       case string"range" => return buildRange(isLexer, t, reporter)
       case string"terminal" => return buildTerminal(isLexer, t, reporter)
@@ -186,7 +210,7 @@ import org.sireum.parser.{GrammarAst => AST}
   }
 
   def buildTerminal(isLexer: B, tree: ParseTree, reporter: Reporter): AST.Element = {
-    val Tree.Node(ISZ(leaf: Tree.Leaf)) = tree
+    val leaf = asLeaf(ch(tree).atS32(s32"0"))
     leaf.ruleName match {
       case string"LID" => return AST.Element.Ref(T, leaf.text, leafPosOpt(leaf))
       case string"CHAR" => return buildCHAR(leaf)
@@ -202,9 +226,9 @@ import org.sireum.parser.{GrammarAst => AST}
   }
 
   def buildRange(isLexer: B, tree: ParseTree, reporter: Reporter): AST.Element = {
-    val Tree.Node(trees) = tree
-    val c1 = trees(0)
-    val c2 = trees(2)
+    val trees = ch(tree)
+    val c1 = trees.atS32(s32"0")
+    val c2 = trees.atS32(s32"2")
     val pOpt = posOpts(posOpt(c1), posOpt(c2))
     if (!isLexer) {
       reporter.error(pOpt, kind, s"Range '..' specs cannot appear inside parser rules")
@@ -213,7 +237,9 @@ import org.sireum.parser.{GrammarAst => AST}
   }
 
   def buildNot(isLexer: B, tree: ParseTree, reporter: Reporter): AST.Element = {
-    val Tree.Node(ISZ(not: Tree.Leaf, e)) = tree
+    val nc = ch(tree)
+    val not = asLeaf(nc.atS32(s32"0"))
+    val e = nc.atS32(s32"1")
     val pOpt = posOpt(not)
     if (!isLexer) {
       reporter.error(pOpt, kind, "Complement '~' specs cannot appear inside parser rules")
@@ -246,13 +272,13 @@ import org.sireum.parser.{GrammarAst => AST}
   }
 
   def buildCHAR(tree: ParseTree): AST.Element.Char = {
-    val leaf@Tree.Leaf(_) = tree
+    val leaf = asLeaf(tree)
     val cis = conversions.String.toCis(leaf.text)
     return AST.Element.Char(cis2C(cis, 1)._1, leafPosOpt(leaf))
   }
 
   def buildSTRING(tree: ParseTree, reporter: Reporter): AST.Element = {
-    val leaf@Tree.Leaf(_) = tree
+    val leaf = asLeaf(tree)
     val cis = conversions.String.toCis(leaf.text)
     val pOpt = leafPosOpt(leaf)
     def error(): Unit = {
@@ -283,17 +309,19 @@ import org.sireum.parser.{GrammarAst => AST}
   }
 
   def buildBlock(isLexer: B, tree: ParseTree, reporter: Reporter): AST.Element.Block = {
-    val Tree.Node(trees) = tree
+    val trees = ch(tree)
     var alts = ISZ[AST.Alt]()
-    for (i <- 1 to trees.size - 1 by 2) {
-      alts = alts :+ buildAlt(isLexer, trees(i), reporter)
+    var i: S32 = s32"1"
+    while (i <= trees.sizeS32 - s32"1") {
+      alts = alts :+ buildAlt(isLexer, trees.atS32(i), reporter)
+      i = i + s32"2"
     }
     return AST.Element.Block(alts, posOpt(tree))
   }
 
   @pure def posOpt(tree: Tree): Option[Position] = {
     tree match {
-      case tree: Tree.Node => return posOpts(posOpt(tree.children(0)), posOpt(tree.children(tree.children.size - 1)))
+      case tree: Tree.Node => return posOpts(posOpt(tree.children.atS32(s32"0")), posOpt(tree.children.atS32(tree.children.sizeS32 - s32"1")))
       case tree: Tree.Leaf => return leafPosOpt(tree)
     }
   }

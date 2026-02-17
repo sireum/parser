@@ -27,6 +27,7 @@
 package org.sireum.parser
 
 import org.sireum._
+import org.sireum.S32._
 import org.sireum.U32._
 import org.sireum.message.Position
 
@@ -1138,31 +1139,33 @@ object GrammarAst {
             }
           }
 
-          var ruleMapMs = MSZ.create[NRule](nextId, NRule.sentinel)
+          var ruleMapMs = MS.create[S32, NRule](nextId, NRule.sentinel)
           for (r <- ng.rules if !r.isLexer) {
             val ruleNum = nameMap.get(r.name).get
+            val ruleNumS32 = conversions.Z.toS32(ruleNum)
             if (r.alts.size > 1) {
               var altNums = ISZ[Z]()
               for (alt <- r.alts) {
                 alt.elements(0) match {
                   case ref: Element.Ref =>
                     val refNum = nameMap.get(ref.name).get
+                    val refNumS32 = conversions.Z.toS32(refNum)
                     altNums = altNums :+ refNum
-                    if (ref.isTerminal && ruleMapMs(refNum) == NRule.sentinel) {
-                      ruleMapMs(refNum) = NRule.Elements(
+                    if (ref.isTerminal && ruleMapMs(refNumS32) == NRule.sentinel) {
+                      ruleMapMs(refNumS32) = NRule.Elements(
                         name = ref.name, num = refNum, isSynthetic = T,
                         elements = ISZ(NElement.Ref(isTerminal = T, ruleName = ref.name, num = refNum)))
                     }
                   case _ => halt("Expected single Ref in alt of multi-alt normalized rule")
                 }
               }
-              ruleMapMs(ruleNum) = NRule.Alts(name = r.name, num = ruleNum, isSynthetic = r.isSynthetic, alts = altNums)
+              ruleMapMs(ruleNumS32) = NRule.Alts(name = r.name, num = ruleNum, isSynthetic = r.isSynthetic, alts = altNums)
             } else if (r.alts.size == 1) {
               var nelems = ISZ[NElement]()
               for (e <- r.alts(0).elements) {
                 nelems = nelems :+ toNElement(e)
               }
-              ruleMapMs(ruleNum) = NRule.Elements(name = r.name, num = ruleNum, isSynthetic = r.isSynthetic, elements = nelems)
+              ruleMapMs(ruleNumS32) = NRule.Elements(name = r.name, num = ruleNum, isSynthetic = r.isSynthetic, elements = nelems)
             }
           }
           return Some(NGrammar(ruleMapMs.toIS, augPt))
