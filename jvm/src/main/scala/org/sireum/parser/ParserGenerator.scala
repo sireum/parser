@@ -763,7 +763,7 @@ import org.sireum.parser.{GrammarAst => AST}
   }
 
   @pure def terminalST(text: String, dest: Z, plain: B, notFoundOpt: Option[ST]): ST = {
-    return st"""case 0x${(valCode(text), "")} /* ${if (plain) text else st"\"${escape(text)}\"" } */$notFoundOpt => ctx.updateTerminal(token, state"$dest")"""
+    return st"""case s32"0x${(valCode(text), "")}" /* ${if (plain) text else st"\"${escape(text)}\"" } */$notFoundOpt => ctx.updateTerminal(token, state"$dest")"""
   }
 
   def genTries(k: Z, ruleTrie: LookAhead.Trie): ISZ[ST] = {
@@ -794,8 +794,8 @@ import org.sireum.parser.{GrammarAst => AST}
             |$acceptOpt"""
       }
       val cond: ST = trie.value match {
-        case v: LookAhead.Case.Value.Str => st"""case 0x${valCode(v.value)} /* "${escape(v.value)}" */"""
-        case v: LookAhead.Case.Value.Terminal => st"""case 0x${(valCode(v.name), "")} /* ${v.name} */"""
+        case v: LookAhead.Case.Value.Str => st"""case s32"0x${valCode(v.value)}" /* "${escape(v.value)}" */"""
+        case v: LookAhead.Case.Value.Terminal => st"""case s32"0x${(valCode(v.name), "")}" /* ${v.name} */"""
       }
       val rf: ST = if (subs.isEmpty) st"$cond => $subsST" else
         st"""$cond =>
