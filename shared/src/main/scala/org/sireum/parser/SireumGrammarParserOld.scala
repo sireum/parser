@@ -67,7 +67,7 @@ object SireumGrammarParserOld {
   }
 
   @record class Context(val ruleName: String,
-                        val ruleType: Z,
+                        val ruleType: S32,
                         val accepting: IS[State, B],
                         var state: State,
                         var resOpt: Option[Result],
@@ -109,7 +109,7 @@ object SireumGrammarParserOld {
   }
 
   object Context {
-    @pure def create(ruleName: String, ruleType: Z, accepts: ISZ[State], i: Z): Context = {
+    @pure def create(ruleName: String, ruleType: S32, accepts: ISZ[State], i: Z): Context = {
       val accepting = MS.create[State, B](17, F)
       for (accept <- accepts) {
         accepting(accept) = T
@@ -201,51 +201,51 @@ object SireumGrammarParserOld {
   val minChar: C = '\u0000'
   val maxChar: C = toC(u32"0x0010FFFF")
 
-  val T_AEB64436: Z = 0xAEB64436 /* "grammar" */
-  val T_36F2899D: Z = 0x36F2899D /* ";" */
-  val T_ED16D169: Z = 0xED16D169 /* "options" */
-  val T_FDCE65E5: Z = 0xFDCE65E5 /* "{" */
-  val T_5BF60471: Z = 0x5BF60471 /* "}" */
-  val T_EF954474: Z = 0xEF954474 /* "=" */
-  val T_763C38BE: Z = 0x763C38BE /* ":" */
-  val T_687111E8: Z = 0x687111E8 /* "|" */
-  val T_072BDD2B: Z = 0x072BDD2B /* "fragment" */
-  val T_71F6371D: Z = 0x71F6371D /* "(" */
-  val T_B9401340: Z = 0xB9401340 /* ")" */
-  val T_D827FEB7: Z = 0xD827FEB7 /* "?" */
-  val T_82283B4B: Z = 0x82283B4B /* "*" */
-  val T_797D7BC8: Z = 0x797D7BC8 /* "+" */
-  val T_AAB7E55C: Z = 0xAAB7E55C /* "~" */
-  val T_3A15194D: Z = 0x3A15194D /* ".." */
-  val T_6890427A: Z = 0x6890427A /* "." */
-  val T_46562B21: Z = 0x46562B21 /* "$channel" */
-  val T_CHAR: Z = 0xE95F063A
-  val T_STRING: Z = 0xA7CF0FE0
-  val T_INT: Z = 0x589C233C
-  val T_LID: Z = 0x8E18F45B
-  val T_PID: Z = 0xD2EDBEA1
-  val T_PHEADER: Z = 0xEDD2348C
-  val T_LHEADER: Z = 0x2322FC01
-  val T_COMMENT: Z = 0x486B464F
-  val T_WS: Z = 0x0E3F5D1E
-  val T_grammarDef: Z = 0x49D573EC
-  val T_optionsSpec: Z = 0x5A3A1CB5
-  val T_option: Z = 0x47F1F331
-  val T_optionValue: Z = 0xED8E0DA8
-  val T_parserRule: Z = 0x4AF0B412
-  val T_lexerRule: Z = 0x9E30C465
-  val T_block: Z = 0xAA25218B
-  val T_alt: Z = 0xB817E927
-  val T_element: Z = 0x022B2C72
-  val T_atom: Z = 0xBF749739
-  val T_not: Z = 0x94BF4010
-  val T_range: Z = 0x821FF55C
-  val T_terminal: Z = 0xC926557D
-  val T_id: Z = 0x92391AB1
-  val T_channel: Z = 0x239B7220
+  val T_AEB64436: S32 = s32"0xAEB64436" /* "grammar" */
+  val T_36F2899D: S32 = s32"0x36F2899D" /* ";" */
+  val T_ED16D169: S32 = s32"0xED16D169" /* "options" */
+  val T_FDCE65E5: S32 = s32"0xFDCE65E5" /* "{" */
+  val T_5BF60471: S32 = s32"0x5BF60471" /* "}" */
+  val T_EF954474: S32 = s32"0xEF954474" /* "=" */
+  val T_763C38BE: S32 = s32"0x763C38BE" /* ":" */
+  val T_687111E8: S32 = s32"0x687111E8" /* "|" */
+  val T_072BDD2B: S32 = s32"0x072BDD2B" /* "fragment" */
+  val T_71F6371D: S32 = s32"0x71F6371D" /* "(" */
+  val T_B9401340: S32 = s32"0xB9401340" /* ")" */
+  val T_D827FEB7: S32 = s32"0xD827FEB7" /* "?" */
+  val T_82283B4B: S32 = s32"0x82283B4B" /* "*" */
+  val T_797D7BC8: S32 = s32"0x797D7BC8" /* "+" */
+  val T_AAB7E55C: S32 = s32"0xAAB7E55C" /* "~" */
+  val T_3A15194D: S32 = s32"0x3A15194D" /* ".." */
+  val T_6890427A: S32 = s32"0x6890427A" /* "." */
+  val T_46562B21: S32 = s32"0x46562B21" /* "$channel" */
+  val T_CHAR: S32 = s32"0xE95F063A"
+  val T_STRING: S32 = s32"0xA7CF0FE0"
+  val T_INT: S32 = s32"0x589C233C"
+  val T_LID: S32 = s32"0x8E18F45B"
+  val T_PID: S32 = s32"0xD2EDBEA1"
+  val T_PHEADER: S32 = s32"0xEDD2348C"
+  val T_LHEADER: S32 = s32"0x2322FC01"
+  val T_COMMENT: S32 = s32"0x486B464F"
+  val T_WS: S32 = s32"0x0E3F5D1E"
+  val T_grammarDef: S32 = s32"0x49D573EC"
+  val T_optionsSpec: S32 = s32"0x5A3A1CB5"
+  val T_option: S32 = s32"0x47F1F331"
+  val T_optionValue: S32 = s32"0xED8E0DA8"
+  val T_parserRule: S32 = s32"0x4AF0B412"
+  val T_lexerRule: S32 = s32"0x9E30C465"
+  val T_block: S32 = s32"0xAA25218B"
+  val T_alt: S32 = s32"0xB817E927"
+  val T_element: S32 = s32"0x022B2C72"
+  val T_atom: S32 = s32"0xBF749739"
+  val T_not: S32 = s32"0x94BF4010"
+  val T_range: S32 = s32"0x821FF55C"
+  val T_terminal: S32 = s32"0xC926557D"
+  val T_id: S32 = s32"0x92391AB1"
+  val T_channel: S32 = s32"0x239B7220"
 
-  val errorLeaf: ParseTree.Leaf = ParseTree.Leaf("<ERROR>", "<ERROR>", 0xE3CDEDDA, F, None())
-  val eofLeaf: ParseTree.Leaf = ParseTree.Leaf("<EOF>", "EOF", 0xFC5CB374, F, None())
+  val errorLeaf: ParseTree.Leaf = ParseTree.Leaf("<ERROR>", "<ERROR>", s32"0xE3CDEDDA", F, None())
+  val eofLeaf: ParseTree.Leaf = ParseTree.Leaf("<EOF>", "EOF", s32"0xFC5CB374", F, None())
 
   def parse(uriOpt: Option[String], input: String, reporter: message.Reporter): Option[ParseTree] = {
     val chars = Indexable.Ext.fromString(uriOpt, input)
@@ -309,7 +309,7 @@ import SireumGrammarParserOld._
 @datatype class SireumGrammarParserOld(tokens: Indexable[Result]) {
 
   @pure def parseGrammarDef(i: Z): Result = {
-    val ctx = Context.create("grammarDef", 0x49D573EC, ISZ(state"8"), i)
+    val ctx = Context.create("grammarDef", s32"0x49D573EC", ISZ(state"8"), i)
 
     while (tokens.has(ctx.j)) {
       val token: ParseTree.Leaf = {
@@ -323,7 +323,7 @@ import SireumGrammarParserOld._
         case state"0" =>
           ctx.found = F
           token.tipe match {
-            case 0xAEB64436 /* "grammar" */ => ctx.updateTerminal(token, state"1")
+            case s32"0xAEB64436" /* "grammar" */ => ctx.updateTerminal(token, state"1")
             case _ =>
           }
           if (!ctx.found) {
@@ -341,7 +341,7 @@ import SireumGrammarParserOld._
         case state"2" =>
           ctx.found = F
           token.tipe match {
-            case 0x36F2899D /* ";" */ => ctx.updateTerminal(token, state"3")
+            case s32"0x36F2899D" /* ";" */ => ctx.updateTerminal(token, state"3")
             case _ =>
           }
           if (!ctx.found) {
@@ -363,9 +363,9 @@ import SireumGrammarParserOld._
           }
           if (!ctx.found) {
             token.tipe match {
-              case 0xEDD2348C /* PHEADER */ => ctx.updateTerminal(token, state"5")
-              case 0x2322FC01 /* LHEADER */ => ctx.updateTerminal(token, state"6")
-              case 0xFC5CB374 /* EOF */ => ctx.updateTerminal(token, state"8")
+              case s32"0xEDD2348C" /* PHEADER */ => ctx.updateTerminal(token, state"5")
+              case s32"0x2322FC01" /* LHEADER */ => ctx.updateTerminal(token, state"6")
+              case s32"0xFC5CB374" /* EOF */ => ctx.updateTerminal(token, state"8")
               case _ =>
             }
           }
@@ -385,9 +385,9 @@ import SireumGrammarParserOld._
           }
           if (!ctx.found) {
             token.tipe match {
-              case 0xEDD2348C /* PHEADER */ => ctx.updateTerminal(token, state"5")
-              case 0x2322FC01 /* LHEADER */ => ctx.updateTerminal(token, state"6")
-              case 0xFC5CB374 /* EOF */ => ctx.updateTerminal(token, state"8")
+              case s32"0xEDD2348C" /* PHEADER */ => ctx.updateTerminal(token, state"5")
+              case s32"0x2322FC01" /* LHEADER */ => ctx.updateTerminal(token, state"6")
+              case s32"0xFC5CB374" /* EOF */ => ctx.updateTerminal(token, state"8")
               case _ =>
             }
           }
@@ -407,8 +407,8 @@ import SireumGrammarParserOld._
           }
           if (!ctx.found) {
             token.tipe match {
-              case 0x2322FC01 /* LHEADER */ => ctx.updateTerminal(token, state"6")
-              case 0xFC5CB374 /* EOF */ => ctx.updateTerminal(token, state"8")
+              case s32"0x2322FC01" /* LHEADER */ => ctx.updateTerminal(token, state"6")
+              case s32"0xFC5CB374" /* EOF */ => ctx.updateTerminal(token, state"8")
               case _ =>
             }
           }
@@ -428,7 +428,7 @@ import SireumGrammarParserOld._
           }
           if (!ctx.found) {
             token.tipe match {
-              case 0xFC5CB374 /* EOF */ => ctx.updateTerminal(token, state"8")
+              case s32"0xFC5CB374" /* EOF */ => ctx.updateTerminal(token, state"8")
               case _ =>
             }
           }
@@ -443,7 +443,7 @@ import SireumGrammarParserOld._
           }
           if (!ctx.found) {
             token.tipe match {
-              case 0xFC5CB374 /* EOF */ => ctx.updateTerminal(token, state"8")
+              case s32"0xFC5CB374" /* EOF */ => ctx.updateTerminal(token, state"8")
               case _ =>
             }
           }
@@ -462,7 +462,7 @@ import SireumGrammarParserOld._
   }
 
   @pure def parseOptionsSpec(i: Z): Result = {
-    val ctx = Context.create("optionsSpec", 0x5A3A1CB5, ISZ(state"4"), i)
+    val ctx = Context.create("optionsSpec", s32"0x5A3A1CB5", ISZ(state"4"), i)
 
     while (tokens.has(ctx.j)) {
       val token: ParseTree.Leaf = {
@@ -476,7 +476,7 @@ import SireumGrammarParserOld._
         case state"0" =>
           ctx.found = F
           token.tipe match {
-            case 0xED16D169 /* "options" */ => ctx.updateTerminal(token, state"1")
+            case s32"0xED16D169" /* "options" */ => ctx.updateTerminal(token, state"1")
             case _ =>
           }
           if (!ctx.found) {
@@ -485,7 +485,7 @@ import SireumGrammarParserOld._
         case state"1" =>
           ctx.found = F
           token.tipe match {
-            case 0xFDCE65E5 /* "{" */ => ctx.updateTerminal(token, state"2")
+            case s32"0xFDCE65E5" /* "{" */ => ctx.updateTerminal(token, state"2")
             case _ =>
           }
           if (!ctx.found) {
@@ -508,7 +508,7 @@ import SireumGrammarParserOld._
           }
           if (!ctx.found) {
             token.tipe match {
-              case 0x5BF60471 /* "}" */ => ctx.updateTerminal(token, state"4")
+              case s32"0x5BF60471" /* "}" */ => ctx.updateTerminal(token, state"4")
               case _ =>
             }
           }
@@ -527,7 +527,7 @@ import SireumGrammarParserOld._
   }
 
   @pure def parseOption(i: Z): Result = {
-    val ctx = Context.create("option", 0x47F1F331, ISZ(state"4"), i)
+    val ctx = Context.create("option", s32"0x47F1F331", ISZ(state"4"), i)
 
     while (tokens.has(ctx.j)) {
       val token: ParseTree.Leaf = {
@@ -550,7 +550,7 @@ import SireumGrammarParserOld._
         case state"1" =>
           ctx.found = F
           token.tipe match {
-            case 0xEF954474 /* "=" */ => ctx.updateTerminal(token, state"2")
+            case s32"0xEF954474" /* "=" */ => ctx.updateTerminal(token, state"2")
             case _ =>
           }
           if (!ctx.found) {
@@ -568,7 +568,7 @@ import SireumGrammarParserOld._
         case state"3" =>
           ctx.found = F
           token.tipe match {
-            case 0x36F2899D /* ";" */ => ctx.updateTerminal(token, state"4")
+            case s32"0x36F2899D" /* ";" */ => ctx.updateTerminal(token, state"4")
             case _ =>
           }
           if (!ctx.found) {
@@ -586,7 +586,7 @@ import SireumGrammarParserOld._
   }
 
   @pure def parseOptionValue(i: Z): Result = {
-    val ctx = Context.create("optionValue", 0xED8E0DA8, ISZ(state"1"), i)
+    val ctx = Context.create("optionValue", s32"0xED8E0DA8", ISZ(state"1"), i)
 
     while (tokens.has(ctx.j)) {
       val token: ParseTree.Leaf = {
@@ -605,7 +605,7 @@ import SireumGrammarParserOld._
           }
           if (!ctx.found) {
             token.tipe match {
-              case 0x589C233C /* INT */ => ctx.updateTerminal(token, state"1")
+              case s32"0x589C233C" /* INT */ => ctx.updateTerminal(token, state"1")
               case _ =>
             }
           }
@@ -624,7 +624,7 @@ import SireumGrammarParserOld._
   }
 
   @pure def parseParserRule(i: Z): Result = {
-    val ctx = Context.create("parserRule", 0x4AF0B412, ISZ(state"5"), i)
+    val ctx = Context.create("parserRule", s32"0x4AF0B412", ISZ(state"5"), i)
 
     while (tokens.has(ctx.j)) {
       val token: ParseTree.Leaf = {
@@ -638,7 +638,7 @@ import SireumGrammarParserOld._
         case state"0" =>
           ctx.found = F
           token.tipe match {
-            case 0xD2EDBEA1 /* PID */ => ctx.updateTerminal(token, state"1")
+            case s32"0xD2EDBEA1" /* PID */ => ctx.updateTerminal(token, state"1")
             case _ =>
           }
           if (!ctx.found) {
@@ -647,7 +647,7 @@ import SireumGrammarParserOld._
         case state"1" =>
           ctx.found = F
           token.tipe match {
-            case 0x763C38BE /* ":" */ => ctx.updateTerminal(token, state"2")
+            case s32"0x763C38BE" /* ":" */ => ctx.updateTerminal(token, state"2")
             case _ =>
           }
           if (!ctx.found) {
@@ -665,8 +665,8 @@ import SireumGrammarParserOld._
         case state"3" =>
           ctx.found = F
           token.tipe match {
-            case 0x687111E8 /* "|" */ => ctx.updateTerminal(token, state"4")
-            case 0x36F2899D /* ";" */ => ctx.updateTerminal(token, state"5")
+            case s32"0x687111E8" /* "|" */ => ctx.updateTerminal(token, state"4")
+            case s32"0x36F2899D" /* ";" */ => ctx.updateTerminal(token, state"5")
             case _ =>
           }
           if (!ctx.found) {
@@ -693,7 +693,7 @@ import SireumGrammarParserOld._
   }
 
   @pure def parseLexerRule(i: Z): Result = {
-    val ctx = Context.create("lexerRule", 0x9E30C465, ISZ(state"7"), i)
+    val ctx = Context.create("lexerRule", s32"0x9E30C465", ISZ(state"7"), i)
 
     while (tokens.has(ctx.j)) {
       val token: ParseTree.Leaf = {
@@ -707,8 +707,8 @@ import SireumGrammarParserOld._
         case state"0" =>
           ctx.found = F
           token.tipe match {
-            case 0x072BDD2B /* "fragment" */ => ctx.updateTerminal(token, state"1")
-            case 0x8E18F45B /* LID */ => ctx.updateTerminal(token, state"2")
+            case s32"0x072BDD2B" /* "fragment" */ => ctx.updateTerminal(token, state"1")
+            case s32"0x8E18F45B" /* LID */ => ctx.updateTerminal(token, state"2")
             case _ =>
           }
           if (!ctx.found) {
@@ -717,7 +717,7 @@ import SireumGrammarParserOld._
         case state"1" =>
           ctx.found = F
           token.tipe match {
-            case 0x8E18F45B /* LID */ => ctx.updateTerminal(token, state"2")
+            case s32"0x8E18F45B" /* LID */ => ctx.updateTerminal(token, state"2")
             case _ =>
           }
           if (!ctx.found) {
@@ -726,7 +726,7 @@ import SireumGrammarParserOld._
         case state"2" =>
           ctx.found = F
           token.tipe match {
-            case 0x763C38BE /* ":" */ => ctx.updateTerminal(token, state"3")
+            case s32"0x763C38BE" /* ":" */ => ctx.updateTerminal(token, state"3")
             case _ =>
           }
           if (!ctx.found) {
@@ -749,8 +749,8 @@ import SireumGrammarParserOld._
           }
           if (!ctx.found) {
             token.tipe match {
-              case 0x687111E8 /* "|" */ => ctx.updateTerminal(token, state"5")
-              case 0x36F2899D /* ";" */ => ctx.updateTerminal(token, state"7")
+              case s32"0x687111E8" /* "|" */ => ctx.updateTerminal(token, state"5")
+              case s32"0x36F2899D" /* ";" */ => ctx.updateTerminal(token, state"7")
               case _ =>
             }
           }
@@ -769,8 +769,8 @@ import SireumGrammarParserOld._
         case state"6" =>
           ctx.found = F
           token.tipe match {
-            case 0x687111E8 /* "|" */ => ctx.updateTerminal(token, state"5")
-            case 0x36F2899D /* ";" */ => ctx.updateTerminal(token, state"7")
+            case s32"0x687111E8" /* "|" */ => ctx.updateTerminal(token, state"5")
+            case s32"0x36F2899D" /* ";" */ => ctx.updateTerminal(token, state"7")
             case _ =>
           }
           if (!ctx.found) {
@@ -780,8 +780,8 @@ import SireumGrammarParserOld._
         case state"8" =>
           ctx.found = F
           token.tipe match {
-            case 0x687111E8 /* "|" */ => ctx.updateTerminal(token, state"9")
-            case 0x36F2899D /* ";" */ => ctx.updateTerminal(token, state"7")
+            case s32"0x687111E8" /* "|" */ => ctx.updateTerminal(token, state"9")
+            case s32"0x36F2899D" /* ";" */ => ctx.updateTerminal(token, state"7")
             case _ =>
           }
           if (!ctx.found) {
@@ -816,7 +816,7 @@ import SireumGrammarParserOld._
   }
 
   @pure def parseBlock(i: Z): Result = {
-    val ctx = Context.create("block", 0xAA25218B, ISZ(state"4"), i)
+    val ctx = Context.create("block", s32"0xAA25218B", ISZ(state"4"), i)
 
     while (tokens.has(ctx.j)) {
       val token: ParseTree.Leaf = {
@@ -830,7 +830,7 @@ import SireumGrammarParserOld._
         case state"0" =>
           ctx.found = F
           token.tipe match {
-            case 0x71F6371D /* "(" */ => ctx.updateTerminal(token, state"1")
+            case s32"0x71F6371D" /* "(" */ => ctx.updateTerminal(token, state"1")
             case _ =>
           }
           if (!ctx.found) {
@@ -848,8 +848,8 @@ import SireumGrammarParserOld._
         case state"2" =>
           ctx.found = F
           token.tipe match {
-            case 0x687111E8 /* "|" */ => ctx.updateTerminal(token, state"3")
-            case 0xB9401340 /* ")" */ => ctx.updateTerminal(token, state"4")
+            case s32"0x687111E8" /* "|" */ => ctx.updateTerminal(token, state"3")
+            case s32"0xB9401340" /* ")" */ => ctx.updateTerminal(token, state"4")
             case _ =>
           }
           if (!ctx.found) {
@@ -876,7 +876,7 @@ import SireumGrammarParserOld._
   }
 
   @pure def parseAlt(i: Z): Result = {
-    val ctx = Context.create("alt", 0xB817E927, ISZ(state"1"), i)
+    val ctx = Context.create("alt", s32"0xB817E927", ISZ(state"1"), i)
 
     while (tokens.has(ctx.j)) {
       val token: ParseTree.Leaf = {
@@ -916,7 +916,7 @@ import SireumGrammarParserOld._
   }
 
   @pure def parseElement(i: Z): Result = {
-    val ctx = Context.create("element", 0x022B2C72, ISZ(state"1", state"2"), i)
+    val ctx = Context.create("element", s32"0x022B2C72", ISZ(state"1", state"2"), i)
 
     while (tokens.has(ctx.j)) {
       val token: ParseTree.Leaf = {
@@ -944,9 +944,9 @@ import SireumGrammarParserOld._
         case state"1" =>
           ctx.found = F
           token.tipe match {
-            case 0xD827FEB7 /* "?" */ => ctx.updateTerminal(token, state"2")
-            case 0x82283B4B /* "*" */ => ctx.updateTerminal(token, state"2")
-            case 0x797D7BC8 /* "+" */ => ctx.updateTerminal(token, state"2")
+            case s32"0xD827FEB7" /* "?" */ => ctx.updateTerminal(token, state"2")
+            case s32"0x82283B4B" /* "*" */ => ctx.updateTerminal(token, state"2")
+            case s32"0x797D7BC8" /* "+" */ => ctx.updateTerminal(token, state"2")
             case _ =>
           }
           if (!ctx.found) {
@@ -964,7 +964,7 @@ import SireumGrammarParserOld._
   }
 
   @pure def parseAtom(i: Z): Result = {
-    val ctx = Context.create("atom", 0xBF749739, ISZ(state"1"), i)
+    val ctx = Context.create("atom", s32"0xBF749739", ISZ(state"1"), i)
 
     while (tokens.has(ctx.j)) {
       val token: ParseTree.Leaf = {
@@ -991,7 +991,7 @@ import SireumGrammarParserOld._
           }
           if (!ctx.found) {
             token.tipe match {
-              case 0xD2EDBEA1 /* PID */ => ctx.updateTerminal(token, state"1")
+              case s32"0xD2EDBEA1" /* PID */ => ctx.updateTerminal(token, state"1")
               case _ =>
             }
           }
@@ -1010,7 +1010,7 @@ import SireumGrammarParserOld._
   }
 
   @pure def parseNot(i: Z): Result = {
-    val ctx = Context.create("not", 0x94BF4010, ISZ(state"2"), i)
+    val ctx = Context.create("not", s32"0x94BF4010", ISZ(state"2"), i)
 
     while (tokens.has(ctx.j)) {
       val token: ParseTree.Leaf = {
@@ -1024,7 +1024,7 @@ import SireumGrammarParserOld._
         case state"0" =>
           ctx.found = F
           token.tipe match {
-            case 0xAAB7E55C /* "~" */ => ctx.updateTerminal(token, state"1")
+            case s32"0xAAB7E55C" /* "~" */ => ctx.updateTerminal(token, state"1")
             case _ =>
           }
           if (!ctx.found) {
@@ -1038,8 +1038,8 @@ import SireumGrammarParserOld._
           }
           if (!ctx.found) {
             token.tipe match {
-              case 0xE95F063A /* CHAR */ => ctx.updateTerminal(token, state"2")
-              case 0xA7CF0FE0 /* STRING */ => ctx.updateTerminal(token, state"2")
+              case s32"0xE95F063A" /* CHAR */ => ctx.updateTerminal(token, state"2")
+              case s32"0xA7CF0FE0" /* STRING */ => ctx.updateTerminal(token, state"2")
               case _ =>
             }
           }
@@ -1058,7 +1058,7 @@ import SireumGrammarParserOld._
   }
 
   @pure def parseRange(i: Z): Result = {
-    val ctx = Context.create("range", 0x821FF55C, ISZ(state"3"), i)
+    val ctx = Context.create("range", s32"0x821FF55C", ISZ(state"3"), i)
 
     while (tokens.has(ctx.j)) {
       val token: ParseTree.Leaf = {
@@ -1072,7 +1072,7 @@ import SireumGrammarParserOld._
         case state"0" =>
           ctx.found = F
           token.tipe match {
-            case 0xE95F063A /* CHAR */ => ctx.updateTerminal(token, state"1")
+            case s32"0xE95F063A" /* CHAR */ => ctx.updateTerminal(token, state"1")
             case _ =>
           }
           if (!ctx.found) {
@@ -1081,7 +1081,7 @@ import SireumGrammarParserOld._
         case state"1" =>
           ctx.found = F
           token.tipe match {
-            case 0x3A15194D /* ".." */ => ctx.updateTerminal(token, state"2")
+            case s32"0x3A15194D" /* ".." */ => ctx.updateTerminal(token, state"2")
             case _ =>
           }
           if (!ctx.found) {
@@ -1090,7 +1090,7 @@ import SireumGrammarParserOld._
         case state"2" =>
           ctx.found = F
           token.tipe match {
-            case 0xE95F063A /* CHAR */ => ctx.updateTerminal(token, state"3")
+            case s32"0xE95F063A" /* CHAR */ => ctx.updateTerminal(token, state"3")
             case _ =>
           }
           if (!ctx.found) {
@@ -1108,7 +1108,7 @@ import SireumGrammarParserOld._
   }
 
   @pure def parseTerminal(i: Z): Result = {
-    val ctx = Context.create("terminal", 0xC926557D, ISZ(state"1"), i)
+    val ctx = Context.create("terminal", s32"0xC926557D", ISZ(state"1"), i)
 
     while (tokens.has(ctx.j)) {
       val token: ParseTree.Leaf = {
@@ -1122,10 +1122,10 @@ import SireumGrammarParserOld._
         case state"0" =>
           ctx.found = F
           token.tipe match {
-            case 0x8E18F45B /* LID */ => ctx.updateTerminal(token, state"1")
-            case 0xE95F063A /* CHAR */ => ctx.updateTerminal(token, state"1")
-            case 0xA7CF0FE0 /* STRING */ => ctx.updateTerminal(token, state"1")
-            case 0x6890427A /* "." */ => ctx.updateTerminal(token, state"1")
+            case s32"0x8E18F45B" /* LID */ => ctx.updateTerminal(token, state"1")
+            case s32"0xE95F063A" /* CHAR */ => ctx.updateTerminal(token, state"1")
+            case s32"0xA7CF0FE0" /* STRING */ => ctx.updateTerminal(token, state"1")
+            case s32"0x6890427A" /* "." */ => ctx.updateTerminal(token, state"1")
             case _ =>
           }
           if (!ctx.found) {
@@ -1143,7 +1143,7 @@ import SireumGrammarParserOld._
   }
 
   @pure def parseId(i: Z): Result = {
-    val ctx = Context.create("id", 0x92391AB1, ISZ(state"1"), i)
+    val ctx = Context.create("id", s32"0x92391AB1", ISZ(state"1"), i)
 
     while (tokens.has(ctx.j)) {
       val token: ParseTree.Leaf = {
@@ -1157,8 +1157,8 @@ import SireumGrammarParserOld._
         case state"0" =>
           ctx.found = F
           token.tipe match {
-            case 0x8E18F45B /* LID */ => ctx.updateTerminal(token, state"1")
-            case 0xD2EDBEA1 /* PID */ => ctx.updateTerminal(token, state"1")
+            case s32"0x8E18F45B" /* LID */ => ctx.updateTerminal(token, state"1")
+            case s32"0xD2EDBEA1" /* PID */ => ctx.updateTerminal(token, state"1")
             case _ =>
           }
           if (!ctx.found) {
@@ -1176,7 +1176,7 @@ import SireumGrammarParserOld._
   }
 
   @pure def parseChannel(i: Z): Result = {
-    val ctx = Context.create("channel", 0x239B7220, ISZ(state"6"), i)
+    val ctx = Context.create("channel", s32"0x239B7220", ISZ(state"6"), i)
 
     while (tokens.has(ctx.j)) {
       val token: ParseTree.Leaf = {
@@ -1190,7 +1190,7 @@ import SireumGrammarParserOld._
         case state"0" =>
           ctx.found = F
           token.tipe match {
-            case 0xFDCE65E5 /* "{" */ => ctx.updateTerminal(token, state"1")
+            case s32"0xFDCE65E5" /* "{" */ => ctx.updateTerminal(token, state"1")
             case _ =>
           }
           if (!ctx.found) {
@@ -1199,7 +1199,7 @@ import SireumGrammarParserOld._
         case state"1" =>
           ctx.found = F
           token.tipe match {
-            case 0x46562B21 /* "$channel" */ => ctx.updateTerminal(token, state"2")
+            case s32"0x46562B21" /* "$channel" */ => ctx.updateTerminal(token, state"2")
             case _ =>
           }
           if (!ctx.found) {
@@ -1208,7 +1208,7 @@ import SireumGrammarParserOld._
         case state"2" =>
           ctx.found = F
           token.tipe match {
-            case 0xEF954474 /* "=" */ => ctx.updateTerminal(token, state"3")
+            case s32"0xEF954474" /* "=" */ => ctx.updateTerminal(token, state"3")
             case _ =>
           }
           if (!ctx.found) {
@@ -1217,7 +1217,7 @@ import SireumGrammarParserOld._
         case state"3" =>
           ctx.found = F
           token.tipe match {
-            case 0x8E18F45B /* LID */ => ctx.updateTerminal(token, state"4")
+            case s32"0x8E18F45B" /* LID */ => ctx.updateTerminal(token, state"4")
             case _ =>
           }
           if (!ctx.found) {
@@ -1226,7 +1226,7 @@ import SireumGrammarParserOld._
         case state"4" =>
           ctx.found = F
           token.tipe match {
-            case 0x36F2899D /* ";" */ => ctx.updateTerminal(token, state"5")
+            case s32"0x36F2899D" /* ";" */ => ctx.updateTerminal(token, state"5")
             case _ =>
           }
           if (!ctx.found) {
@@ -1235,7 +1235,7 @@ import SireumGrammarParserOld._
         case state"5" =>
           ctx.found = F
           token.tipe match {
-            case 0x5BF60471 /* "}" */ => ctx.updateTerminal(token, state"6")
+            case s32"0x5BF60471" /* "}" */ => ctx.updateTerminal(token, state"6")
             case _ =>
           }
           if (!ctx.found) {
@@ -1538,12 +1538,12 @@ import SireumGrammarParserOld._
     val tokenJ = tokens.at(j)
     if (tokenJ.kind == Result.Kind.Normal) {
       tokenJ.leaf.tipe match {
-        case 0xD2EDBEA1 /* PID */ =>
+        case s32"0xD2EDBEA1" /* PID */ =>
           if (hasJ1) {
             val tokenJ1 = tokens.at(j1)
             if (tokenJ1.kind == Result.Kind.Normal) {
               tokenJ1.leaf.tipe match {
-                case 0x763C38BE /* ":" */ => return 2
+                case s32"0x763C38BE" /* ":" */ => return 2
                 case _ =>
               }
             }
@@ -1561,34 +1561,34 @@ import SireumGrammarParserOld._
     val tokenJ = tokens.at(j)
     if (tokenJ.kind == Result.Kind.Normal) {
       tokenJ.leaf.tipe match {
-        case 0xE95F063A /* CHAR */ =>
+        case s32"0xE95F063A" /* CHAR */ =>
           if (hasJ1) {
             val tokenJ1 = tokens.at(j1)
             if (tokenJ1.kind == Result.Kind.Normal) {
               tokenJ1.leaf.tipe match {
-                case 0x3A15194D /* ".." */ => return 2
+                case s32"0x3A15194D" /* ".." */ => return 2
                 case _ =>
               }
             }
           }
           return 1
-        case 0x8E18F45B /* LID */ => return 1
-        case 0xA7CF0FE0 /* STRING */ => return 1
-        case 0x6890427A /* "." */ => return 1
-        case 0xAAB7E55C /* "~" */ =>
+        case s32"0x8E18F45B" /* LID */ => return 1
+        case s32"0xA7CF0FE0" /* STRING */ => return 1
+        case s32"0x6890427A" /* "." */ => return 1
+        case s32"0xAAB7E55C" /* "~" */ =>
           if (hasJ1) {
             val tokenJ1 = tokens.at(j1)
             if (tokenJ1.kind == Result.Kind.Normal) {
               tokenJ1.leaf.tipe match {
-                case 0xE95F063A /* CHAR */ => return 2
-                case 0xA7CF0FE0 /* STRING */ => return 2
-                case 0x71F6371D /* "(" */ => return 2
+                case s32"0xE95F063A" /* CHAR */ => return 2
+                case s32"0xA7CF0FE0" /* STRING */ => return 2
+                case s32"0x71F6371D" /* "(" */ => return 2
                 case _ =>
               }
             }
           }
 
-        case 0xD2EDBEA1 /* PID */ => return 1
+        case s32"0xD2EDBEA1" /* PID */ => return 1
         case _ =>
       }
     }
@@ -1601,12 +1601,12 @@ import SireumGrammarParserOld._
     val tokenJ = tokens.at(j)
     if (tokenJ.kind == Result.Kind.Normal) {
       tokenJ.leaf.tipe match {
-        case 0xED16D169 /* "options" */ =>
+        case s32"0xED16D169" /* "options" */ =>
           if (hasJ1) {
             val tokenJ1 = tokens.at(j1)
             if (tokenJ1.kind == Result.Kind.Normal) {
               tokenJ1.leaf.tipe match {
-                case 0xFDCE65E5 /* "{" */ => return 2
+                case s32"0xFDCE65E5" /* "{" */ => return 2
                 case _ =>
               }
             }
@@ -1624,132 +1624,132 @@ import SireumGrammarParserOld._
     val tokenJ = tokens.at(j)
     if (tokenJ.kind == Result.Kind.Normal) {
       tokenJ.leaf.tipe match {
-        case 0xE95F063A /* CHAR */ =>
+        case s32"0xE95F063A" /* CHAR */ =>
           if (hasJ1) {
             val tokenJ1 = tokens.at(j1)
             if (tokenJ1.kind == Result.Kind.Normal) {
               tokenJ1.leaf.tipe match {
-                case 0x3A15194D /* ".." */ => return 2
-                case 0xE95F063A /* CHAR */ => return 2
-                case 0x8E18F45B /* LID */ => return 2
-                case 0xA7CF0FE0 /* STRING */ => return 2
-                case 0x6890427A /* "." */ => return 2
-                case 0xAAB7E55C /* "~" */ => return 2
-                case 0xD2EDBEA1 /* PID */ => return 2
-                case 0x71F6371D /* "(" */ => return 2
-                case 0xD827FEB7 /* "?" */ => return 2
-                case 0x82283B4B /* "*" */ => return 2
-                case 0x797D7BC8 /* "+" */ => return 2
+                case s32"0x3A15194D" /* ".." */ => return 2
+                case s32"0xE95F063A" /* CHAR */ => return 2
+                case s32"0x8E18F45B" /* LID */ => return 2
+                case s32"0xA7CF0FE0" /* STRING */ => return 2
+                case s32"0x6890427A" /* "." */ => return 2
+                case s32"0xAAB7E55C" /* "~" */ => return 2
+                case s32"0xD2EDBEA1" /* PID */ => return 2
+                case s32"0x71F6371D" /* "(" */ => return 2
+                case s32"0xD827FEB7" /* "?" */ => return 2
+                case s32"0x82283B4B" /* "*" */ => return 2
+                case s32"0x797D7BC8" /* "+" */ => return 2
                 case _ =>
               }
             }
           }
           return 1
-        case 0x8E18F45B /* LID */ =>
+        case s32"0x8E18F45B" /* LID */ =>
           if (hasJ1) {
             val tokenJ1 = tokens.at(j1)
             if (tokenJ1.kind == Result.Kind.Normal) {
               tokenJ1.leaf.tipe match {
-                case 0xE95F063A /* CHAR */ => return 2
-                case 0x8E18F45B /* LID */ => return 2
-                case 0xA7CF0FE0 /* STRING */ => return 2
-                case 0x6890427A /* "." */ => return 2
-                case 0xAAB7E55C /* "~" */ => return 2
-                case 0xD2EDBEA1 /* PID */ => return 2
-                case 0x71F6371D /* "(" */ => return 2
-                case 0xD827FEB7 /* "?" */ => return 2
-                case 0x82283B4B /* "*" */ => return 2
-                case 0x797D7BC8 /* "+" */ => return 2
+                case s32"0xE95F063A" /* CHAR */ => return 2
+                case s32"0x8E18F45B" /* LID */ => return 2
+                case s32"0xA7CF0FE0" /* STRING */ => return 2
+                case s32"0x6890427A" /* "." */ => return 2
+                case s32"0xAAB7E55C" /* "~" */ => return 2
+                case s32"0xD2EDBEA1" /* PID */ => return 2
+                case s32"0x71F6371D" /* "(" */ => return 2
+                case s32"0xD827FEB7" /* "?" */ => return 2
+                case s32"0x82283B4B" /* "*" */ => return 2
+                case s32"0x797D7BC8" /* "+" */ => return 2
                 case _ =>
               }
             }
           }
           return 1
-        case 0xA7CF0FE0 /* STRING */ =>
+        case s32"0xA7CF0FE0" /* STRING */ =>
           if (hasJ1) {
             val tokenJ1 = tokens.at(j1)
             if (tokenJ1.kind == Result.Kind.Normal) {
               tokenJ1.leaf.tipe match {
-                case 0xE95F063A /* CHAR */ => return 2
-                case 0x8E18F45B /* LID */ => return 2
-                case 0xA7CF0FE0 /* STRING */ => return 2
-                case 0x6890427A /* "." */ => return 2
-                case 0xAAB7E55C /* "~" */ => return 2
-                case 0xD2EDBEA1 /* PID */ => return 2
-                case 0x71F6371D /* "(" */ => return 2
-                case 0xD827FEB7 /* "?" */ => return 2
-                case 0x82283B4B /* "*" */ => return 2
-                case 0x797D7BC8 /* "+" */ => return 2
+                case s32"0xE95F063A" /* CHAR */ => return 2
+                case s32"0x8E18F45B" /* LID */ => return 2
+                case s32"0xA7CF0FE0" /* STRING */ => return 2
+                case s32"0x6890427A" /* "." */ => return 2
+                case s32"0xAAB7E55C" /* "~" */ => return 2
+                case s32"0xD2EDBEA1" /* PID */ => return 2
+                case s32"0x71F6371D" /* "(" */ => return 2
+                case s32"0xD827FEB7" /* "?" */ => return 2
+                case s32"0x82283B4B" /* "*" */ => return 2
+                case s32"0x797D7BC8" /* "+" */ => return 2
                 case _ =>
               }
             }
           }
           return 1
-        case 0x6890427A /* "." */ =>
+        case s32"0x6890427A" /* "." */ =>
           if (hasJ1) {
             val tokenJ1 = tokens.at(j1)
             if (tokenJ1.kind == Result.Kind.Normal) {
               tokenJ1.leaf.tipe match {
-                case 0xE95F063A /* CHAR */ => return 2
-                case 0x8E18F45B /* LID */ => return 2
-                case 0xA7CF0FE0 /* STRING */ => return 2
-                case 0x6890427A /* "." */ => return 2
-                case 0xAAB7E55C /* "~" */ => return 2
-                case 0xD2EDBEA1 /* PID */ => return 2
-                case 0x71F6371D /* "(" */ => return 2
-                case 0xD827FEB7 /* "?" */ => return 2
-                case 0x82283B4B /* "*" */ => return 2
-                case 0x797D7BC8 /* "+" */ => return 2
+                case s32"0xE95F063A" /* CHAR */ => return 2
+                case s32"0x8E18F45B" /* LID */ => return 2
+                case s32"0xA7CF0FE0" /* STRING */ => return 2
+                case s32"0x6890427A" /* "." */ => return 2
+                case s32"0xAAB7E55C" /* "~" */ => return 2
+                case s32"0xD2EDBEA1" /* PID */ => return 2
+                case s32"0x71F6371D" /* "(" */ => return 2
+                case s32"0xD827FEB7" /* "?" */ => return 2
+                case s32"0x82283B4B" /* "*" */ => return 2
+                case s32"0x797D7BC8" /* "+" */ => return 2
                 case _ =>
               }
             }
           }
           return 1
-        case 0xAAB7E55C /* "~" */ =>
+        case s32"0xAAB7E55C" /* "~" */ =>
           if (hasJ1) {
             val tokenJ1 = tokens.at(j1)
             if (tokenJ1.kind == Result.Kind.Normal) {
               tokenJ1.leaf.tipe match {
-                case 0xE95F063A /* CHAR */ => return 2
-                case 0xA7CF0FE0 /* STRING */ => return 2
-                case 0x71F6371D /* "(" */ => return 2
+                case s32"0xE95F063A" /* CHAR */ => return 2
+                case s32"0xA7CF0FE0" /* STRING */ => return 2
+                case s32"0x71F6371D" /* "(" */ => return 2
                 case _ =>
               }
             }
           }
 
-        case 0xD2EDBEA1 /* PID */ =>
+        case s32"0xD2EDBEA1" /* PID */ =>
           if (hasJ1) {
             val tokenJ1 = tokens.at(j1)
             if (tokenJ1.kind == Result.Kind.Normal) {
               tokenJ1.leaf.tipe match {
-                case 0xE95F063A /* CHAR */ => return 2
-                case 0x8E18F45B /* LID */ => return 2
-                case 0xA7CF0FE0 /* STRING */ => return 2
-                case 0x6890427A /* "." */ => return 2
-                case 0xAAB7E55C /* "~" */ => return 2
-                case 0xD2EDBEA1 /* PID */ => return 2
-                case 0x71F6371D /* "(" */ => return 2
-                case 0xD827FEB7 /* "?" */ => return 2
-                case 0x82283B4B /* "*" */ => return 2
-                case 0x797D7BC8 /* "+" */ => return 2
+                case s32"0xE95F063A" /* CHAR */ => return 2
+                case s32"0x8E18F45B" /* LID */ => return 2
+                case s32"0xA7CF0FE0" /* STRING */ => return 2
+                case s32"0x6890427A" /* "." */ => return 2
+                case s32"0xAAB7E55C" /* "~" */ => return 2
+                case s32"0xD2EDBEA1" /* PID */ => return 2
+                case s32"0x71F6371D" /* "(" */ => return 2
+                case s32"0xD827FEB7" /* "?" */ => return 2
+                case s32"0x82283B4B" /* "*" */ => return 2
+                case s32"0x797D7BC8" /* "+" */ => return 2
                 case _ =>
               }
             }
           }
           return 1
-        case 0x71F6371D /* "(" */ =>
+        case s32"0x71F6371D" /* "(" */ =>
           if (hasJ1) {
             val tokenJ1 = tokens.at(j1)
             if (tokenJ1.kind == Result.Kind.Normal) {
               tokenJ1.leaf.tipe match {
-                case 0xE95F063A /* CHAR */ => return 2
-                case 0x8E18F45B /* LID */ => return 2
-                case 0xA7CF0FE0 /* STRING */ => return 2
-                case 0x6890427A /* "." */ => return 2
-                case 0xAAB7E55C /* "~" */ => return 2
-                case 0xD2EDBEA1 /* PID */ => return 2
-                case 0x71F6371D /* "(" */ => return 2
+                case s32"0xE95F063A" /* CHAR */ => return 2
+                case s32"0x8E18F45B" /* LID */ => return 2
+                case s32"0xA7CF0FE0" /* STRING */ => return 2
+                case s32"0x6890427A" /* "." */ => return 2
+                case s32"0xAAB7E55C" /* "~" */ => return 2
+                case s32"0xD2EDBEA1" /* PID */ => return 2
+                case s32"0x71F6371D" /* "(" */ => return 2
                 case _ =>
               }
             }
@@ -1765,10 +1765,10 @@ import SireumGrammarParserOld._
     val tokenJ = tokens.at(j)
     if (tokenJ.kind == Result.Kind.Normal) {
       tokenJ.leaf.tipe match {
-        case 0x8E18F45B /* LID */ => return 1
-        case 0xE95F063A /* CHAR */ => return 1
-        case 0xA7CF0FE0 /* STRING */ => return 1
-        case 0x6890427A /* "." */ => return 1
+        case s32"0x8E18F45B" /* LID */ => return 1
+        case s32"0xE95F063A" /* CHAR */ => return 1
+        case s32"0xA7CF0FE0" /* STRING */ => return 1
+        case s32"0x6890427A" /* "." */ => return 1
         case _ =>
       }
     }
@@ -1781,23 +1781,23 @@ import SireumGrammarParserOld._
     val tokenJ = tokens.at(j)
     if (tokenJ.kind == Result.Kind.Normal) {
       tokenJ.leaf.tipe match {
-        case 0x072BDD2B /* "fragment" */ =>
+        case s32"0x072BDD2B" /* "fragment" */ =>
           if (hasJ1) {
             val tokenJ1 = tokens.at(j1)
             if (tokenJ1.kind == Result.Kind.Normal) {
               tokenJ1.leaf.tipe match {
-                case 0x8E18F45B /* LID */ => return 2
+                case s32"0x8E18F45B" /* LID */ => return 2
                 case _ =>
               }
             }
           }
 
-        case 0x8E18F45B /* LID */ =>
+        case s32"0x8E18F45B" /* LID */ =>
           if (hasJ1) {
             val tokenJ1 = tokens.at(j1)
             if (tokenJ1.kind == Result.Kind.Normal) {
               tokenJ1.leaf.tipe match {
-                case 0x763C38BE /* ":" */ => return 2
+                case s32"0x763C38BE" /* ":" */ => return 2
                 case _ =>
               }
             }
@@ -1815,97 +1815,97 @@ import SireumGrammarParserOld._
     val tokenJ = tokens.at(j)
     if (tokenJ.kind == Result.Kind.Normal) {
       tokenJ.leaf.tipe match {
-        case 0xE95F063A /* CHAR */ =>
+        case s32"0xE95F063A" /* CHAR */ =>
           if (hasJ1) {
             val tokenJ1 = tokens.at(j1)
             if (tokenJ1.kind == Result.Kind.Normal) {
               tokenJ1.leaf.tipe match {
-                case 0x3A15194D /* ".." */ => return 2
-                case 0xD827FEB7 /* "?" */ => return 2
-                case 0x82283B4B /* "*" */ => return 2
-                case 0x797D7BC8 /* "+" */ => return 2
+                case s32"0x3A15194D" /* ".." */ => return 2
+                case s32"0xD827FEB7" /* "?" */ => return 2
+                case s32"0x82283B4B" /* "*" */ => return 2
+                case s32"0x797D7BC8" /* "+" */ => return 2
                 case _ =>
               }
             }
           }
           return 1
-        case 0x8E18F45B /* LID */ =>
+        case s32"0x8E18F45B" /* LID */ =>
           if (hasJ1) {
             val tokenJ1 = tokens.at(j1)
             if (tokenJ1.kind == Result.Kind.Normal) {
               tokenJ1.leaf.tipe match {
-                case 0xD827FEB7 /* "?" */ => return 2
-                case 0x82283B4B /* "*" */ => return 2
-                case 0x797D7BC8 /* "+" */ => return 2
+                case s32"0xD827FEB7" /* "?" */ => return 2
+                case s32"0x82283B4B" /* "*" */ => return 2
+                case s32"0x797D7BC8" /* "+" */ => return 2
                 case _ =>
               }
             }
           }
           return 1
-        case 0xA7CF0FE0 /* STRING */ =>
+        case s32"0xA7CF0FE0" /* STRING */ =>
           if (hasJ1) {
             val tokenJ1 = tokens.at(j1)
             if (tokenJ1.kind == Result.Kind.Normal) {
               tokenJ1.leaf.tipe match {
-                case 0xD827FEB7 /* "?" */ => return 2
-                case 0x82283B4B /* "*" */ => return 2
-                case 0x797D7BC8 /* "+" */ => return 2
+                case s32"0xD827FEB7" /* "?" */ => return 2
+                case s32"0x82283B4B" /* "*" */ => return 2
+                case s32"0x797D7BC8" /* "+" */ => return 2
                 case _ =>
               }
             }
           }
           return 1
-        case 0x6890427A /* "." */ =>
+        case s32"0x6890427A" /* "." */ =>
           if (hasJ1) {
             val tokenJ1 = tokens.at(j1)
             if (tokenJ1.kind == Result.Kind.Normal) {
               tokenJ1.leaf.tipe match {
-                case 0xD827FEB7 /* "?" */ => return 2
-                case 0x82283B4B /* "*" */ => return 2
-                case 0x797D7BC8 /* "+" */ => return 2
+                case s32"0xD827FEB7" /* "?" */ => return 2
+                case s32"0x82283B4B" /* "*" */ => return 2
+                case s32"0x797D7BC8" /* "+" */ => return 2
                 case _ =>
               }
             }
           }
           return 1
-        case 0xAAB7E55C /* "~" */ =>
+        case s32"0xAAB7E55C" /* "~" */ =>
           if (hasJ1) {
             val tokenJ1 = tokens.at(j1)
             if (tokenJ1.kind == Result.Kind.Normal) {
               tokenJ1.leaf.tipe match {
-                case 0xE95F063A /* CHAR */ => return 2
-                case 0xA7CF0FE0 /* STRING */ => return 2
-                case 0x71F6371D /* "(" */ => return 2
+                case s32"0xE95F063A" /* CHAR */ => return 2
+                case s32"0xA7CF0FE0" /* STRING */ => return 2
+                case s32"0x71F6371D" /* "(" */ => return 2
                 case _ =>
               }
             }
           }
 
-        case 0xD2EDBEA1 /* PID */ =>
+        case s32"0xD2EDBEA1" /* PID */ =>
           if (hasJ1) {
             val tokenJ1 = tokens.at(j1)
             if (tokenJ1.kind == Result.Kind.Normal) {
               tokenJ1.leaf.tipe match {
-                case 0xD827FEB7 /* "?" */ => return 2
-                case 0x82283B4B /* "*" */ => return 2
-                case 0x797D7BC8 /* "+" */ => return 2
+                case s32"0xD827FEB7" /* "?" */ => return 2
+                case s32"0x82283B4B" /* "*" */ => return 2
+                case s32"0x797D7BC8" /* "+" */ => return 2
                 case _ =>
               }
             }
           }
           return 1
-        case 0x71F6371D /* "(" */ =>
+        case s32"0x71F6371D" /* "(" */ =>
           if (hasJ1) {
             val tokenJ1 = tokens.at(j1)
             if (tokenJ1.kind == Result.Kind.Normal) {
               tokenJ1.leaf.tipe match {
-                case 0xE95F063A /* CHAR */ => return 2
-                case 0x8E18F45B /* LID */ => return 2
-                case 0xA7CF0FE0 /* STRING */ => return 2
-                case 0x6890427A /* "." */ => return 2
-                case 0xAAB7E55C /* "~" */ => return 2
-                case 0xD2EDBEA1 /* PID */ => return 2
-                case 0x71F6371D /* "(" */ => return 2
+                case s32"0xE95F063A" /* CHAR */ => return 2
+                case s32"0x8E18F45B" /* LID */ => return 2
+                case s32"0xA7CF0FE0" /* STRING */ => return 2
+                case s32"0x6890427A" /* "." */ => return 2
+                case s32"0xAAB7E55C" /* "~" */ => return 2
+                case s32"0xD2EDBEA1" /* PID */ => return 2
+                case s32"0x71F6371D" /* "(" */ => return 2
                 case _ =>
               }
             }
@@ -1923,12 +1923,12 @@ import SireumGrammarParserOld._
     val tokenJ = tokens.at(j)
     if (tokenJ.kind == Result.Kind.Normal) {
       tokenJ.leaf.tipe match {
-        case 0xFDCE65E5 /* "{" */ =>
+        case s32"0xFDCE65E5" /* "{" */ =>
           if (hasJ1) {
             val tokenJ1 = tokens.at(j1)
             if (tokenJ1.kind == Result.Kind.Normal) {
               tokenJ1.leaf.tipe match {
-                case 0x46562B21 /* "$channel" */ => return 2
+                case s32"0x46562B21" /* "$channel" */ => return 2
                 case _ =>
               }
             }
@@ -1946,23 +1946,23 @@ import SireumGrammarParserOld._
     val tokenJ = tokens.at(j)
     if (tokenJ.kind == Result.Kind.Normal) {
       tokenJ.leaf.tipe match {
-        case 0x8E18F45B /* LID */ =>
+        case s32"0x8E18F45B" /* LID */ =>
           if (hasJ1) {
             val tokenJ1 = tokens.at(j1)
             if (tokenJ1.kind == Result.Kind.Normal) {
               tokenJ1.leaf.tipe match {
-                case 0xEF954474 /* "=" */ => return 2
+                case s32"0xEF954474" /* "=" */ => return 2
                 case _ =>
               }
             }
           }
 
-        case 0xD2EDBEA1 /* PID */ =>
+        case s32"0xD2EDBEA1" /* PID */ =>
           if (hasJ1) {
             val tokenJ1 = tokens.at(j1)
             if (tokenJ1.kind == Result.Kind.Normal) {
               tokenJ1.leaf.tipe match {
-                case 0xEF954474 /* "=" */ => return 2
+                case s32"0xEF954474" /* "=" */ => return 2
                 case _ =>
               }
             }
@@ -1978,9 +1978,9 @@ import SireumGrammarParserOld._
     val tokenJ = tokens.at(j)
     if (tokenJ.kind == Result.Kind.Normal) {
       tokenJ.leaf.tipe match {
-        case 0x8E18F45B /* LID */ => return 1
-        case 0xD2EDBEA1 /* PID */ => return 1
-        case 0x589C233C /* INT */ => return 1
+        case s32"0x8E18F45B" /* LID */ => return 1
+        case s32"0xD2EDBEA1" /* PID */ => return 1
+        case s32"0x589C233C" /* INT */ => return 1
         case _ =>
       }
     }
@@ -1993,18 +1993,18 @@ import SireumGrammarParserOld._
     val tokenJ = tokens.at(j)
     if (tokenJ.kind == Result.Kind.Normal) {
       tokenJ.leaf.tipe match {
-        case 0x71F6371D /* "(" */ =>
+        case s32"0x71F6371D" /* "(" */ =>
           if (hasJ1) {
             val tokenJ1 = tokens.at(j1)
             if (tokenJ1.kind == Result.Kind.Normal) {
               tokenJ1.leaf.tipe match {
-                case 0xE95F063A /* CHAR */ => return 2
-                case 0x8E18F45B /* LID */ => return 2
-                case 0xA7CF0FE0 /* STRING */ => return 2
-                case 0x6890427A /* "." */ => return 2
-                case 0xAAB7E55C /* "~" */ => return 2
-                case 0xD2EDBEA1 /* PID */ => return 2
-                case 0x71F6371D /* "(" */ => return 2
+                case s32"0xE95F063A" /* CHAR */ => return 2
+                case s32"0x8E18F45B" /* LID */ => return 2
+                case s32"0xA7CF0FE0" /* STRING */ => return 2
+                case s32"0x6890427A" /* "." */ => return 2
+                case s32"0xAAB7E55C" /* "~" */ => return 2
+                case s32"0xD2EDBEA1" /* PID */ => return 2
+                case s32"0x71F6371D" /* "(" */ => return 2
                 case _ =>
               }
             }
@@ -2022,13 +2022,13 @@ import SireumGrammarParserOld._
     val tokenJ = tokens.at(j)
     if (tokenJ.kind == Result.Kind.Normal) {
       tokenJ.leaf.tipe match {
-        case 0xAEB64436 /* "grammar" */ =>
+        case s32"0xAEB64436" /* "grammar" */ =>
           if (hasJ1) {
             val tokenJ1 = tokens.at(j1)
             if (tokenJ1.kind == Result.Kind.Normal) {
               tokenJ1.leaf.tipe match {
-                case 0x8E18F45B /* LID */ => return 2
-                case 0xD2EDBEA1 /* PID */ => return 2
+                case s32"0x8E18F45B" /* LID */ => return 2
+                case s32"0xD2EDBEA1" /* PID */ => return 2
                 case _ =>
               }
             }
@@ -2046,12 +2046,12 @@ import SireumGrammarParserOld._
     val tokenJ = tokens.at(j)
     if (tokenJ.kind == Result.Kind.Normal) {
       tokenJ.leaf.tipe match {
-        case 0xE95F063A /* CHAR */ =>
+        case s32"0xE95F063A" /* CHAR */ =>
           if (hasJ1) {
             val tokenJ1 = tokens.at(j1)
             if (tokenJ1.kind == Result.Kind.Normal) {
               tokenJ1.leaf.tipe match {
-                case 0x3A15194D /* ".." */ => return 2
+                case s32"0x3A15194D" /* ".." */ => return 2
                 case _ =>
               }
             }
@@ -2067,8 +2067,8 @@ import SireumGrammarParserOld._
     val tokenJ = tokens.at(j)
     if (tokenJ.kind == Result.Kind.Normal) {
       tokenJ.leaf.tipe match {
-        case 0x8E18F45B /* LID */ => return 1
-        case 0xD2EDBEA1 /* PID */ => return 1
+        case s32"0x8E18F45B" /* LID */ => return 1
+        case s32"0xD2EDBEA1" /* PID */ => return 1
         case _ =>
       }
     }
@@ -2081,14 +2081,14 @@ import SireumGrammarParserOld._
     val tokenJ = tokens.at(j)
     if (tokenJ.kind == Result.Kind.Normal) {
       tokenJ.leaf.tipe match {
-        case 0xAAB7E55C /* "~" */ =>
+        case s32"0xAAB7E55C" /* "~" */ =>
           if (hasJ1) {
             val tokenJ1 = tokens.at(j1)
             if (tokenJ1.kind == Result.Kind.Normal) {
               tokenJ1.leaf.tipe match {
-                case 0xE95F063A /* CHAR */ => return 2
-                case 0xA7CF0FE0 /* STRING */ => return 2
-                case 0x71F6371D /* "(" */ => return 2
+                case s32"0xE95F063A" /* CHAR */ => return 2
+                case s32"0xA7CF0FE0" /* STRING */ => return 2
+                case s32"0x71F6371D" /* "(" */ => return 2
                 case _ =>
               }
             }
@@ -2202,7 +2202,7 @@ import SireumGrammarParserOld._
     return -1
   }
 
-  @pure def lex_grammar(index: Z): Option[Result] = { return lexH(index, lit_grammar(index), """'grammar'""", 0xAEB64436 /* "grammar" */, F) }
+  @pure def lex_grammar(index: Z): Option[Result] = { return lexH(index, lit_grammar(index), """'grammar'""", s32"0xAEB64436" /* "grammar" */, F) }
 
   @pure def lit_u003B(i: Z): Z = {
     if (cis.has(i) && cis.at(i) == ';') {
@@ -2211,7 +2211,7 @@ import SireumGrammarParserOld._
     return -1
   }
 
-  @pure def lex_u003B(index: Z): Option[Result] = { return lexH(index, lit_u003B(index), """';'""", 0x36F2899D /* ";" */, F) }
+  @pure def lex_u003B(index: Z): Option[Result] = { return lexH(index, lit_u003B(index), """';'""", s32"0x36F2899D" /* ";" */, F) }
 
   @pure def lit_options(i: Z): Z = {
     if (!cis.has(i + 6)) {
@@ -2223,7 +2223,7 @@ import SireumGrammarParserOld._
     return -1
   }
 
-  @pure def lex_options(index: Z): Option[Result] = { return lexH(index, lit_options(index), """'options'""", 0xED16D169 /* "options" */, F) }
+  @pure def lex_options(index: Z): Option[Result] = { return lexH(index, lit_options(index), """'options'""", s32"0xED16D169" /* "options" */, F) }
 
   @pure def lit_u007B(i: Z): Z = {
     if (cis.has(i) && cis.at(i) == '{') {
@@ -2232,7 +2232,7 @@ import SireumGrammarParserOld._
     return -1
   }
 
-  @pure def lex_u007B(index: Z): Option[Result] = { return lexH(index, lit_u007B(index), """'{'""", 0xFDCE65E5 /* "{" */, F) }
+  @pure def lex_u007B(index: Z): Option[Result] = { return lexH(index, lit_u007B(index), """'{'""", s32"0xFDCE65E5" /* "{" */, F) }
 
   @pure def lit_u007D(i: Z): Z = {
     if (cis.has(i) && cis.at(i) == '}') {
@@ -2241,7 +2241,7 @@ import SireumGrammarParserOld._
     return -1
   }
 
-  @pure def lex_u007D(index: Z): Option[Result] = { return lexH(index, lit_u007D(index), """'}'""", 0x5BF60471 /* "}" */, F) }
+  @pure def lex_u007D(index: Z): Option[Result] = { return lexH(index, lit_u007D(index), """'}'""", s32"0x5BF60471" /* "}" */, F) }
 
   @pure def lit_u003D(i: Z): Z = {
     if (cis.has(i) && cis.at(i) == '=') {
@@ -2250,7 +2250,7 @@ import SireumGrammarParserOld._
     return -1
   }
 
-  @pure def lex_u003D(index: Z): Option[Result] = { return lexH(index, lit_u003D(index), """'='""", 0xEF954474 /* "=" */, F) }
+  @pure def lex_u003D(index: Z): Option[Result] = { return lexH(index, lit_u003D(index), """'='""", s32"0xEF954474" /* "=" */, F) }
 
   @pure def lit_u003A(i: Z): Z = {
     if (cis.has(i) && cis.at(i) == ':') {
@@ -2259,7 +2259,7 @@ import SireumGrammarParserOld._
     return -1
   }
 
-  @pure def lex_u003A(index: Z): Option[Result] = { return lexH(index, lit_u003A(index), """':'""", 0x763C38BE /* ":" */, F) }
+  @pure def lex_u003A(index: Z): Option[Result] = { return lexH(index, lit_u003A(index), """':'""", s32"0x763C38BE" /* ":" */, F) }
 
   @pure def lit_u007C(i: Z): Z = {
     if (cis.has(i) && cis.at(i) == '|') {
@@ -2268,7 +2268,7 @@ import SireumGrammarParserOld._
     return -1
   }
 
-  @pure def lex_u007C(index: Z): Option[Result] = { return lexH(index, lit_u007C(index), """'|'""", 0x687111E8 /* "|" */, F) }
+  @pure def lex_u007C(index: Z): Option[Result] = { return lexH(index, lit_u007C(index), """'|'""", s32"0x687111E8" /* "|" */, F) }
 
   @pure def lit_fragment(i: Z): Z = {
     if (!cis.has(i + 7)) {
@@ -2280,7 +2280,7 @@ import SireumGrammarParserOld._
     return -1
   }
 
-  @pure def lex_fragment(index: Z): Option[Result] = { return lexH(index, lit_fragment(index), """'fragment'""", 0x072BDD2B /* "fragment" */, F) }
+  @pure def lex_fragment(index: Z): Option[Result] = { return lexH(index, lit_fragment(index), """'fragment'""", s32"0x072BDD2B" /* "fragment" */, F) }
 
   @pure def lit_u0028(i: Z): Z = {
     if (cis.has(i) && cis.at(i) == '(') {
@@ -2289,7 +2289,7 @@ import SireumGrammarParserOld._
     return -1
   }
 
-  @pure def lex_u0028(index: Z): Option[Result] = { return lexH(index, lit_u0028(index), """'('""", 0x71F6371D /* "(" */, F) }
+  @pure def lex_u0028(index: Z): Option[Result] = { return lexH(index, lit_u0028(index), """'('""", s32"0x71F6371D" /* "(" */, F) }
 
   @pure def lit_u0029(i: Z): Z = {
     if (cis.has(i) && cis.at(i) == ')') {
@@ -2298,7 +2298,7 @@ import SireumGrammarParserOld._
     return -1
   }
 
-  @pure def lex_u0029(index: Z): Option[Result] = { return lexH(index, lit_u0029(index), """')'""", 0xB9401340 /* ")" */, F) }
+  @pure def lex_u0029(index: Z): Option[Result] = { return lexH(index, lit_u0029(index), """')'""", s32"0xB9401340" /* ")" */, F) }
 
   @pure def lit_u003F(i: Z): Z = {
     if (cis.has(i) && cis.at(i) == '?') {
@@ -2307,7 +2307,7 @@ import SireumGrammarParserOld._
     return -1
   }
 
-  @pure def lex_u003F(index: Z): Option[Result] = { return lexH(index, lit_u003F(index), """'?'""", 0xD827FEB7 /* "?" */, F) }
+  @pure def lex_u003F(index: Z): Option[Result] = { return lexH(index, lit_u003F(index), """'?'""", s32"0xD827FEB7" /* "?" */, F) }
 
   @pure def lit_u002A(i: Z): Z = {
     if (cis.has(i) && cis.at(i) == '*') {
@@ -2316,7 +2316,7 @@ import SireumGrammarParserOld._
     return -1
   }
 
-  @pure def lex_u002A(index: Z): Option[Result] = { return lexH(index, lit_u002A(index), """'*'""", 0x82283B4B /* "*" */, F) }
+  @pure def lex_u002A(index: Z): Option[Result] = { return lexH(index, lit_u002A(index), """'*'""", s32"0x82283B4B" /* "*" */, F) }
 
   @pure def lit_u002B(i: Z): Z = {
     if (cis.has(i) && cis.at(i) == '+') {
@@ -2325,7 +2325,7 @@ import SireumGrammarParserOld._
     return -1
   }
 
-  @pure def lex_u002B(index: Z): Option[Result] = { return lexH(index, lit_u002B(index), """'+'""", 0x797D7BC8 /* "+" */, F) }
+  @pure def lex_u002B(index: Z): Option[Result] = { return lexH(index, lit_u002B(index), """'+'""", s32"0x797D7BC8" /* "+" */, F) }
 
   @pure def lit_u007E(i: Z): Z = {
     if (cis.has(i) && cis.at(i) == '~') {
@@ -2334,7 +2334,7 @@ import SireumGrammarParserOld._
     return -1
   }
 
-  @pure def lex_u007E(index: Z): Option[Result] = { return lexH(index, lit_u007E(index), """'~'""", 0xAAB7E55C /* "~" */, F) }
+  @pure def lex_u007E(index: Z): Option[Result] = { return lexH(index, lit_u007E(index), """'~'""", s32"0xAAB7E55C" /* "~" */, F) }
 
   @pure def lit_u002Eu002E(i: Z): Z = {
     if (!cis.has(i + 1)) {
@@ -2346,7 +2346,7 @@ import SireumGrammarParserOld._
     return -1
   }
 
-  @pure def lex_u002Eu002E(index: Z): Option[Result] = { return lexH(index, lit_u002Eu002E(index), """'..'""", 0x3A15194D /* ".." */, F) }
+  @pure def lex_u002Eu002E(index: Z): Option[Result] = { return lexH(index, lit_u002Eu002E(index), """'..'""", s32"0x3A15194D" /* ".." */, F) }
 
   @pure def lit_u002E(i: Z): Z = {
     if (cis.has(i) && cis.at(i) == '.') {
@@ -2355,7 +2355,7 @@ import SireumGrammarParserOld._
     return -1
   }
 
-  @pure def lex_u002E(index: Z): Option[Result] = { return lexH(index, lit_u002E(index), """'.'""", 0x6890427A /* "." */, F) }
+  @pure def lex_u002E(index: Z): Option[Result] = { return lexH(index, lit_u002E(index), """'.'""", s32"0x6890427A" /* "." */, F) }
 
   @pure def lit__channel(i: Z): Z = {
     if (!cis.has(i + 7)) {
@@ -2367,7 +2367,7 @@ import SireumGrammarParserOld._
     return -1
   }
 
-  @pure def lex__channel(index: Z): Option[Result] = { return lexH(index, lit__channel(index), """'$channel'""", 0x46562B21 /* "$channel" */, F) }
+  @pure def lex__channel(index: Z): Option[Result] = { return lexH(index, lit__channel(index), """'$channel'""", s32"0x46562B21" /* "$channel" */, F) }
 
   @pure def dfa_CHAR(i: Z): Z = {
     val ctx = LContext.create(ISZ(state"3"), i)
@@ -2458,7 +2458,7 @@ import SireumGrammarParserOld._
     return ctx.afterAcceptIndex
   }
 
-  @pure def lex_CHAR(index: Z): Option[Result] = { return lexH(index, dfa_CHAR(index), """CHAR""",  0xE95F063A, F) }
+  @pure def lex_CHAR(index: Z): Option[Result] = { return lexH(index, dfa_CHAR(index), """CHAR""",  s32"0xE95F063A", F) }
 
   @pure def dfa_STRING(i: Z): Z = {
     val ctx = LContext.create(ISZ(state"4"), i)
@@ -2611,7 +2611,7 @@ import SireumGrammarParserOld._
     return ctx.afterAcceptIndex
   }
 
-  @pure def lex_STRING(index: Z): Option[Result] = { return lexH(index, dfa_STRING(index), """STRING""",  0xA7CF0FE0, F) }
+  @pure def lex_STRING(index: Z): Option[Result] = { return lexH(index, dfa_STRING(index), """STRING""",  s32"0xA7CF0FE0", F) }
 
   @pure def dfa_INT(i: Z): Z = {
     val ctx = LContext.create(ISZ(state"1"), i)
@@ -2643,7 +2643,7 @@ import SireumGrammarParserOld._
     return ctx.afterAcceptIndex
   }
 
-  @pure def lex_INT(index: Z): Option[Result] = { return lexH(index, dfa_INT(index), """INT""",  0x589C233C, F) }
+  @pure def lex_INT(index: Z): Option[Result] = { return lexH(index, dfa_INT(index), """INT""",  s32"0x589C233C", F) }
 
   @pure def dfa_LID(i: Z): Z = {
     val ctx = LContext.create(ISZ(state"1"), i)
@@ -2675,7 +2675,7 @@ import SireumGrammarParserOld._
     return ctx.afterAcceptIndex
   }
 
-  @pure def lex_LID(index: Z): Option[Result] = { return lexH(index, dfa_LID(index), """LID""",  0x8E18F45B, F) }
+  @pure def lex_LID(index: Z): Option[Result] = { return lexH(index, dfa_LID(index), """LID""",  s32"0x8E18F45B", F) }
 
   @pure def dfa_PID(i: Z): Z = {
     val ctx = LContext.create(ISZ(state"1"), i)
@@ -2707,7 +2707,7 @@ import SireumGrammarParserOld._
     return ctx.afterAcceptIndex
   }
 
-  @pure def lex_PID(index: Z): Option[Result] = { return lexH(index, dfa_PID(index), """PID""",  0xD2EDBEA1, F) }
+  @pure def lex_PID(index: Z): Option[Result] = { return lexH(index, dfa_PID(index), """PID""",  s32"0xD2EDBEA1", F) }
 
   @pure def dfa_PHEADER(i: Z): Z = {
     val ctx = LContext.create(ISZ(state"9"), i)
@@ -2809,7 +2809,7 @@ import SireumGrammarParserOld._
     return ctx.afterAcceptIndex
   }
 
-  @pure def lex_PHEADER(index: Z): Option[Result] = { return lexH(index, dfa_PHEADER(index), """PHEADER""",  0xEDD2348C, F) }
+  @pure def lex_PHEADER(index: Z): Option[Result] = { return lexH(index, dfa_PHEADER(index), """PHEADER""",  s32"0xEDD2348C", F) }
 
   @pure def dfa_LHEADER(i: Z): Z = {
     val ctx = LContext.create(ISZ(state"16"), i)
@@ -2980,7 +2980,7 @@ import SireumGrammarParserOld._
     return ctx.afterAcceptIndex
   }
 
-  @pure def lex_LHEADER(index: Z): Option[Result] = { return lexH(index, dfa_LHEADER(index), """LHEADER""",  0x2322FC01, F) }
+  @pure def lex_LHEADER(index: Z): Option[Result] = { return lexH(index, dfa_LHEADER(index), """LHEADER""",  s32"0x2322FC01", F) }
 
   @pure def dfa_COMMENT(i: Z): Z = {
     val ctx = LContext.create(ISZ(state"5", state"6"), i)
@@ -3085,7 +3085,7 @@ import SireumGrammarParserOld._
     return ctx.afterAcceptIndex
   }
 
-  @pure def lex_COMMENT(index: Z): Option[Result] = { return lexH(index, dfa_COMMENT(index), """COMMENT""",  0x486B464F, T) }
+  @pure def lex_COMMENT(index: Z): Option[Result] = { return lexH(index, dfa_COMMENT(index), """COMMENT""",  s32"0x486B464F", T) }
 
   @pure def dfa_WS(i: Z): Z = {
     val ctx = LContext.create(ISZ(state"1"), i)
@@ -3117,7 +3117,7 @@ import SireumGrammarParserOld._
     return ctx.afterAcceptIndex
   }
 
-  @pure def lex_WS(index: Z): Option[Result] = { return lexH(index, dfa_WS(index), """WS""",  0x0E3F5D1E, T) }
+  @pure def lex_WS(index: Z): Option[Result] = { return lexH(index, dfa_WS(index), """WS""",  s32"0x0E3F5D1E", T) }
 
   @pure def hidden(i: Z): Z = {
      var j: Z = -1
@@ -3132,7 +3132,7 @@ import SireumGrammarParserOld._
      return -1
   }
 
-  @pure def lexH(index: Z, newIndex: Z, name: String, tipe: Z, isHidden: B): Option[Result] = {
+  @pure def lexH(index: Z, newIndex: Z, name: String, tipe: S32, isHidden: B): Option[Result] = {
     if (newIndex > 0) {
       return Some(Result.create(ParseTree.Leaf(conversions.String.fromCis(for (i <- index until newIndex) yield cis.at(i)),
         name, tipe, isHidden, cis.posOpt(index, newIndex - index)), newIndex))

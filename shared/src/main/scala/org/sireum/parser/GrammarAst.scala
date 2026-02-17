@@ -1081,17 +1081,17 @@ object GrammarAst {
           // Augment the nameMap with all rule names and literals that may not
           // appear in k-token lookahead sequences but are still referenced in rules
           var nameMap = pt.nameMap
-          var nextId: Z = 0
+          var nextId: S32 = s32"0"
           for (e <- nameMap.entries) {
             if (e._2 >= nextId) {
-              nextId = e._2 + 1
+              nextId = e._2 + s32"1"
             }
           }
 
           def ensureName(name: String): Unit = {
             if (!nameMap.contains(name)) {
               nameMap = nameMap + name ~> nextId
-              nextId = nextId + 1
+              nextId = nextId + s32"1"
             }
           }
 
@@ -1139,33 +1139,31 @@ object GrammarAst {
             }
           }
 
-          var ruleMapMs = MS.create[S32, NRule](nextId, NRule.sentinel)
+          var ruleMapMs = MS.create[S32, NRule](conversions.S32.toZ(nextId), NRule.sentinel)
           for (r <- ng.rules if !r.isLexer) {
             val ruleNum = nameMap.get(r.name).get
-            val ruleNumS32 = conversions.Z.toS32(ruleNum)
             if (r.alts.size > 1) {
-              var altNums = ISZ[Z]()
+              var altNums = IS[S32, S32]()
               for (alt <- r.alts) {
                 alt.elements(0) match {
                   case ref: Element.Ref =>
                     val refNum = nameMap.get(ref.name).get
-                    val refNumS32 = conversions.Z.toS32(refNum)
                     altNums = altNums :+ refNum
-                    if (ref.isTerminal && ruleMapMs(refNumS32) == NRule.sentinel) {
-                      ruleMapMs(refNumS32) = NRule.Elements(
+                    if (ref.isTerminal && ruleMapMs(refNum) == NRule.sentinel) {
+                      ruleMapMs(refNum) = NRule.Elements(
                         name = ref.name, num = refNum, isSynthetic = T,
                         elements = ISZ(NElement.Ref(isTerminal = T, ruleName = ref.name, num = refNum)))
                     }
                   case _ => halt("Expected single Ref in alt of multi-alt normalized rule")
                 }
               }
-              ruleMapMs(ruleNumS32) = NRule.Alts(name = r.name, num = ruleNum, isSynthetic = r.isSynthetic, alts = altNums)
+              ruleMapMs(ruleNum) = NRule.Alts(name = r.name, num = ruleNum, isSynthetic = r.isSynthetic, alts = altNums)
             } else if (r.alts.size == 1) {
               var nelems = ISZ[NElement]()
               for (e <- r.alts(0).elements) {
                 nelems = nelems :+ toNElement(e)
               }
-              ruleMapMs(ruleNumS32) = NRule.Elements(name = r.name, num = ruleNum, isSynthetic = r.isSynthetic, elements = nelems)
+              ruleMapMs(ruleNum) = NRule.Elements(name = r.name, num = ruleNum, isSynthetic = r.isSynthetic, elements = nelems)
             }
           }
           return Some(NGrammar(ruleMapMs.toIS, augPt))

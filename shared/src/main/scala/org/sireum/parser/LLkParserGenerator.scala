@@ -314,7 +314,7 @@ object LLkParserGenerator {
       val nfa = nfaElement(s, z"0")
       val dfa = minimize(nfaToDfa(nfa))
       val litName = s"'${s.value}'"
-      dfaInfos = dfaInfos :+ (dfa, litName, nameMap.get(litName).get, F)
+      dfaInfos = dfaInfos :+ (dfa, litName, conversions.S32.toZ(nameMap.get(litName).get), F)
     }
 
     // Build DFA infos for single-character literals
@@ -323,16 +323,19 @@ object LLkParserGenerator {
       val nfa = nfaElement(ch, z"0")
       val dfa = minimize(nfaToDfa(nfa))
       val litName = s"'${conversions.String.fromCis(ISZ(ch.value))}'"
-      dfaInfos = dfaInfos :+ (dfa, litName, nameMap.get(litName).get, F)
+      dfaInfos = dfaInfos :+ (dfa, litName, conversions.S32.toZ(nameMap.get(litName).get), F)
     }
 
     // Build DFA infos for lexer rules
     for (r <- lexRules) {
       val dfa = buildDfa(r)
-      dfaInfos = dfaInfos :+ (dfa, r.name, nameMap.get(r.name).get, r.isHidden)
+      dfaInfos = dfaInfos :+ (dfa, r.name, conversions.S32.toZ(nameMap.get(r.name).get), r.isHidden)
     }
 
-    val eofTypeOpt: Option[Z] = nameMap.get("EOF")
+    val eofTypeOpt: Option[Z] = nameMap.get("EOF") match {
+      case Some(v) => Some(conversions.S32.toZ(v))
+      case _ => None()
+    }
     val lexerDfas = LexerDfas.fromDfas(dfaInfos = dfaInfos, eofTypeOpt = eofTypeOpt)
 
     val maxChunkSize: Z = 60000
