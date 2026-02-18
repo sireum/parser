@@ -87,8 +87,8 @@ import org.sireum.parser.{GrammarAst => AST}
         lexNames = lexNames :+ lexname
         val valcode = valCode(s)
         val sEscape = escape(s)
-        val valueST = st"""u32"0x${(valcode, "")}" /* "$sEscape" */"""
-        objectVals = objectVals :+ st"""val T_$valcode: U32 = $valueST"""
+        val valueST = st"""s32"0x${(valcode, "")}" /* "$sEscape" */"""
+        objectVals = objectVals :+ st"""val T_$valcode: S32 = $valueST"""
         lexerDefs = lexerDefs :+ lexST(lexname, st"${p._2}", st"$tqs'$s'$tqs", valueST, F)
       }
 
@@ -115,8 +115,8 @@ import org.sireum.parser.{GrammarAst => AST}
         val lexname = lexName(tname)
         lexNames = lexNames :+ lexname
         val valcode = valCode(tname)
-        val valueST = st"""u32"0x${(valcode, "")}""""
-        objectVals = objectVals :+ st"""val T_$tname: U32 = $valueST"""
+        val valueST = st"""s32"0x${(valcode, "")}" """
+        objectVals = objectVals :+ st"""val T_$tname: S32 = $valueST"""
         lexerDefs = lexerDefs :+ lexST(lexname, dfaname, st"$tqs${p._1}$tqs", valueST, hiddenNames.contains(p._1))
       }
 
@@ -128,7 +128,7 @@ import org.sireum.parser.{GrammarAst => AST}
             |}"""
 
       lexerDefs = lexerDefs :+
-        st"""@pure def lexH(index: Z, newIndex: Z, name: String, tipe: U32, isHidden: B): Option[Result] = {
+        st"""@pure def lexH(index: Z, newIndex: Z, name: String, tipe: S32, isHidden: B): Option[Result] = {
             |  if (newIndex > 0) {
             |    return Some(Result.create(ParseTree.Leaf(conversions.String.fromCis(for (i <- index until newIndex) yield cis.at(i)),
             |      name, tipe, isHidden, cis.posOpt(index, newIndex - index)), newIndex))
@@ -208,8 +208,8 @@ import org.sireum.parser.{GrammarAst => AST}
         if (numOfStates > maxNumOfStates) {
           maxNumOfStates = numOfStates
         }
-        val valueST = st"""u32"0x${valCode(p._1)}""""
-        objectVals = objectVals :+ st"""val T_${p._1}: U32 = $valueST"""
+        val valueST = st"""s32"0x${valCode(p._1)}" """
+        objectVals = objectVals :+ st"""val T_${p._1}: S32 = $valueST"""
         val (parserST, cds): (ST, ISZ[String]) =
           if (predict && !backtracking) genPredictiveParserDfa(k, memoize, backtracking, parseName(p._1), p._1,
             valueST, p._2._1, p._2._2)
@@ -243,8 +243,8 @@ import org.sireum.parser.{GrammarAst => AST}
       case ISZ(first, _*) if !first.isLexer =>
         Some(
           st"""def parse(uriOpt: Option[String], input: String, reporter: message.Reporter): Option[ParseTree] = {
-              |  val docInfo = message.DocInfo.create(uriOpt, input)
-              |  val tokens = lex(input, docInfo, T, T, reporter)
+              |  val chars = Indexable.Ext.fromString(uriOpt, input)
+              |  val tokens = lex(chars, T, T, reporter)
               |  if (reporter.hasError) {
               |    return None()
               |  }
@@ -252,7 +252,7 @@ import org.sireum.parser.{GrammarAst => AST}
               |  r.kind match {
               |    case Result.Kind.Normal => return Some(r.tree)
               |    case Result.Kind.LexicalError =>
-              |      reporter.error(Some(message.PosInfo(docInfo, offsetLength(r.newIndex, 1))), kind, s"Could not recognize token")
+              |      reporter.error(chars.posOpt(r.newIndex, 1), kind, s"Could not recognize token")
               |      return None()
               |    case Result.Kind.GrammaticalError =>
               |      val idx: Z = if (r.newIndex < 0) -r.newIndex else r.newIndex
@@ -303,6 +303,7 @@ import org.sireum.parser.{GrammarAst => AST}
           |$packageOpt
           |
           |import org.sireum._
+          |import org.sireum.S32._
           |import org.sireum.U32._
           |import org.sireum.U64._
           |import org.sireum.conversions.U32.toC
@@ -340,14 +341,14 @@ import org.sireum.parser.{GrammarAst => AST}
           |  }
           |
           |  @record class Context(val ruleName: String,
-          |                        val ruleType: U32,
+          |                        val ruleType: S32,
           |                        val accepting: IS[State, B],
           |                        var state: State,
           |                        var resOpt: Option[Result],
           |                        var j: Z,
           |                        var max: Z,
           |                        var initial: B,
-          |                        var trees: ISZ[ParseTree],
+          |                        var trees: IS[S32, ParseTree],
           |                        var found: B,
           |                        var failIndex: Z,
           |                        var isLexical: B) {
@@ -382,7 +383,7 @@ import org.sireum.parser.{GrammarAst => AST}
           |  }
           |
           |  object Context {
-          |    @pure def create(ruleName: String, ruleType: U32, accepts: ISZ[State], i: Z): Context = {
+          |    @pure def create(ruleName: String, ruleType: S32, accepts: ISZ[State], i: Z): Context = {
           |      val accepting = MS.create[State, B]($maxNumOfStates, F)
           |      for (accept <- accepts) {
           |        accepting(accept) = T
@@ -393,7 +394,7 @@ import org.sireum.parser.{GrammarAst => AST}
           |        accepting = accepting.toIS,
           |        state = state"0",
           |        resOpt = None(),
-          |        trees = ISZ[ParseTree](),
+          |        trees = IS[S32, ParseTree](),
           |        j = i,
           |        max = i,
           |        initial = T,
@@ -476,14 +477,14 @@ import org.sireum.parser.{GrammarAst => AST}
           |
           |  ${(objectVals, "\n")}
           |
-          |  val errorLeaf: ParseTree.Leaf = ParseTree.Leaf("<ERROR>", "<ERROR>", u32"0x${(valCode("<ERROR>"), "")}", F, None())
-          |  val eofLeaf: ParseTree.Leaf = ParseTree.Leaf("<EOF>", "EOF", u32"0x${(valCode("EOF"), "")}", F, None())
+          |  val errorLeaf: ParseTree.Leaf = ParseTree.Leaf("<ERROR>", "<ERROR>", s32"0x${(valCode("<ERROR>"), "")}", F, None())
+          |  val eofLeaf: ParseTree.Leaf = ParseTree.Leaf("<EOF>", "EOF", s32"0x${(valCode("EOF"), "")}", F, None())
           |
           |  $parserOpt
           |
-          |  def lex(input: String, docInfo: message.DocInfo, skipHidden: B, stopAtError: B,
+          |  def lex(chars: Indexable.PosC, skipHidden: B, stopAtError: B,
           |          reporter: message.Reporter): ISZ[Result] = {
-          |    return ${name}Lexer(Indexable.fromIszDocInfo(conversions.String.toCis(input), docInfo)).tokenizeAll(skipHidden, stopAtError, reporter)
+          |    return ${name}Lexer(chars).tokenizeAll(skipHidden, stopAtError, reporter)
           |  }
           |
           |  @pure def offsetLength(offset: Z, length: Z): U64 = {
@@ -762,7 +763,7 @@ import org.sireum.parser.{GrammarAst => AST}
   }
 
   @pure def terminalST(text: String, dest: Z, plain: B, notFoundOpt: Option[ST]): ST = {
-    return st"""case u32"0x${(valCode(text), "")}" /* ${if (plain) text else st"\"${escape(text)}\"" } */$notFoundOpt => ctx.updateTerminal(token, state"$dest")"""
+    return st"""case s32"0x${(valCode(text), "")}" /* ${if (plain) text else st"\"${escape(text)}\"" } */$notFoundOpt => ctx.updateTerminal(token, state"$dest")"""
   }
 
   def genTries(k: Z, ruleTrie: LookAhead.Trie): ISZ[ST] = {
@@ -793,8 +794,8 @@ import org.sireum.parser.{GrammarAst => AST}
             |$acceptOpt"""
       }
       val cond: ST = trie.value match {
-        case v: LookAhead.Case.Value.Str => st"""case u32"0x${valCode(v.value)}" /* "${escape(v.value)}" */"""
-        case v: LookAhead.Case.Value.Terminal => st"""case u32"0x${(valCode(v.name), "")}" /* ${v.name} */"""
+        case v: LookAhead.Case.Value.Str => st"""case s32"0x${valCode(v.value)}" /* "${escape(v.value)}" */"""
+        case v: LookAhead.Case.Value.Terminal => st"""case s32"0x${(valCode(v.name), "")}" /* ${v.name} */"""
       }
       val rf: ST = if (subs.isEmpty) st"$cond => $subsST" else
         st"""$cond =>

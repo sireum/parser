@@ -27,6 +27,7 @@
 package org.sireum.parser
 
 import org.sireum._
+import org.sireum.S32._
 import org.sireum.U32._
 import org.sireum.message.Position
 
@@ -1080,17 +1081,17 @@ object GrammarAst {
           // Augment the nameMap with all rule names and literals that may not
           // appear in k-token lookahead sequences but are still referenced in rules
           var nameMap = pt.nameMap
-          var nextId: U32 = u32"0"
+          var nextId: S32 = s32"0"
           for (e <- nameMap.entries) {
-            if (conversions.U32.toZ(e._2) >= conversions.U32.toZ(nextId)) {
-              nextId = e._2 + u32"1"
+            if (e._2 >= nextId) {
+              nextId = e._2 + s32"1"
             }
           }
 
           def ensureName(name: String): Unit = {
             if (!nameMap.contains(name)) {
               nameMap = nameMap + name ~> nextId
-              nextId = nextId + u32"1"
+              nextId = nextId + s32"1"
             }
           }
 
@@ -1138,34 +1139,34 @@ object GrammarAst {
             }
           }
 
-          var ruleMap = HashSMap.empty[U32, NRule]
+          var ruleMapMs = MS.create[S32, NRule](conversions.S32.toZ(nextId), NRule.sentinel)
           for (r <- ng.rules if !r.isLexer) {
             val ruleNum = nameMap.get(r.name).get
             if (r.alts.size > 1) {
-              var altNums = ISZ[U32]()
+              var altNums = IS[S32, S32]()
               for (alt <- r.alts) {
                 alt.elements(0) match {
                   case ref: Element.Ref =>
                     val refNum = nameMap.get(ref.name).get
                     altNums = altNums :+ refNum
-                    if (ref.isTerminal && !ruleMap.contains(refNum)) {
-                      ruleMap = ruleMap + refNum ~> NRule.Elements(
+                    if (ref.isTerminal && ruleMapMs(refNum) == NRule.sentinel) {
+                      ruleMapMs(refNum) = NRule.Elements(
                         name = ref.name, num = refNum, isSynthetic = T,
                         elements = ISZ(NElement.Ref(isTerminal = T, ruleName = ref.name, num = refNum)))
                     }
                   case _ => halt("Expected single Ref in alt of multi-alt normalized rule")
                 }
               }
-              ruleMap = ruleMap + ruleNum ~> NRule.Alts(name = r.name, num = ruleNum, isSynthetic = r.isSynthetic, alts = altNums)
+              ruleMapMs(ruleNum) = NRule.Alts(name = r.name, num = ruleNum, isSynthetic = r.isSynthetic, alts = altNums)
             } else if (r.alts.size == 1) {
               var nelems = ISZ[NElement]()
               for (e <- r.alts(0).elements) {
                 nelems = nelems :+ toNElement(e)
               }
-              ruleMap = ruleMap + ruleNum ~> NRule.Elements(name = r.name, num = ruleNum, isSynthetic = r.isSynthetic, elements = nelems)
+              ruleMapMs(ruleNum) = NRule.Elements(name = r.name, num = ruleNum, isSynthetic = r.isSynthetic, elements = nelems)
             }
           }
-          return Some(NGrammar(ruleMap, augPt))
+          return Some(NGrammar(ruleMapMs.toIS, augPt))
         case _ => return None()
       }
     }

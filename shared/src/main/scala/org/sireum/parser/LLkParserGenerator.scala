@@ -27,7 +27,6 @@
 package org.sireum.parser
 
 import org.sireum._
-import org.sireum.U32._
 import org.sireum.automaton._
 
 object LLkParserGenerator {
@@ -310,12 +309,12 @@ object LLkParserGenerator {
     val nameMap = ng.pt.nameMap
 
     // Build DFA infos for string literals
-    var dfaInfos = ISZ[(automaton.Dfa[(C, C)], String, U32, B)]()
+    var dfaInfos = ISZ[(automaton.Dfa[(C, C)], String, Z, B)]()
     for (s <- strs) {
       val nfa = nfaElement(s, z"0")
       val dfa = minimize(nfaToDfa(nfa))
       val litName = s"'${s.value}'"
-      dfaInfos = dfaInfos :+ (dfa, litName, nameMap.get(litName).get, F)
+      dfaInfos = dfaInfos :+ (dfa, litName, conversions.S32.toZ(nameMap.get(litName).get), F)
     }
 
     // Build DFA infos for single-character literals
@@ -324,16 +323,19 @@ object LLkParserGenerator {
       val nfa = nfaElement(ch, z"0")
       val dfa = minimize(nfaToDfa(nfa))
       val litName = s"'${conversions.String.fromCis(ISZ(ch.value))}'"
-      dfaInfos = dfaInfos :+ (dfa, litName, nameMap.get(litName).get, F)
+      dfaInfos = dfaInfos :+ (dfa, litName, conversions.S32.toZ(nameMap.get(litName).get), F)
     }
 
     // Build DFA infos for lexer rules
     for (r <- lexRules) {
       val dfa = buildDfa(r)
-      dfaInfos = dfaInfos :+ (dfa, r.name, nameMap.get(r.name).get, r.isHidden)
+      dfaInfos = dfaInfos :+ (dfa, r.name, conversions.S32.toZ(nameMap.get(r.name).get), r.isHidden)
     }
 
-    val eofTypeOpt: Option[U32] = nameMap.get("EOF")
+    val eofTypeOpt: Option[Z] = nameMap.get("EOF") match {
+      case Some(v) => Some(conversions.S32.toZ(v))
+      case _ => None()
+    }
     val lexerDfas = LexerDfas.fromDfas(dfaInfos = dfaInfos, eofTypeOpt = eofTypeOpt)
 
     val maxChunkSize: Z = 60000
@@ -395,6 +397,7 @@ object LLkParserGenerator {
           |$packageOpt
           |
           |import org.sireum._
+          |import org.sireum.S32._
           |import org.sireum.parser._
           |
           |object ${name}Parser {
@@ -402,15 +405,13 @@ object LLkParserGenerator {
           |  val lexerDfas: LexerDfas = $lexerInit
           |
           |  def parseRule(uriOpt: Option[String], content: String, ruleName: String, reporter: message.Reporter): Option[ParseTree] = {
-          |    val cis = conversions.String.toCis(content)
-          |    val docInfo = message.DocInfo.createFromCis(uriOpt, cis)
-          |    val chars = Indexable.IszDocInfo[C](cis, docInfo)
+          |    val chars = Indexable.Ext.fromString(uriOpt, content)
           |    val (errorIndex, tokens) = lexerDfas.tokens(chars, T)
-          |    if (errorIndex >= 0) {
-          |      reporter.error(chars.posOpt(errorIndex, 1), "${name}Parser", st"Unrecognized character '$${ops.COps(cis(errorIndex)).escapeString}'".render)
+          |    if (errorIndex >= s32"0") {
+          |      reporter.error(chars.posOptS32(errorIndex, s32"1"), "${name}Parser", st"Unrecognized character '$${ops.COps(chars.atS32(errorIndex)).escapeString}'".render)
           |      return None()
           |    }
-          |    return g.parse(ruleName, Indexable.fromIsz(tokens), reporter)
+          |    return g.parse(ruleName, Indexable.fromIs(tokens), reporter)
           |  }
           |
           |  def parse(uriOpt: Option[String], content: String, reporter: message.Reporter): Option[ParseTree] = {
