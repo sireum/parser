@@ -389,13 +389,16 @@ object LLkParserGenerator {
             |}"""
       }
     }
-
+    val readable = g.readable
     return Some(
       st"""// #Sireum
           |$licenseOpt
           |$fileInfo
           |$packageOpt
           |
+          |/*
+          |${readable.prettyPrint}
+          |*/
           |import org.sireum._
           |import org.sireum.S32._
           |import org.sireum.parser._

@@ -1012,18 +1012,68 @@ object GrammarAst {
               for (ba <- block.alts) {
                 blockAlts = blockAlts ++ distributeAlt(ba)
               }
-              var newPartials = ISZ[ISZ[Element]]()
-              for (partial <- partials) {
-                for (ba <- blockAlts) {
-                  newPartials = newPartials :+ (partial ++ ba.elements)
+              if (partials.size * blockAlts.size > z"3") {
+                partials = for (partial <- partials) yield partial :+ Element.Block(blockAlts, block.posOpt)
+              } else {
+                var newPartials = ISZ[ISZ[Element]]()
+                for (partial <- partials) {
+                  for (ba <- blockAlts) {
+                    newPartials = newPartials :+ (partial ++ ba.elements)
+                  }
                 }
+                partials = newPartials
               }
-              partials = newPartials
             case _ =>
               partials = for (partial <- partials) yield partial :+ e
           }
         }
         return for (partial <- partials) yield Alt(partial)
+      }
+
+      def collectElementRefs(e: Element, refs: HashSSet[String]): HashSSet[String] = {
+        var r = refs
+        e match {
+          case ref: Element.Ref => r = r + ref.name
+          case block: Element.Block =>
+            for (alt <- block.alts) {
+              for (elem <- alt.elements) {
+                r = collectElementRefs(elem, r)
+              }
+            }
+          case opt: Element.Opt => r = collectElementRefs(opt.element, r)
+          case star: Element.Star => r = collectElementRefs(star.element, r)
+          case plus: Element.Plus => r = collectElementRefs(plus.element, r)
+          case _ =>
+        }
+        return r
+      }
+
+      def canReachSelf(start: String, current: String, ruleMap: HashSMap[String, Rule],
+                       candidates: HashSSet[String], visited: HashSSet[String]): B = {
+        if (visited.contains(current)) {
+          return F
+        }
+        ruleMap.get(current) match {
+          case Some(r) =>
+            var refs = HashSSet.empty[String]
+            for (alt <- r.alts) {
+              for (e <- alt.elements) {
+                refs = collectElementRefs(e, refs)
+              }
+            }
+            for (ref <- refs.elements) {
+              if (candidates.contains(ref)) {
+                if (ref == start) {
+                  return T
+                }
+                if (canReachSelf(start, ref, ruleMap, candidates, visited + current)) {
+                  return T
+                }
+              }
+            }
+          case _ =>
+        }
+        return F
       }
 
       var currentRules = rules
@@ -1043,6 +1093,14 @@ object GrammarAst {
             case _ =>
           }
         }
+        // Exclude inlineable rules that form cycles to prevent stack overflow during inlining
+        var safeInlineable = HashSSet.empty[String]
+        for (name <- inlineable.elements) {
+          if (!canReachSelf(name, name, ruleMap, inlineable, HashSSet.empty[String])) {
+            safeInlineable = safeInlineable + name
+          }
+        }
+        inlineable = safeInlineable
         if (inlineable.nonEmpty) {
           changed = T
           var newRules = ISZ[Rule]()
@@ -1061,16 +1119,271 @@ object GrammarAst {
       }
       var finalRules = ISZ[Rule]()
       for (r <- currentRules) {
-        if (r.isLexer) {
-          finalRules = finalRules :+ r
-        } else {
-          var newAlts = ISZ[Alt]()
-          for (alt <- r.alts) {
-            newAlts = newAlts ++ distributeAlt(alt)
+        var newAlts = ISZ[Alt]()
+        for (alt <- r.alts) {
+          newAlts = newAlts ++ distributeAlt(alt)
+        }
+        finalRules = finalRules :+ Rule(name = r.name, isLexer = r.isLexer, isFragment = r.isFragment, isHidden = r.isHidden, isSynthetic = r.isSynthetic, posOpt = r.posOpt, alts = newAlts)
+      }
+      // Inline simple lexer rules (all alts are single string/char literals, non-fragment,
+      // non-hidden) into parser rules, replacing Ref with the literal element or Block
+      var simpleLexerLiterals = HashSMap.empty[String, Element]
+      for (r <- finalRules) {
+        if (r.isLexer && !r.isFragment && !r.isHidden && r.alts.nonEmpty) {
+          var allSimple: B = T
+          for (alt <- r.alts if allSimple) {
+            if (alt.elements.size == 1) {
+              alt.elements(0) match {
+                case _: Element.Str =>
+                case _: Element.Char =>
+                case _ => allSimple = F
+              }
+            } else {
+              allSimple = F
+            }
           }
-          finalRules = finalRules :+ Rule(name = r.name, isLexer = r.isLexer, isFragment = r.isFragment, isHidden = r.isHidden, isSynthetic = r.isSynthetic, posOpt = r.posOpt, alts = newAlts)
+          if (allSimple) {
+            if (r.alts.size == 1) {
+              simpleLexerLiterals = simpleLexerLiterals + r.name ~> r.alts(0).elements(0)
+            } else {
+              simpleLexerLiterals = simpleLexerLiterals + r.name ~> Element.Block(r.alts, r.posOpt)
+            }
+          }
         }
       }
+
+      def inlineLexerElement(e: Element): Element = {
+        e match {
+          case ref: Element.Ref =>
+            simpleLexerLiterals.get(ref.name) match {
+              case Some(lit) => return lit
+              case _ =>
+            }
+            return e
+          case block: Element.Block =>
+            return Element.Block(for (alt <- block.alts) yield Alt(for (elem <- alt.elements) yield inlineLexerElement(elem)), block.posOpt)
+          case opt: Element.Opt => return Element.Opt(inlineLexerElement(opt.element), opt.posOpt)
+          case star: Element.Star => return Element.Star(inlineLexerElement(star.element), star.posOpt)
+          case plus: Element.Plus => return Element.Plus(inlineLexerElement(plus.element), plus.posOpt)
+          case _ => return e
+        }
+      }
+
+      if (simpleLexerLiterals.nonEmpty) {
+        var result = ISZ[Rule]()
+        for (r <- finalRules) {
+          if (r.isLexer && simpleLexerLiterals.contains(r.name)) {
+            // skip — inlined into parser rules
+          } else if (r.isLexer) {
+            result = result :+ r
+          } else {
+            var newAlts = ISZ[Alt]()
+            for (alt <- r.alts) {
+              newAlts = newAlts :+ Alt(for (e <- alt.elements) yield inlineLexerElement(e))
+            }
+            result = result :+ Rule(name = r.name, isLexer = r.isLexer, isFragment = r.isFragment, isHidden = r.isHidden, isSynthetic = r.isSynthetic, posOpt = r.posOpt, alts = newAlts)
+          }
+        }
+        finalRules = result
+      }
+
+      finalRules = for (r <- finalRules if !r.isHidden) yield r
+
+      // Extract repeated multi-alternative blocks into synthetic helper rules
+      def elementWeight(e: Element): Z = {
+        e match {
+          case _: Element.Dot => return 1
+          case _: Element.Char => return 1
+          case _: Element.Str => return 1
+          case _: Element.Range => return 1
+          case _: Element.Ref => return 1
+          case block: Element.Block =>
+            var w: Z = 1
+            for (alt <- block.alts) {
+              for (elem <- alt.elements) {
+                w = w + elementWeight(elem)
+              }
+            }
+            return w
+          case opt: Element.Opt => return 1 + elementWeight(opt.element)
+          case star: Element.Star => return 1 + elementWeight(star.element)
+          case plus: Element.Plus => return 1 + elementWeight(plus.element)
+          case neg: Element.Neg => return 1 + elementWeight(neg.element)
+        }
+      }
+
+      var blockCounts = HashSMap.empty[Element.Block, Z]
+      var blockOrigins = HashSMap.empty[Element.Block, HashSMap[String, Z]]
+      var currentCountRuleName: String = ""
+
+      def countBlockElements(e: Element): Unit = {
+        e match {
+          case block: Element.Block =>
+            val prev: Z = blockCounts.get(block) match {
+              case Some(n) => n
+              case _ => 0
+            }
+            blockCounts = blockCounts + block ~> (prev + 1)
+            val origins: HashSMap[String, Z] = blockOrigins.get(block) match {
+              case Some(m) => m
+              case _ => HashSMap.empty[String, Z]
+            }
+            val originPrev: Z = origins.get(currentCountRuleName) match {
+              case Some(n) => n
+              case _ => 0
+            }
+            blockOrigins = blockOrigins + block ~> (origins + currentCountRuleName ~> (originPrev + 1))
+            for (alt <- block.alts) {
+              for (elem <- alt.elements) {
+                countBlockElements(elem)
+              }
+            }
+          case opt: Element.Opt => countBlockElements(opt.element)
+          case star: Element.Star => countBlockElements(star.element)
+          case plus: Element.Plus => countBlockElements(plus.element)
+          case neg: Element.Neg => countBlockElements(neg.element)
+          case _ =>
+        }
+      }
+
+      for (r <- finalRules) {
+        currentCountRuleName = r.name
+        for (alt <- r.alts) {
+          for (e <- alt.elements) {
+            countBlockElements(e)
+          }
+        }
+      }
+
+      // Find blocks meeting extraction criteria and determine origin rule names
+      var extractable = ISZ[Element.Block]()
+      for (entry <- blockCounts.entries) {
+        if (entry._2 >= 3 && entry._1.alts.size >= 2 && elementWeight(entry._1) >= 6) {
+          extractable = extractable :+ entry._1
+        }
+      }
+
+      // Determine origin rule (rule with most occurrences) for each block
+      var originCounts = HashSMap.empty[String, Z]
+      for (block <- extractable) {
+        val origins: HashSMap[String, Z] = blockOrigins.get(block) match {
+          case Some(m) => m
+          case _ => HashSMap.empty[String, Z]
+        }
+        var bestRule: String = "block"
+        var bestCount: Z = 0
+        for (entry <- origins.entries) {
+          if (entry._2 > bestCount) {
+            bestCount = entry._2
+            bestRule = entry._1
+          }
+        }
+        val prev: Z = originCounts.get(bestRule) match {
+          case Some(n) => n
+          case _ => 0
+        }
+        originCounts = originCounts + bestRule ~> (prev + 1)
+      }
+
+      // Assign names: _<rule> if unique origin, _<rule>_<n> if multiple blocks share an origin
+      var blockReplacements = HashSMap.empty[Element.Block, String]
+      var originIdxMap = HashSMap.empty[String, Z]
+      for (block <- extractable) {
+        val origins: HashSMap[String, Z] = blockOrigins.get(block) match {
+          case Some(m) => m
+          case _ => HashSMap.empty[String, Z]
+        }
+        var bestRule: String = "block"
+        var bestCount: Z = 0
+        for (entry <- origins.entries) {
+          if (entry._2 > bestCount) {
+            bestCount = entry._2
+            bestRule = entry._1
+          }
+        }
+        val total: Z = originCounts.get(bestRule) match {
+          case Some(n) => n
+          case _ => 1
+        }
+        val name: String = if (total == 1) {
+          st"_$bestRule".render
+        } else {
+          val idx: Z = originIdxMap.get(bestRule) match {
+            case Some(n) => n
+            case _ => 0
+          }
+          originIdxMap = originIdxMap + bestRule ~> (idx + 1)
+          st"_${bestRule}_$idx".render
+        }
+        blockReplacements = blockReplacements + block ~> name
+      }
+
+      if (blockReplacements.nonEmpty) {
+        def replaceBlockElement(e: Element): Element = {
+          e match {
+            case block: Element.Block =>
+              blockReplacements.get(block) match {
+                case Some(name) => return Element.Ref(isTerminal = F, name = name, posOpt = block.posOpt)
+                case _ =>
+                  return Element.Block(
+                    for (alt <- block.alts) yield Alt(for (elem <- alt.elements) yield replaceBlockElement(elem)),
+                    block.posOpt
+                  )
+              }
+            case opt: Element.Opt => return Element.Opt(replaceBlockElement(opt.element), opt.posOpt)
+            case star: Element.Star => return Element.Star(replaceBlockElement(star.element), star.posOpt)
+            case plus: Element.Plus => return Element.Plus(replaceBlockElement(plus.element), plus.posOpt)
+            case neg: Element.Neg => return Element.Neg(replaceBlockElement(neg.element), neg.posOpt)
+            case _ => return e
+          }
+        }
+
+        // Build map from origin rule name to its synthetic rules
+        var originSynthetics = HashSMap.empty[String, ISZ[Rule]]
+        for (entry <- blockReplacements.entries) {
+          val block = entry._1
+          val name = entry._2
+          val newAlts = for (alt <- block.alts) yield Alt(for (e <- alt.elements) yield replaceBlockElement(e))
+          val synRule = Rule(
+            name = name, isLexer = F, isFragment = F, isHidden = F,
+            isSynthetic = T, posOpt = block.posOpt, alts = newAlts
+          )
+          // Determine origin rule for this block
+          val origins: HashSMap[String, Z] = blockOrigins.get(block) match {
+            case Some(m) => m
+            case _ => HashSMap.empty[String, Z]
+          }
+          var bestRule: String = "block"
+          var bestCount: Z = 0
+          for (oe <- origins.entries) {
+            if (oe._2 > bestCount) {
+              bestCount = oe._2
+              bestRule = oe._1
+            }
+          }
+          val prev: ISZ[Rule] = originSynthetics.get(bestRule) match {
+            case Some(rs) => rs
+            case _ => ISZ[Rule]()
+          }
+          originSynthetics = originSynthetics + bestRule ~> (prev :+ synRule)
+        }
+
+        // Insert each synthetic rule right after its origin rule
+        var result = ISZ[Rule]()
+        for (r <- finalRules) {
+          val newAlts = for (alt <- r.alts) yield Alt(for (e <- alt.elements) yield replaceBlockElement(e))
+          result = result :+ Rule(
+            name = r.name, isLexer = r.isLexer, isFragment = r.isFragment, isHidden = r.isHidden,
+            isSynthetic = r.isSynthetic, posOpt = r.posOpt, alts = newAlts
+          )
+          originSynthetics.get(r.name) match {
+            case Some(synthetics) => result = result ++ synthetics
+            case _ =>
+          }
+        }
+        finalRules = result
+      }
+
       return Grammar(id, options, pheaderOpt, lheaderOpt, finalRules)
     }
 
@@ -1181,14 +1494,27 @@ object GrammarAst {
           case '\b' => return st"\\b"
           case '\f' => return st"\\f"
           case '\'' => return st"\\'"
-
           case '\\' => return st"\\\\"
           case _ =>
             val n = conversions.C.toU32(c)
             if (n >= u32"0x20" && n <= u32"0x7E") {
               return st"$c"
             } else {
-              return st"\\u${ops.COps(c).toUnicodeHex}"
+              val cat = ops.COps(c).category
+              cat match {
+                case ops.COps.Category.Cc =>
+                case ops.COps.Category.Cf =>
+                case ops.COps.Category.Cn =>
+                case ops.COps.Category.Co =>
+                case ops.COps.Category.Cs =>
+                case ops.COps.Category.Zl =>
+                case ops.COps.Category.Zp =>
+                case ops.COps.Category.Zs =>
+                case _ => return st"$c"
+              }
+              val c1 = ops.COps.hex2c((c >>> '\u0010') & '\u000F')
+              val (c2, c3, c4, c5) = ops.COps(c).toUnicodeHex
+              return st"\\u$c1$c2$c3$c4$c5"
             }
         }
       }
@@ -1203,6 +1529,15 @@ object GrammarAst {
         return st"'${(parts, "")}'"
       }
 
+      @pure def isSimpleAlt(alt: Alt): B = {
+        if (alt.elements.size != 1) {
+          return F
+        }
+        val e = alt.elements(0)
+        return e.isInstanceOf[Element.Str] || e.isInstanceOf[Element.Char] || e.isInstanceOf[Element.Dot] || e.isInstanceOf[Element.Range] || e.isInstanceOf[Element.Ref]
+      }
+      @strictpure def allSimpleAlts(alts: ISZ[Alt]): B = ops.ISZOps(alts).forall(isSimpleAlt _)
+
       def ppElement(e: Element): ST = {
         e match {
           case _: Element.Dot => return st"."
@@ -1212,7 +1547,15 @@ object GrammarAst {
           case ref: Element.Ref => return st"${ref.name}"
           case block: Element.Block =>
             val alts: ISZ[ST] = for (a <- block.alts) yield ppAlt(a)
-            return st"( ${(alts, " | ")} )"
+            if (block.alts.size == 1 || allSimpleAlts(block.alts)) {
+              return st"""( ${(alts, " | ")} )"""
+            }
+            val r =
+              st"""(
+                  |    ${alts(0)}
+                  |  ${(for (alt <- ops.ISZOps(alts).drop(1)) yield st"| $alt", "\n")}
+                  |)"""
+            return r
           case opt: Element.Opt => return st"${ppElement(opt.element)}?"
           case star: Element.Star => return st"${ppElement(star.element)}*"
           case plus: Element.Plus => return st"${ppElement(plus.element)}+"
@@ -1227,16 +1570,24 @@ object GrammarAst {
 
       def ppRule(r: Rule): ST = {
         val alts: ISZ[ST] = for (a <- r.alts) yield ppAlt(a)
-        val body = st"${(alts, " | ")}"
         if (r.isLexer) {
           val frag: String = if (r.isFragment) "fragment " else ""
-          if (r.isHidden) {
-            return st"${frag}${r.name}: ${body} {$$channel=HIDDEN;} ;"
-          } else {
-            return st"${frag}${r.name}: ${body} ;"
-          }
+          val hidden: String = if (r.isHidden) "{$$channel=HIDDEN;} " else ""
+          val rST: ST =
+            if (alts.size == 1 || allSimpleAlts(r.alts)) st"$frag${r.name}: ${(alts, " | ")} $hidden;"
+            else
+              st"""$frag${r.name}:
+                  |    ${alts(0)}
+                  |  ${(for (alt <- ops.ISZOps(alts).drop(1)) yield st"| $alt", "\n")} $hidden;"""
+          return rST
         } else {
-          return st"${r.name}: ${body} ;"
+          val rST: ST =
+            if (alts.size == 1 || allSimpleAlts(r.alts)) st"${r.name}: ${(alts, " | ")} ;"
+            else
+              st"""${r.name}:
+                  |    ${alts(0)}
+                  |  ${(for (alt <- ops.ISZOps(alts).drop(1)) yield st"| $alt", "\n")} ;"""
+          return rST
         }
       }
 
