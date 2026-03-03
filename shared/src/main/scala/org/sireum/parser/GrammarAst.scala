@@ -1343,7 +1343,7 @@ object GrammarAst {
         for (entry <- blockReplacements.entries) {
           val block = entry._1
           val name = entry._2
-          val newAlts = for (alt <- block.alts) yield Alt(for (e <- alt.elements) yield replaceBlockElement(e))
+          val newAlts: ISZ[Alt] = for (alt <- block.alts) yield Alt(for (e <- alt.elements) yield replaceBlockElement(e))
           val synRule = Rule(
             name = name, isLexer = F, isFragment = F, isHidden = F,
             isSynthetic = T, posOpt = block.posOpt, alts = newAlts
@@ -1371,7 +1371,7 @@ object GrammarAst {
         // Insert each synthetic rule right after its origin rule
         var result = ISZ[Rule]()
         for (r <- finalRules) {
-          val newAlts = for (alt <- r.alts) yield Alt(for (e <- alt.elements) yield replaceBlockElement(e))
+          val newAlts: ISZ[Alt] = for (alt <- r.alts) yield Alt(for (e <- alt.elements) yield replaceBlockElement(e))
           result = result :+ Rule(
             name = r.name, isLexer = r.isLexer, isFragment = r.isFragment, isHidden = r.isHidden,
             isSynthetic = r.isSynthetic, posOpt = r.posOpt, alts = newAlts
