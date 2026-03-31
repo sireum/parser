@@ -33,6 +33,8 @@ import org.sireum.message.Position
 
 object GrammarAst {
 
+  var followKDebug: B = F
+
   @datatype class Grammar(val id: String,
                           val options: ISZ[(String, String)],
                           val pheaderOpt: Option[String],
@@ -511,7 +513,12 @@ object GrammarAst {
         case ref: Element.Ref =>
           firstKMap.get(ref.name) match {
             case Some(firsts) => return firsts
-            case _ => return empty
+            case _ =>
+              if (ref.isTerminal) {
+                return empty + ISZ(ref.name)
+              } else {
+                return empty
+              }
           }
         case block: Element.Block =>
           return firstKOfAlts(block.alts, k, firstKMap)
@@ -618,8 +625,24 @@ object GrammarAst {
       var followCtx = tailFollow
       var i = elements.size - 1
       while (i >= 0) {
+        if (followKDebug) {
+          cprintln(T, s"  followKOfElements[$i]: elem=${elements(i)} followCtx.size=${followCtx.size}")
+          for (seq <- followCtx.elements) {
+            cprintln(T, s"    followCtx seq: $seq")
+          }
+        }
         fm = followKOfElement(elements(i), followCtx, k, firstKMap, fm)
-        followCtx = truncConcatK(k, firstKOfElement(elements(i), k, firstKMap), followCtx)
+        val fk = firstKOfElement(elements(i), k, firstKMap)
+        if (followKDebug) {
+          cprintln(T, s"    firstK.size=${fk.size}")
+          for (seq <- fk.elements) {
+            cprintln(T, s"    firstK seq: $seq")
+          }
+        }
+        followCtx = truncConcatK(k, fk, followCtx)
+        if (followKDebug) {
+          cprintln(T, s"    new followCtx.size=${followCtx.size}")
+        }
         i = i - 1
       }
       return fm
@@ -631,8 +654,20 @@ object GrammarAst {
       for (r <- rules if !r.isLexer) {
         followKMap = followKMap + r.name ~> HashSSet.empty
       }
+      // Seed entry-point rules (those ending with EOF) with {ε}
+      // so truncConcatK can extend sub-k sequences at end-of-input
+      val epsilon = HashSSet.empty[ISZ[String]] + ISZ[String]()
+      for (r <- rules if !r.isLexer && r.alts.size == 1 && r.alts(0).elements.nonEmpty) {
+        r.alts(0).elements(r.alts(0).elements.size - 1) match {
+          case ref: Element.Ref if ref.name == "EOF" =>
+            followKMap = followKMap + r.name ~> epsilon
+          case _ =>
+        }
+      }
       var changed: B = T
+      var iteration: Z = 0
       while (changed) {
+        iteration = iteration + 1
         var totalBefore: Z = 0
         for (entry <- followKMap.entries) {
           totalBefore = totalBefore + entry._2.size
@@ -640,7 +675,21 @@ object GrammarAst {
         for (r <- rules if !r.isLexer) {
           for (alt <- r.alts) {
             val rFollow = followKMap.get(r.name).get
+            val oldMap = followKMap
+            if (iteration <= z"2" && (r.name == "file" || r.name == "script" || r.name == "imprt")) {
+              followKDebug = T
+              cprintln(T, s"[iter $iteration] TRACE ${r.name}: elements=${alt.elements} rFollow.size=${rFollow.size}")
+            }
             followKMap = followKOfElements(alt.elements, rFollow, k, firstKMap, followKMap)
+            followKDebug = F
+            if (iteration <= z"2") {
+              for (e <- followKMap.entries) {
+                val old = oldMap.get(e._1)
+                if (old.nonEmpty && old.get.size != e._2.size) {
+                  cprintln(T, s"  [iter $iteration] CHANGED ${r.name}: ${e._1} ${old.get.size} -> ${e._2.size}")
+                }
+              }
+            }
           }
         }
         var totalAfter: Z = 0
@@ -673,6 +722,14 @@ object GrammarAst {
       * @return an equivalent grammar in normal form
       */
     def normalize: Grammar = {
+      return normalizeH()
+    }
+
+    def normalizeForReadable: Grammar = {
+      return normalizeH().inlineSimpleLexerRules
+    }
+
+    def normalizeH(): Grammar = {
 
       def normalizeRule(r: Rule, counter: Z, introduced: ISZ[Rule]): (Rule, Z, ISZ[Rule]) = {
         if (r.alts.size > 1) {
@@ -883,6 +940,69 @@ object GrammarAst {
       *
       * @return an equivalent grammar optimized for readability
       */
+    def inlineSimpleLexerRules: Grammar = {
+      var simpleLexerLiterals = HashSMap.empty[String, Element]
+      for (r <- rules) {
+        if (r.isLexer && !r.isFragment && !r.isHidden && r.alts.nonEmpty) {
+          var allSimple: B = T
+          for (alt <- r.alts if allSimple) {
+            if (alt.elements.size == 1) {
+              alt.elements(0) match {
+                case _: Element.Str =>
+                case _: Element.Char =>
+                case _ => allSimple = F
+              }
+            } else {
+              allSimple = F
+            }
+          }
+          if (allSimple) {
+            if (r.alts.size == 1) {
+              simpleLexerLiterals = simpleLexerLiterals + r.name ~> r.alts(0).elements(0)
+            } else {
+              simpleLexerLiterals = simpleLexerLiterals + r.name ~> Element.Block(r.alts, r.posOpt)
+            }
+          }
+        }
+      }
+
+      def inlineLexerElement(e: Element): Element = {
+        e match {
+          case ref: Element.Ref =>
+            simpleLexerLiterals.get(ref.name) match {
+              case Some(lit) => return lit
+              case _ =>
+            }
+            return e
+          case block: Element.Block =>
+            return Element.Block(for (alt <- block.alts) yield Alt(for (elem <- alt.elements) yield inlineLexerElement(elem)), block.posOpt)
+          case opt: Element.Opt => return Element.Opt(inlineLexerElement(opt.element), opt.posOpt)
+          case star: Element.Star => return Element.Star(inlineLexerElement(star.element), star.posOpt)
+          case plus: Element.Plus => return Element.Plus(inlineLexerElement(plus.element), plus.posOpt)
+          case _ => return e
+        }
+      }
+
+      if (simpleLexerLiterals.isEmpty) {
+        return this
+      }
+      var result = ISZ[Rule]()
+      for (r <- rules) {
+        if (r.isLexer && simpleLexerLiterals.contains(r.name)) {
+          // skip — inlined into parser rules
+        } else if (r.isLexer) {
+          result = result :+ r
+        } else {
+          var newAlts = ISZ[Alt]()
+          for (alt <- r.alts) {
+            newAlts = newAlts :+ Alt(for (e <- alt.elements) yield inlineLexerElement(e))
+          }
+          result = result :+ Rule(name = r.name, isLexer = r.isLexer, isFragment = r.isFragment, isHidden = r.isHidden, isSynthetic = r.isSynthetic, posOpt = r.posOpt, alts = newAlts)
+        }
+      }
+      return Grammar(id, options, pheaderOpt, lheaderOpt, result)
+    }
+
     def readable: Grammar = {
 
       def computeRefCounts(rs: ISZ[Rule]): HashSMap[String, Z] = {
@@ -1125,68 +1245,6 @@ object GrammarAst {
         }
         finalRules = finalRules :+ Rule(name = r.name, isLexer = r.isLexer, isFragment = r.isFragment, isHidden = r.isHidden, isSynthetic = r.isSynthetic, posOpt = r.posOpt, alts = newAlts)
       }
-      // Inline simple lexer rules (all alts are single string/char literals, non-fragment,
-      // non-hidden) into parser rules, replacing Ref with the literal element or Block
-      var simpleLexerLiterals = HashSMap.empty[String, Element]
-      for (r <- finalRules) {
-        if (r.isLexer && !r.isFragment && !r.isHidden && r.alts.nonEmpty) {
-          var allSimple: B = T
-          for (alt <- r.alts if allSimple) {
-            if (alt.elements.size == 1) {
-              alt.elements(0) match {
-                case _: Element.Str =>
-                case _: Element.Char =>
-                case _ => allSimple = F
-              }
-            } else {
-              allSimple = F
-            }
-          }
-          if (allSimple) {
-            if (r.alts.size == 1) {
-              simpleLexerLiterals = simpleLexerLiterals + r.name ~> r.alts(0).elements(0)
-            } else {
-              simpleLexerLiterals = simpleLexerLiterals + r.name ~> Element.Block(r.alts, r.posOpt)
-            }
-          }
-        }
-      }
-
-      def inlineLexerElement(e: Element): Element = {
-        e match {
-          case ref: Element.Ref =>
-            simpleLexerLiterals.get(ref.name) match {
-              case Some(lit) => return lit
-              case _ =>
-            }
-            return e
-          case block: Element.Block =>
-            return Element.Block(for (alt <- block.alts) yield Alt(for (elem <- alt.elements) yield inlineLexerElement(elem)), block.posOpt)
-          case opt: Element.Opt => return Element.Opt(inlineLexerElement(opt.element), opt.posOpt)
-          case star: Element.Star => return Element.Star(inlineLexerElement(star.element), star.posOpt)
-          case plus: Element.Plus => return Element.Plus(inlineLexerElement(plus.element), plus.posOpt)
-          case _ => return e
-        }
-      }
-
-      if (simpleLexerLiterals.nonEmpty) {
-        var result = ISZ[Rule]()
-        for (r <- finalRules) {
-          if (r.isLexer && simpleLexerLiterals.contains(r.name)) {
-            // skip — inlined into parser rules
-          } else if (r.isLexer) {
-            result = result :+ r
-          } else {
-            var newAlts = ISZ[Alt]()
-            for (alt <- r.alts) {
-              newAlts = newAlts :+ Alt(for (e <- alt.elements) yield inlineLexerElement(e))
-            }
-            result = result :+ Rule(name = r.name, isLexer = r.isLexer, isFragment = r.isFragment, isHidden = r.isHidden, isSynthetic = r.isSynthetic, posOpt = r.posOpt, alts = newAlts)
-          }
-        }
-        finalRules = result
-      }
-
       finalRules = for (r <- finalRules if !r.isHidden) yield r
 
       // Extract repeated multi-alternative blocks into synthetic helper rules
