@@ -763,7 +763,7 @@ import org.sireum.parser.{GrammarAst => AST}
   }
 
   @pure def terminalST(text: String, dest: Z, plain: B, notFoundOpt: Option[ST]): ST = {
-    return st"""case s32"0x${(valCode(text), "")}" /* ${if (plain) text else st"\"${escape(text)}\"" } */$notFoundOpt => ctx.updateTerminal(token, state"$dest")"""
+    return st"""case s32"0x${(valCode(text), "")}" /* ${if (plain) st"$text" else st"\"${escape(text)}\"" } */$notFoundOpt => ctx.updateTerminal(token, state"$dest")"""
   }
 
   def genTries(k: Z, ruleTrie: LookAhead.Trie): ISZ[ST] = {
