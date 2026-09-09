@@ -58,6 +58,8 @@ object cli {
         tpe = Type.Path(multiple = F, default = None()), description = "License file to be inserted in the file header"),
       Opt(name = "outputDir", longKey = "output-dir", shortKey = Some('o'),
         tpe = Type.Path(multiple = F, default = Some(".")), description = "Output directory for the generated transformer Slang files"),
+      Opt(name = "ll2", longKey = "ll2", shortKey = None(),
+        tpe = Type.Flag(default = F), description = "Generate LL(2) Slang output"),
       Opt(name = "packageName", longKey = "package", shortKey = Some('p'),
         tpe = Type.Str(sep = Some('.'), default = None()),
         description = "Package name for the generated parser/lexer"),
